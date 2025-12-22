@@ -198,9 +198,10 @@ const AdminDashboard: React.FC = () => {
     };
 
     // --- Order Handlers ---
-    const toggleOrderStatus = (orderId: string, currentStatus: 'PENDIENTE' | 'FINALIZADO') => {
-        const newStatus = currentStatus === 'PENDIENTE' ? 'FINALIZADO' : 'PENDIENTE';
-        updateOrderStatus(orderId, newStatus);
+    const toggleOrderStatus = (orderId: string, currentStatus: string) => {
+        // Toggle logic: Pendiente -> Entregado. Anything else -> Pendiente (Reopen)
+        const newStatus = currentStatus === 'Pendiente' ? 'Entregado' : 'Pendiente';
+        updateOrderStatus(orderId, newStatus as any);
     };
 
     // --- Blog Handlers ---
@@ -531,17 +532,15 @@ const AdminDashboard: React.FC = () => {
                                     <div key={order.id} className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6 flex flex-col md:flex-row justify-between md:items-center gap-6">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
-                                                <span className={`px-3 py-1 rounded text-xs font-black uppercase tracking-wider ${order.status === 'PENDIENTE' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'}`}>
+                                                <span className={`px-3 py-1 rounded text-xs font-black uppercase tracking-wider ${order.status === 'Pendiente' ? 'bg-yellow-500/20 text-yellow-500' : 'bg-green-500/20 text-green-500'}`}>
                                                     {order.status}
                                                 </span>
-                                                <span className="text-gray-500 text-xs">{order.date}</span>
-                                                <span className="text-[10px] text-gray-700 font-mono">ID: {order.id.toString().slice(-4)}</span>
+                                                <span className="text-gray-500 text-xs">{order.created_at}</span>
+                                                <span className="text-[10px] text-gray-700 font-mono">#{order.display_id || order.id.toString().slice(-4)}</span>
                                                 <button
                                                     type="button"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        // TEMPORARY DEBUG: Removed window.confirm to test if browser is blocking the popup
-                                                        console.log('Force deleting order:', order.id);
                                                         deleteOrder(order.id);
                                                     }}
                                                     className="p-3 text-red-500 hover:bg-red-900/20 rounded-lg transition-all ml-auto md:ml-2 border border-red-900/30"
@@ -551,29 +550,30 @@ const AdminDashboard: React.FC = () => {
                                                 </button>
                                             </div>
                                             <div className="flex flex-col gap-1">
-                                                {order.items.map(item => (
-                                                    <div key={item.id + item.selectedSize} className="text-sm">
-                                                        <span className="font-bold text-white">{item.quantity}x {item.name}</span>
-                                                        <span className="text-gray-500 ml-2">({item.selectedSize})</span>
+                                                {/* Compatibility check for items */}
+                                                {(order.items as any[])?.map((item: any) => (
+                                                    <div key={item.id + (item.selectedSize || '')} className="text-sm">
+                                                        <span className="font-bold text-white">{item.quantity || 1}x {item.name}</span>
+                                                        {item.selectedSize && <span className="text-gray-500 ml-2">({item.selectedSize})</span>}
                                                     </div>
                                                 ))}
                                             </div>
                                             <div className="mt-2 text-xs text-gray-400">
-                                                Total: <span className="text-white font-bold text-base">Gs. {order.total.toLocaleString()}</span>
+                                                Total: <span className="text-white font-bold text-base">Gs. {order.total_amount?.toLocaleString()}</span>
                                             </div>
                                         </div>
 
                                         <div className="flex flex-col md:flex-row gap-4 items-center">
-                                            {order.status === 'PENDIENTE' ? (
+                                            {order.status === 'Pendiente' ? (
                                                 <button
-                                                    onClick={() => toggleOrderStatus(order.id, 'PENDIENTE')}
+                                                    onClick={() => toggleOrderStatus(order.id, 'Pendiente')}
                                                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors w-full md:w-auto"
                                                 >
                                                     Marcar Finalizado
                                                 </button>
                                             ) : (
                                                 <button
-                                                    onClick={() => toggleOrderStatus(order.id, 'FINALIZADO')}
+                                                    onClick={() => toggleOrderStatus(order.id, 'Entregado')}
                                                     className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-wider transition-colors w-full md:w-auto"
                                                 >
                                                     Reabrir Pedido

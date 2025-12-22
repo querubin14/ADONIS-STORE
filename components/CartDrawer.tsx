@@ -45,23 +45,21 @@ const CartDrawer: React.FC = () => {
     if (!isCartOpen) return null;
 
     const handleCheckout = () => {
-        const orderId = Date.now().toString();
-        const newOrder = {
+        const orderId = crypto.randomUUID();
+        const displayId = Math.floor(1000 + Math.random() * 9000); // Simple ID for display
+
+        const newOrder: any = { // Temporary any to bridge types while refactoring
             id: orderId,
+            display_id: displayId,
+            product_ids: cart.map(item => item.id), // Storing Product IDs
             customerInfo: {
                 location: selectedLocation || undefined
             },
-            items: cart.map(item => ({
-                id: item.id,
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                selectedSize: item.selectedSize,
-                image: item.images[0]
-            })),
-            total: finalTotal,
-            status: 'PENDIENTE' as const,
-            date: new Date().toLocaleDateString()
+            items: cart, // Storing full cart items for local UI
+            total_amount: finalTotal,
+            delivery_cost: shippingCost,
+            status: 'Pendiente',
+            created_at: new Date().toLocaleDateString()
         };
 
         createOrder(newOrder);

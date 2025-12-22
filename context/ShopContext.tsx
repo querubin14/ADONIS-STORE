@@ -24,7 +24,7 @@ interface ShopContextType {
     deleteProduct: (productId: string) => void;
     updateHeroSlides: (slides: HeroSlide[]) => void;
     createOrder: (order: Order) => void;
-    updateOrderStatus: (orderId: string, status: 'PENDIENTE' | 'FINALIZADO') => void;
+    updateOrderStatus: (orderId: string, status: 'Pendiente' | 'Confirmado en Mercado' | 'En Camino' | 'Entregado') => void;
     deleteOrder: (orderId: string) => void;
     clearOrders: () => void;
     addBlogPost: (post: BlogPost) => void;
@@ -203,7 +203,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setCart([]);
     };
 
-    const updateOrderStatus = (orderId: string, status: 'PENDIENTE' | 'FINALIZADO') => {
+    const updateOrderStatus = (orderId: string, status: 'Pendiente' | 'Confirmado en Mercado' | 'En Camino' | 'Entregado') => {
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
     };
 
