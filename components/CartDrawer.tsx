@@ -65,12 +65,20 @@ const CartDrawer: React.FC = () => {
         createOrder(newOrder);
 
         // WhatsApp Checkout Logic
-        const phoneNumber = socialConfig.whatsapp || "5491112345678";
-        const message = `*NUEVO PEDIDO SAVAGE #${orderId}* \n\n` +
-            cart.map(item => `- ${item.name} (${item.quantity}x) - $${item.price * item.quantity}`).join('\n') +
-            `\n\n*SUBTOTAL: $${cartTotal}*` +
-            (shippingCost > 0 ? `\n*ENVÍO: $${shippingCost}*` : '') +
-            `\n*TOTAL FINAL: $${finalTotal}*` +
+        const phoneNumber = socialConfig.whatsapp || "595983840235";
+
+        // Helper for formatting currency
+        const formatPrice = (price: number) => price.toLocaleString('es-PY') + ' Gs';
+
+        const message = `*NUEVO PEDIDO SAVAGE #${displayId}* \n\n` +
+            cart.map(item => {
+                const imgLink = item.images && item.images.length > 0 ? `\n🖼️ Ver foto: ${item.images[0]}` : '';
+                return `▪️ *${item.name}*\n   Cant: ${item.quantity} | Talle: ${item.selectedSize}\n   Precio: ${formatPrice(item.price * item.quantity)}${imgLink}`;
+            }).join('\n\n') +
+            `\n\n--------------------------------\n` +
+            `*SUBTOTAL:* ${formatPrice(cartTotal)}\n` +
+            (shippingCost > 0 ? `*ENVÍO:* ${formatPrice(shippingCost)}\n` : '') +
+            `*TOTAL FINAL:* ${formatPrice(finalTotal)}` +
             (selectedLocation ? `\n\n📍 *UBICACIÓN DE ENVÍO:*\nhttps://www.google.com/maps?q=${selectedLocation.lat},${selectedLocation.lng}` : '');
 
         const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
