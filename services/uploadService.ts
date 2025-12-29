@@ -7,14 +7,17 @@ import { supabase } from './supabase';
  * @param file The file to upload.
  * @returns The public URL of the uploaded file, or null if failed.
  */
-export const uploadProductImage = async (file: File): Promise<string | null> => {
+export const uploadProductImage = async (file: File, folder?: string): Promise<string | null> => {
     try {
         if (!file) return null;
 
         // Create a unique file name
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
-        const filePath = `${fileName}`;
+
+        // Clean folder name to be safe
+        const cleanFolder = folder ? folder.toLowerCase().replace(/[^a-z0-9-_]/g, '-') : null;
+        const filePath = cleanFolder ? `${cleanFolder}/${fileName}` : fileName;
 
         // Upload to 'products' bucket
         // If the user hasn't created the bucket yet, this will fail.

@@ -282,7 +282,9 @@ const AdminDashboard: React.FC = () => {
             const uploadedUrls: string[] = [];
 
             for (const file of files) {
-                const url = await uploadProductImage(file as File);
+                // Organize by category folder
+                const folder = newProduct.category ? newProduct.category : 'general';
+                const url = await uploadProductImage(file as File, folder);
                 if (url) {
                     uploadedUrls.push(url);
                 }
@@ -304,7 +306,8 @@ const AdminDashboard: React.FC = () => {
             setIsUploading(true);
             try {
                 const file = new File([blob], name, { type: blob.type });
-                const url = await uploadProductImage(file);
+                const folder = newProduct.category ? newProduct.category : 'general';
+                const url = await uploadProductImage(file, folder);
                 if (url) {
                     setNewProduct(prev => ({
                         ...prev,
@@ -454,7 +457,7 @@ const AdminDashboard: React.FC = () => {
         if (e.target.files && e.target.files.length > 0) {
             setIsBlogUploading(true);
             const file = e.target.files[0];
-            const url = await uploadProductImage(file);
+            const url = await uploadProductImage(file, 'blog');
 
             if (url) {
                 setBlogForm(prev => ({ ...prev, image: url }));
