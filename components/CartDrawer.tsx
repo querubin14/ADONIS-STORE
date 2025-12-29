@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useShop } from '../context/ShopContext';
-import { X, Plus, Minus, Trash2, MapPin, Truck } from 'lucide-react';
+import { X, Plus, Minus, Trash2, MapPin, Truck, ArrowLeft } from 'lucide-react';
 import LocationPicker from './LocationPicker';
 import { isPointInPolygon } from '../types';
 
@@ -109,7 +109,12 @@ const CartDrawer: React.FC = () => {
             {/* Drawer */}
             <div className="relative w-full max-w-md bg-[#0a0a0a] border-l border-gray-800 h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
                 <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-[#0a0a0a]">
-                    <h2 className="text-xl font-bold tracking-wider">CARRITO ({cart.length})</h2>
+                    <div className="flex items-center gap-4">
+                        <button onClick={toggleCart} className="md:hidden text-gray-400 hover:text-white">
+                            <ArrowLeft size={24} />
+                        </button>
+                        <h2 className="text-xl font-bold tracking-wider">CARRITO ({cart.length})</h2>
+                    </div>
                     <button onClick={toggleCart} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                         <X size={20} />
                     </button>
