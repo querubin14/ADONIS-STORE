@@ -76,11 +76,15 @@ const LifestyleSection: React.FC = () => {
 
         <div className={`grid gap-6 transition-all duration-500 ease-in-out ${itemsToShow === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'}`}>
           {finalVisibleItems.map((item: any, index) => {
-            // Determine style based on content
-            const hasImage = item.image && item.image.startsWith('http');
-            const isTestimonialStyle = !hasImage || item.type === 'testimonial';
+            // Determine style based on content or tag
+            // If tag is 'CLIENTE', treat as testimonial regardless of image size
+            const isTestimonial = item.type === 'testimonial' || (item.tag && item.tag.toUpperCase() === 'CLIENTE');
 
-            if (isTestimonialStyle) {
+            const hasImage = item.image && item.image.startsWith('http');
+            // If it's not explicitly a testimonial, and has an image, treat as blog card.
+            const isBlogCard = hasImage && !isTestimonial;
+
+            if (!isBlogCard) {
               // Testimonial / Text Card
               return (
                 <div key={`${item.id}-${index}-${activeIndex}`} className="bg-background-dark p-6 rounded border border-gray-800 flex flex-col justify-between h-full min-h-[300px] animate-in fade-in zoom-in-95 duration-500">
@@ -95,7 +99,7 @@ const LifestyleSection: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <div
                       className="size-10 rounded-full bg-gray-700 bg-cover bg-center"
-                      style={{ backgroundImage: `url('${item.avatar || 'https://via.placeholder.com/150'}')` }}
+                      style={{ backgroundImage: `url('${item.avatar || item.image || 'https://via.placeholder.com/150'}')` }}
                     />
                     <div>
                       <p className="text-white font-bold text-sm">{item.author || item.name || 'Anonymous'}</p>
