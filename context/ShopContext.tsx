@@ -192,6 +192,35 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 })));
             }
 
+            // Fetch Orders
+            const { data: ordersData, error: ordersError } = await supabase
+                .from('orders')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (ordersError) {
+                console.error('Error fetching orders:', ordersError);
+            } else if (ordersData) {
+                setOrders(ordersData.map(o => ({
+                    ...o,
+                    total_amount: Number(o.total_amount),
+                    delivery_cost: Number(o.delivery_cost),
+                    // JSONB columns come as objects already
+                })));
+            }
+
+            // Fetch Blog Posts
+            const { data: blogData, error: blogError } = await supabase
+                .from('blog_posts')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (blogError) {
+                console.error('Error fetching blog posts:', blogError);
+            } else if (blogData) {
+                setBlogPosts(blogData);
+            }
+
         } catch (error) {
             console.error('Exception fetching data:', error);
         } finally {
@@ -208,11 +237,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Persistence Effects (Legacy LocalStorage for non-critical stuff or backup)
     useEffect(() => { localStorage.setItem('savage_cart', JSON.stringify(cart)); }, [cart]);
     useEffect(() => { localStorage.setItem('savage_hero_slides', JSON.stringify(heroSlides)); }, [heroSlides]);
-    useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
-    useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
+    useEffect(() => { localStorage.setItem('savage_hero_slides', JSON.stringify(heroSlides)); }, [heroSlides]);
+    // useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
+    // useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
     useEffect(() => { localStorage.setItem('savage_social_config', JSON.stringify(socialConfig)); }, [socialConfig]);
     useEffect(() => { localStorage.setItem('savage_social_config', JSON.stringify(socialConfig)); }, [socialConfig]);
     // useEffect(() => { localStorage.setItem('savage_delivery_zones', JSON.stringify(deliveryZones)); }, [deliveryZones]);
+    // useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
+    // useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
 
 
     // Cart Logic
@@ -363,11 +395,41 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     // Order Logic
-    const createOrder = (order: Order) => {
+    // Order Logic - SUPABASE SYNCED
+    const createOrder = async (order: Order) => {
+        // Optimistic UI
         setOrders(prev => [order, ...prev]);
-        // Optional: clear cart here? Usually yes, but user might want to keep it if they didn't finish.
-        // For WhatsApp checkout, usually we clear it after they click "Confirmar".
-        setCart([]);
+        setCart([]); // Clear cart immediately for better UX
+        localStorage.removeItem('savage_cart');
+
+        try {
+            const dbOrder = {
+                // Let DB generate ID or use the one we created? Better to let DB generate UUID if possible,
+                // but we used crypto.randomUUID() which is valid UUID. 
+                // Let's use the generated ID to ensure consistency with the WhatsApp message.
+                id: order.id,
+                display_id: order.display_id,
+                total_amount: order.total_amount,
+                delivery_cost: order.delivery_cost,
+                status: order.status,
+                items: order.items,
+                customer_info: order.customerInfo,
+                product_ids: order.product_ids || []
+            };
+
+            const { error } = await supabase
+                .from('orders')
+                .insert([dbOrder]);
+
+            if (error) {
+                console.error('Error creating order in Supabase:', error);
+                alert('Hubo un error guardando tu pedido en el sistema, pero el enlace de WhatsApp se generó correctamente.');
+                // Don't revert optimistic UI here to avoid confusing user, 
+                // but admins won't see it until fixed or manually added.
+            }
+        } catch (e) {
+            console.error('Exception creating order:', e);
+        }
     };
 
     const updateOrderStatus = (orderId: string, status: 'Pendiente' | 'Confirmado en Mercado' | 'En Camino' | 'Entregado') => {
@@ -388,16 +450,73 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     // Blog Logic
-    const addBlogPost = (post: BlogPost) => {
+    // Blog Logic - SUPABASE SYNCED
+    const addBlogPost = async (post: BlogPost) => {
         setBlogPosts(prev => [post, ...prev]);
+
+        try {
+            // Omit ID to let DB generate it, OR use the optimistic one.
+            // Let's use optimistic ID if it's UUID, or omit if timestamp.
+            // The frontend usually generates "blog-date" or similar.
+            // Let's rely on DB UUID for cleanliness, but we need to update local or re-fetch.
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .insert([{
+                    title: post.title,
+                    content: post.content,
+                    image: post.image,
+                    rating: post.rating,
+                    tag: post.tag,
+                    author: post.author
+                }])
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error creating blog post:', error);
+                setBlogPosts(prev => prev.filter(p => p.id !== post.id));
+            } else if (data) {
+                setBlogPosts(prev => prev.map(p => p.id === post.id ? { ...p, id: data.id } : p));
+            }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const updateBlogPost = (updatedPost: BlogPost) => {
+    const updateBlogPost = async (updatedPost: BlogPost) => {
         setBlogPosts(prev => prev.map(post => post.id === updatedPost.id ? updatedPost : post));
+
+        try {
+            const { error } = await supabase
+                .from('blog_posts')
+                .update({
+                    title: updatedPost.title,
+                    content: updatedPost.content,
+                    image: updatedPost.image,
+                    rating: updatedPost.rating,
+                    tag: updatedPost.tag,
+                    author: updatedPost.author
+                })
+                .eq('id', updatedPost.id);
+
+            if (error) console.error('Error updating blog post:', error);
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const deleteBlogPost = (id: string) => {
+    const deleteBlogPost = async (id: string) => {
         setBlogPosts(prev => prev.filter(p => p.id !== id));
+        try {
+            const { error } = await supabase
+                .from('blog_posts')
+                .delete()
+                .eq('id', id);
+
+            if (error) console.error('Error deleting blog post:', error);
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     // Social Logic
