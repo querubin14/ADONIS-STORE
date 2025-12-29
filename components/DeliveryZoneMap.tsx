@@ -535,7 +535,7 @@ const DeliveryZoneMap: React.FC = () => {
             if (isNew) {
                 // A) CREAR NUEVA ZONA (INSERT)
                 const { data, error } = await supabase
-                    .from('shipping_zones')
+                    .from('delivery_zones')
                     .insert([payload])
                     .select()
                     .single();
@@ -546,7 +546,7 @@ const DeliveryZoneMap: React.FC = () => {
             } else {
                 // B) ACTUALIZAR ZONA EXISTENTE (UPDATE)
                 const { data, error } = await supabase
-                    .from('shipping_zones')
+                    .from('delivery_zones')
                     .update(payload)
                     .eq('id', editingId)
                     .select()

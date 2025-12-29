@@ -11,6 +11,7 @@ const CartDrawer: React.FC = () => {
         isCartOpen,
         toggleCart,
         updateQuantity,
+        updateCartItemSize, // Consume new function
         removeFromCart,
         cartTotal,
         createOrder,
@@ -21,6 +22,18 @@ const CartDrawer: React.FC = () => {
     const [showMap, setShowMap] = React.useState(false);
     const [selectedLocation, setSelectedLocation] = React.useState<{ lat: number, lng: number } | null>(null);
     const [shippingCost, setShippingCost] = React.useState(0);
+
+    // Lock Body Scroll when Cart is Open
+    React.useEffect(() => {
+        if (isCartOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isCartOpen]);
 
     // Recalculate shipping when location changes
     React.useEffect(() => {
@@ -86,7 +99,7 @@ const CartDrawer: React.FC = () => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex justify-end">
+        <div className="fixed inset-0 z-[9999] flex justify-end">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -115,7 +128,7 @@ const CartDrawer: React.FC = () => {
                         </div>
                     ) : (
                         cart.map(item => (
-                            <div key={item.id} className="flex gap-4 p-3 bg-white/5 rounded-lg border border-white/5">
+                            <div key={`${item.id}-${item.selectedSize}`} className="flex gap-4 p-3 bg-white/5 rounded-lg border border-white/5">
                                 <img
                                     src={item.images ? item.images[0] : 'https://via.placeholder.com/150'}
                                     alt={item.name}
@@ -131,7 +144,26 @@ const CartDrawer: React.FC = () => {
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
-                                    <p className="text-accent-gray text-xs mb-3">{item.category}</p>
+                                    <p className="text-accent-gray text-xs mb-2">{item.category}</p>
+
+                                    {/* Size Selector */}
+                                    <div className="mb-3">
+                                        {item.sizes && item.sizes.length > 0 && (
+                                            <select
+                                                value={item.selectedSize}
+                                                onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value)}
+                                                className="bg-black border border-gray-700 text-white text-xs rounded px-2 py-1 outline-none focus:border-white"
+                                            >
+                                                {item.sizes.map(s => (
+                                                    <option key={s} value={s}>{s}</option>
+                                                ))}
+                                            </select>
+                                        )}
+                                        {(!item.sizes || item.sizes.length === 0) && (
+                                            <span className="text-xs text-gray-400">One Size</span>
+                                        )}
+                                    </div>
+
                                     <div className="flex justify-between items-center">
                                         <span className="font-mono font-bold">Gs. {item.price.toLocaleString()}</span>
                                         <div className="flex items-center gap-3 bg-black rounded-lg px-2 py-1 border border-gray-800">

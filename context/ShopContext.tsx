@@ -21,6 +21,7 @@ interface ShopContextType {
     addToCart: (product: Product, size?: string) => void;
     removeFromCart: (productId: string, size: string) => void;
     updateQuantity: (productId: string, size: string, delta: number) => void;
+    updateCartItemSize: (productId: string, currentSize: string, newSize: string) => void;
     addProduct: (product: Product) => void;
     updateProduct: (product: Product) => void;
     deleteProduct: (productId: string) => void;
@@ -275,6 +276,34 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
             return item;
         }).filter(item => item.quantity > 0));
+    };
+
+    const updateCartItemSize = (productId: string, currentSize: string, newSize: string) => {
+        setCart(prev => {
+            // 1. Find the item to update
+            const itemToUpdate = prev.find(item => item.id === productId && item.selectedSize === currentSize);
+            if (!itemToUpdate) return prev;
+
+            // 2. Check if an item with the NEW size already exists
+            const targetItem = prev.find(item => item.id === productId && item.selectedSize === newSize);
+
+            if (targetItem) {
+                // MERGE: Remove the old one, update the target one
+                return prev.map(item => {
+                    if (item.id === productId && item.selectedSize === newSize) {
+                        return { ...item, quantity: item.quantity + itemToUpdate.quantity };
+                    }
+                    return item;
+                }).filter(item => !(item.id === productId && item.selectedSize === currentSize));
+            } else {
+                // JUST UPDATE: Change size
+                return prev.map(item =>
+                    (item.id === productId && item.selectedSize === currentSize)
+                        ? { ...item, selectedSize: newSize }
+                        : item
+                );
+            }
+        });
     };
 
     const toggleCart = () => setIsCartOpen(prev => !prev);
@@ -780,6 +809,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addToCart,
             removeFromCart,
             updateQuantity,
+            updateCartItemSize,
             addProduct,
             updateProduct,
             deleteProduct,
