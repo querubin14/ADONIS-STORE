@@ -70,12 +70,32 @@ const AdminDashboard: React.FC = () => {
 
     // Hero Form State
     const [heroForm, setHeroForm] = useState<HeroSlide[]>(heroSlides);
+    const [uploadingSlideId, setUploadingSlideId] = useState<string | null>(null);
+    const heroFileInputRef = React.useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
         if (heroSlides && heroSlides.length > 0) {
             setHeroForm(heroSlides);
         }
     }, [heroSlides]);
+
+    const handleHeroFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0 && uploadingSlideId) {
+            setIsUploading(true);
+            const file = e.target.files[0];
+            const url = await uploadProductImage(file, 'hero');
+
+            if (url) {
+                setHeroForm(prev => prev.map(slide =>
+                    slide.id === uploadingSlideId ? { ...slide, image: url } : slide
+                ));
+            }
+
+            setIsUploading(false);
+            setUploadingSlideId(null);
+            if (heroFileInputRef.current) heroFileInputRef.current.value = '';
+        }
+    };
 
     // Blog Form State
     const [blogForm, setBlogForm] = useState({
@@ -1319,6 +1339,8 @@ const AdminDashboard: React.FC = () => {
                                 </button>
                             </header>
 
+                            <input type="file" ref={heroFileInputRef} onChange={handleHeroFileSelect} className="hidden" accept="image/*" />
+
                             <div className="space-y-6">
                                 {heroForm.map((slide, index) => (
                                     <div key={slide.id} className="bg-[#0a0a0a] border border-gray-800 rounded-xl overflow-hidden relative group">
@@ -1351,7 +1373,16 @@ const AdminDashboard: React.FC = () => {
                                             <div className="p-6 md:col-span-2 space-y-4">
                                                 <div className="space-y-2">
                                                     <label className="text-xs font-bold text-gray-500 uppercase">URL Imagen</label>
-                                                    <input type="text" value={slide.image} onChange={e => updateSlide(slide.id, 'image', e.target.value)} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" />
+                                                    <div className="flex gap-2">
+                                                        <input type="text" value={slide.image} onChange={e => updateSlide(slide.id, 'image', e.target.value)} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" />
+                                                        <button
+                                                            onClick={() => { setUploadingSlideId(slide.id); heroFileInputRef.current?.click(); }}
+                                                            className="bg-gray-800 hover:bg-gray-700 text-white p-3 rounded-lg transition-colors"
+                                                            title="Subir imagen"
+                                                        >
+                                                            <UploadCloud size={20} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className="space-y-2">
