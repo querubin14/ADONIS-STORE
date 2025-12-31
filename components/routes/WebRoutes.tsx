@@ -8,6 +8,7 @@ import BlogPage from '../../pages/BlogPage';
 
 import ShippingPolicy from '../../pages/ShippingPolicy';
 import ExchangePolicy from '../../pages/ExchangePolicy';
+import PaymentMethods from '../../pages/PaymentMethods';
 
 import AdminDashboard from '../../pages/Admin';
 
@@ -24,6 +25,7 @@ const WebRoutes: React.FC = () => {
             <Route path="/blog" element={<BlogPage />} />
             <Route path="/shipping-policy" element={<ShippingPolicy />} />
             <Route path="/exchange-policy" element={<ExchangePolicy />} />
+            <Route path="/payment-methods" element={<PaymentMethods />} />
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoute />}>
                 <Route path="/admin" element={<AdminDashboard />} />
