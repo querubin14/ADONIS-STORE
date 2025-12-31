@@ -157,7 +157,8 @@ const CartDrawer: React.FC = () => {
                                             <select
                                                 value={item.selectedSize}
                                                 onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value)}
-                                                className="bg-black border border-gray-700 text-white text-xs rounded px-2 py-1 outline-none focus:border-white"
+                                                className="w-full bg-black border border-gray-700 text-white text-sm rounded-md px-3 py-2 outline-none focus:border-white appearance-none cursor-pointer hover:bg-white/5 transition-colors"
+                                                style={{ backgroundImage: 'none' }} // Remove default arrow if needed, or keep it. Let's keep appearance-none and maybe add a custom SVG if I could, but standard is fine with border.
                                             >
                                                 {item.sizes.map(s => (
                                                     <option key={s} value={s}>{s}</option>

@@ -222,6 +222,22 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setBlogPosts(blogData);
             }
 
+            // Fetch Store Config (Social, etc)
+            const { data: configData, error: configError } = await supabase
+                .from('store_config')
+                .select('*')
+                .eq('key', 'social_config')
+                .single();
+
+            if (configError) {
+                // It's okay if not found initially, we use defaults. But log other errors.
+                if (configError.code !== 'PGRST116') { // PGRST116 is "The result contains 0 rows"
+                    console.error('Error fetching social config:', configError);
+                }
+            } else if (configData && configData.value) {
+                setSocialConfig(configData.value);
+            }
+
         } catch (error) {
             console.error('Exception fetching data:', error);
         } finally {
@@ -549,8 +565,25 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     // Social Logic
-    const updateSocialConfig = (config: SocialConfig) => {
-        setSocialConfig(config);
+    const updateSocialConfig = async (config: SocialConfig) => {
+        setSocialConfig(config); // Optimistic
+
+        try {
+            const { error } = await supabase
+                .from('store_config')
+                .upsert({
+                    key: 'social_config',
+                    value: config,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (error) {
+                console.error('Error saving social config to DB:', error);
+                alert('No se pudieron guardar los cambios de configuración en la nube.');
+            }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     // Category Logic
