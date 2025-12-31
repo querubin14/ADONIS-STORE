@@ -71,6 +71,12 @@ const AdminDashboard: React.FC = () => {
     // Hero Form State
     const [heroForm, setHeroForm] = useState<HeroSlide[]>(heroSlides);
 
+    React.useEffect(() => {
+        if (heroSlides && heroSlides.length > 0) {
+            setHeroForm(heroSlides);
+        }
+    }, [heroSlides]);
+
     // Blog Form State
     const [blogForm, setBlogForm] = useState({
         title: '',
