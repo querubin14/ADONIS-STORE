@@ -85,8 +85,18 @@ const AdminDashboard: React.FC = () => {
 
     // Config Form State
     const [configForm, setConfigForm] = useState({
-        instagram: '', tiktok: '', email: '', whatsapp: '', address: '', shippingText: '', ...socialConfig
+        instagram: '', tiktok: '', email: '', whatsapp: '', address: '', shippingText: '', topHeaderText: '', extraShippingInfo: '', ...socialConfig
     });
+
+    // Validates that the form stays in sync with the database/context data when it loads
+    React.useEffect(() => {
+        if (socialConfig) {
+            setConfigForm(prev => ({
+                ...prev,
+                ...socialConfig
+            }));
+        }
+    }, [socialConfig]);
 
     const [lifestyleForm, setLifestyleForm] = useState(lifestyleConfig || {
         sectionTitle: 'THE SAVAGE LIFESTYLE',
