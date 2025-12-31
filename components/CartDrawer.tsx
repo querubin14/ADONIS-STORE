@@ -1,11 +1,13 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useShop } from '../context/ShopContext';
 import { X, Plus, Minus, Trash2, MapPin, Truck, ArrowLeft } from 'lucide-react';
 import LocationPicker from './LocationPicker';
 import { isPointInPolygon } from '../types';
 
 const CartDrawer: React.FC = () => {
+    const navigate = useNavigate();
     const {
         cart,
         isCartOpen,
@@ -221,6 +223,7 @@ const CartDrawer: React.FC = () => {
                             CONFIRMAR PEDIDO
                         </button>
 
+
                         <div className="mt-4">
                             {!selectedLocation ? (
                                 <button
@@ -241,6 +244,13 @@ const CartDrawer: React.FC = () => {
                                 </div>
                             )}
                         </div>
+
+                        <button
+                            onClick={() => { toggleCart(); navigate('/'); }}
+                            className="w-full mt-3 bg-transparent border border-gray-800 hover:border-gray-500 text-gray-400 hover:text-white py-3 rounded-sm tracking-widest transition-all uppercase flex items-center justify-center gap-2 text-xs font-bold"
+                        >
+                            SEGUIR COMPRANDO
+                        </button>
 
                         <p className="text-center text-xs text-gray-500 mt-4">
                             El pedido se enviará a través de WhatsApp para confirmar detalles.

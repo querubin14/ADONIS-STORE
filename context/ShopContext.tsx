@@ -712,7 +712,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 { id: 'l7', label: 'Guía de Tallas', url: '#' },
                 { id: 'l8', label: 'Preguntas Frecuentes', url: '#' },
                 { id: 'l9', label: 'Términos Mayoristas', url: '#' },
-                { id: 'l10', label: 'Contacto', url: '/contact' }
+                { id: 'l10', label: 'Contacto', url: '/contact' },
+                { id: 'l11', label: 'Términos de Envío', url: '#' },
+                { id: 'l12', label: 'Cambios', url: '#' },
+                { id: 'l13', label: 'Sistemas de Pago', url: '#' }
             ]
         }
     ];
