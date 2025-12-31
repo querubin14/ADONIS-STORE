@@ -579,14 +579,119 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error saving social config to DB:', error);
-                alert('No se pudieron guardar los cambios de configuración en la nube.');
+                throw error;
             }
         } catch (e) {
             console.error(e);
+            throw e;
         }
     };
 
-    // Category Logic
+    // --- Web Layout Config ---
+
+    const DEFAULT_NAVBAR: NavbarLink[] = [
+        { id: 'nav1', label: 'INICIO', path: '/' },
+        { id: 'nav2', label: 'DEPORTIVO', path: '/category/Deportivo' },
+        { id: 'nav3', label: 'CALZADOS', path: '/category/Calzados' },
+        { id: 'nav4', label: 'CLIENTES', path: '/' }
+    ];
+
+    const DEFAULT_BANNERS: BannerBento[] = [
+        {
+            id: 'large',
+            title: 'Joyas',
+            subtitle: 'Plata esterlina y acero inoxidable. Diseños agresivos para un estilo sin límites.',
+            buttonText: 'Ver Colección',
+            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBAqGbUj2FJLIGgcAKZAKLYBngrFEDRYfQoeV7VkDrTvzr13ECdtmX2qfvHu6Qd8h9Up5ZVYnAg66Dv1QOA9uM8kN4zE3xiXEEsDqWkYlRgdrn9-7nULwBuow4fqc66fDikz66FszvQXmPZaVivdWb8Urjz5K3eTyglcRqwOmNXSLR2hI_IURHsacCZ16ekg-ZEtzvjJHTnBJn5SM0Xb7JrstUnlakaQ8iAMvY2D23ZbcsDUdHvwFwsWY5KbMOvBFBjhyaDMh0mhrc',
+            link: '/category/Joyas'
+        },
+        {
+            id: 'top_right',
+            title: 'Ropa',
+            buttonText: 'Explorar',
+            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCyAeoyNm7zGmNtvPtnOAzDOnFCMqNI5GjDezYSapx09Jzqb2J2YHFfQd-9uyoWu-hCvaOzmQsy6GbAS4FqEzWscWIUzekY1vjZjUwnjojprLpYk0VW2NPY-UofDRuLKAnpsEmj0-8a6BAJ-j_ta15GW7wu9GI3IyZiYO2wt1huNB_KCyaad9JCU4z_eRdOVUxVTBIHxytiKBBJ0aPGEnIwAWjhooQnJzAb2BXKpa842Xhj16wQ9kCXIkW1kP78huM7WzXjvu9sAoM',
+            link: '/category/Ropa'
+        },
+        {
+            id: 'bottom_right',
+            title: 'Nuevos Ingresos',
+            subtitle: 'La última gota',
+            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtj6EY5btq8X5E8_8GCid2GriBY3VTDKQBFQUT1C5CC2AiohgJiQRz0LUBMOku2H8qrVJIPPTVlwnNNIbhzigrSBC9tFulP2vcuiKTE8Y5BnVFWSoauuXZxTs0YHEP1_cbOkJE6KR3vLSsLIj61LOBTteCP5CgxQN7fN_b9kLQkH_-G9Afu1VHCOqdSebpMKz_g4qZvRlX7jmBLrnA-zjE5iBTFCd8mc_hy0FZyuRp1z0f4Ypwb1VP_tXyHN-xQiKQXcTp3i9Rpe0',
+            link: '/category/New'
+        }
+    ];
+
+    const [navbarLinks, setNavbarLinks] = useState<NavbarLink[]>(() => {
+        const saved = localStorage.getItem('savage_navbar');
+        return saved ? JSON.parse(saved) : DEFAULT_NAVBAR;
+    });
+
+    const [bannerBento, setBannerBento] = useState<BannerBento[]>(() => {
+        const saved = localStorage.getItem('savage_banners_bento');
+        return saved ? JSON.parse(saved) : DEFAULT_BANNERS;
+    });
+
+    // ... (rest of file)
+
+    const updateNavbarLinks = async (links: NavbarLink[]) => {
+        setNavbarLinks(links);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'navbar_links',
+                value: links,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
+
+    const updateBannerBento = async (banners: BannerBento[]) => {
+        setBannerBento(banners);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'banner_bento',
+                value: banners,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
+
+
+    // --- Lifestyle Config ---
+    const DEFAULT_LIFESTYLE: LifestyleConfig = {
+        sectionTitle: 'THE SAVAGE LIFESTYLE',
+        sectionSubtitle: 'Únete a la comunidad que redefine las reglas. Historias reales, estilo sin filtros.',
+        buttonText: 'LEER EL BLOG',
+        buttonLink: '/blog'
+    };
+
+    const [lifestyleConfig, setLifestyleConfig] = useState<LifestyleConfig>(() => {
+        const saved = localStorage.getItem('savage_lifestyle_config');
+        return saved ? JSON.parse(saved) : DEFAULT_LIFESTYLE;
+    });
+
+
+    const updateLifestyleConfig = async (config: LifestyleConfig) => {
+        setLifestyleConfig(config);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'lifestyle_config',
+                value: config,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
     // Category Logic - SUPABASE SYNCED
     const addCategory = async (category: Category) => {
         setCategories(prev => [...prev, category]);
@@ -748,103 +853,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    // --- Web Layout Config ---
 
-    const DEFAULT_NAVBAR: NavbarLink[] = [
-        { id: 'nav1', label: 'INICIO', path: '/' },
-        { id: 'nav2', label: 'DEPORTIVO', path: '/category/Deportivo' },
-        { id: 'nav3', label: 'CALZADOS', path: '/category/Calzados' },
-        { id: 'nav4', label: 'CLIENTES', path: '/' }
-    ];
-
-    const DEFAULT_BANNERS: BannerBento[] = [
-        {
-            id: 'large',
-            title: 'Joyas',
-            subtitle: 'Plata esterlina y acero inoxidable. Diseños agresivos para un estilo sin límites.',
-            buttonText: 'Ver Colección',
-            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBAqGbUj2FJLIGgcAKZAKLYBngrFEDRYfQoeV7VkDrTvzr13ECdtmX2qfvHu6Qd8h9Up5ZVYnAg66Dv1QOA9uM8kN4zE3xiXEEsDqWkYlRgdrn9-7nULwBuow4fqc66fDikz66FszvQXmPZaVivdWb8Urjz5K3eTyglcRqwOmNXSLR2hI_IURHsacCZ16ekg-ZEtzvjJHTnBJn5SM0Xb7JrstUnlakaQ8iAMvY2D23ZbcsDUdHvwFwsWY5KbMOvBFBjhyaDMh0mhrc',
-            link: '/category/Joyas'
-        },
-        {
-            id: 'top_right',
-            title: 'Ropa',
-            buttonText: 'Explorar',
-            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCyAeoyNm7zGmNtvPtnOAzDOnFCMqNI5GjDezYSapx09Jzqb2J2YHFfQd-9uyoWu-hCvaOzmQsy6GbAS4FqEzWscWIUzekY1vjZjUwnjojprLpYk0VW2NPY-UofDRuLKAnpsEmj0-8a6BAJ-j_ta15GW7wu9GI3IyZiYO2wt1huNB_KCyaad9JCU4z_eRdOVUxVTBIHxytiKBBJ0aPGEnIwAWjhooQnJzAb2BXKpa842Xhj16wQ9kCXIkW1kP78huM7WzXjvu9sAoM',
-            link: '/category/Ropa'
-        },
-        {
-            id: 'bottom_right',
-            title: 'Nuevos Ingresos',
-            subtitle: 'La última gota',
-            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtj6EY5btq8X5E8_8GCid2GriBY3VTDKQBFQUT1C5CC2AiohgJiQRz0LUBMOku2H8qrVJIPPTVlwnNNIbhzigrSBC9tFulP2vcuiKTE8Y5BnVFWSoauuXZxTs0YHEP1_cbOkJE6KR3vLSsLIj61LOBTteCP5CgxQN7fN_b9kLQkH_-G9Afu1VHCOqdSebpMKz_g4qZvRlX7jmBLrnA-zjE5iBTFCd8mc_hy0FZyuRp1z0f4Ypwb1VP_tXyHN-xQiKQXcTp3i9Rpe0',
-            link: '/category/New'
-        }
-    ];
-
-    const [navbarLinks, setNavbarLinks] = useState<NavbarLink[]>(() => {
-        const saved = localStorage.getItem('savage_navbar');
-        return saved ? JSON.parse(saved) : DEFAULT_NAVBAR;
-    });
-
-    const [bannerBento, setBannerBento] = useState<BannerBento[]>(() => {
-        const saved = localStorage.getItem('savage_banners_bento');
-        return saved ? JSON.parse(saved) : DEFAULT_BANNERS;
-    });
-
-    const updateNavbarLinks = async (links: NavbarLink[]) => {
-        setNavbarLinks(links);
-        try {
-            await supabase.from('store_config').upsert({
-                key: 'navbar_links',
-                value: links,
-                updated_at: new Date().toISOString()
-            });
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    const updateBannerBento = async (banners: BannerBento[]) => {
-        setBannerBento(banners);
-        try {
-            await supabase.from('store_config').upsert({
-                key: 'banner_bento',
-                value: banners,
-                updated_at: new Date().toISOString()
-            });
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-
-    // --- Lifestyle Config ---
-    const DEFAULT_LIFESTYLE: LifestyleConfig = {
-        sectionTitle: 'THE SAVAGE LIFESTYLE',
-        sectionSubtitle: 'Únete a la comunidad que redefine las reglas. Historias reales, estilo sin filtros.',
-        buttonText: 'LEER EL BLOG',
-        buttonLink: '/blog'
-    };
-
-    const [lifestyleConfig, setLifestyleConfig] = useState<LifestyleConfig>(() => {
-        const saved = localStorage.getItem('savage_lifestyle_config');
-        return saved ? JSON.parse(saved) : DEFAULT_LIFESTYLE;
-    });
-
-
-    const updateLifestyleConfig = async (config: LifestyleConfig) => {
-        setLifestyleConfig(config);
-        try {
-            await supabase.from('store_config').upsert({
-                key: 'lifestyle_config',
-                value: config,
-                updated_at: new Date().toISOString()
-            });
-        } catch (e) {
-            console.error(e);
-        }
-    };
 
     const saveAllData = () => {
         // Deprecated manual save, but kept for legacy manual triggers if any

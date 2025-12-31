@@ -431,10 +431,17 @@ const AdminDashboard: React.FC = () => {
     };
 
     // --- Config Handlers ---
-    const handleConfigSave = () => {
-        updateSocialConfig(configForm);
-        updateLifestyleConfig(lifestyleForm);
-        alert('Configuración guardada!');
+    const handleConfigSave = async () => {
+        try {
+            await Promise.all([
+                updateSocialConfig(configForm),
+                updateLifestyleConfig(lifestyleForm)
+            ]);
+            alert('Configuración guardada correctamente en la nube!');
+        } catch (error) {
+            console.error(error);
+            alert('Hubo un problema guardando. Revisa la consola o tu conexión.');
+        }
     };
 
     // --- Category Handlers ---
