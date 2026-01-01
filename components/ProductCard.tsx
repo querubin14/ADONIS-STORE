@@ -21,15 +21,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           className={`w-full h-full bg-center transition-transform duration-700 group-hover:scale-110 ${product.type === 'footwear' ? 'bg-contain bg-no-repeat' : 'bg-cover'}`}
           style={{ backgroundImage: `url('${product.images[0]}')` }}
         />
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToCart(product);
-          }}
-          className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-primary hover:text-white shadow-lg z-10"
-        >
-          <span className="material-symbols-outlined">shopping_bag</span>
-        </button>
+        {/* Sold Out Overlay */}
+        {product.stock === 0 && (
+          <div className="absolute inset-0 bg-black/60 z-20 flex items-center justify-center">
+            <span className="bg-red-600 text-white font-black px-4 py-2 uppercase tracking-widest text-sm border-2 border-white transform -rotate-12 shadow-xl">
+              AGOTADO
+            </span>
+          </div>
+        )}
+
+        {product.stock !== 0 && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToCart(product);
+            }}
+            className="absolute bottom-4 right-4 bg-white text-black p-3 rounded-full opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 hover:bg-primary hover:text-white shadow-lg z-10"
+          >
+            <span className="material-symbols-outlined">shopping_bag</span>
+          </button>
+        )}
 
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           {product.isNew && (

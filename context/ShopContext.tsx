@@ -166,7 +166,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     isFeatured: p.is_featured,
                     isCategoryFeatured: p.is_category_featured,
                     isNew: p.is_new,
-                    subcategory: p.subcategory || '' // Handle nulls gracefully
+                    subcategory: p.subcategory || '', // Handle nulls gracefully
+                    stock: p.stock_quantity
                 })));
             }
 
@@ -352,7 +353,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_featured: product.isFeatured,
                 is_category_featured: product.isCategoryFeatured,
                 description: product.description,
-                stock_quantity: 0
+                stock_quantity: null
             };
 
             const { data, error } = await supabase

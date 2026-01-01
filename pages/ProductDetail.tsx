@@ -28,6 +28,7 @@ const ProductDetail: React.FC = () => {
     const isAccessory = product.category?.toUpperCase() === 'ACCESORIOS';
 
     const handleAddToCart = () => {
+        if (product.stock === 0) return;
         if (!selectedSize && product.sizes.length > 0 && !isAccessory) {
             alert('Por favor selecciona un talle');
             return;
@@ -56,8 +57,15 @@ const ProductDetail: React.FC = () => {
                             <img
                                 src={product.images[selectedImage]}
                                 alt={product.name}
-                                className="w-full h-full object-cover"
+                                className={`w-full h-full object-cover ${product.stock === 0 ? 'grayscale opacity-50' : ''}`}
                             />
+                            {product.stock === 0 && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="bg-red-600 text-white font-black px-6 py-3 uppercase tracking-widest text-xl border-4 border-white transform -rotate-12 shadow-2xl">
+                                        AGOTADO
+                                    </span>
+                                </div>
+                            )}
                             {/* Image Navigation (Optional if multiple images) */}
                             {product.images.length > 1 && (
                                 <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -136,9 +144,14 @@ const ProductDetail: React.FC = () => {
                         <div className="mt-auto space-y-4">
                             <button
                                 onClick={handleAddToCart}
-                                className="w-full py-5 bg-primary hover:bg-red-700 text-white font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg"
+                                disabled={product.stock === 0}
+                                className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg ${product.stock === 0 ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-red-700 text-white'}`}
                             >
-                                <ShoppingBag size={24} /> Agregar al Carrito
+                                {product.stock === 0 ? 'AGOTADO' : (
+                                    <>
+                                        <ShoppingBag size={24} /> Agregar al Carrito
+                                    </>
+                                )}
                             </button>
 
                             {/* <div className="flex gap-4">

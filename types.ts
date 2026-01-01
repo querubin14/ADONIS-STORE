@@ -14,6 +14,7 @@ export interface Product {
   isFeatured?: boolean; // Featured in Home "Destacados"
   isCategoryFeatured?: boolean; // Featured within its specific category
   description?: string;
+  stock?: number;
 }
 
 export interface Category {
