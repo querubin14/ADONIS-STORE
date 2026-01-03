@@ -505,7 +505,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error updating order status in Supabase:', error);
-                alert('No se pudo guardar el estado del pedido en la nube. Revisa tu conexión.');
+                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCódigo: ${error.code}\nDetalles: ${error.details || 'N/A'}\nHint: ${error.hint || 'N/A'}\n\nVerifica que el usuario tenga permisos (RLS) y que el valor 'Entregado' sea válido en la columna enum.`);
                 return; // Stop if status update failed
             }
 
