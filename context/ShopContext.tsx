@@ -493,9 +493,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
 
     const updateOrderStatus = async (orderId: string, status: 'Pendiente' | 'Confirmado en Mercado' | 'En Camino' | 'Entregado') => {
+        // 1. Local State Optimistic Update (Order Status Only)
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
 
         try {
+            // 2. DB Update (Order Status)
             const { error } = await supabase
                 .from('orders')
                 .update({ status })
@@ -504,7 +506,61 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) {
                 console.error('Error updating order status in Supabase:', error);
                 alert('No se pudo guardar el estado del pedido en la nube. Revisa tu conexión.');
+                return; // Stop if status update failed
             }
+
+            // 3. Stock Management Logic
+            const order = orders.find(o => o.id === orderId);
+            if (!order || !order.items) return;
+
+            // Only act if we are transitioning to/from 'Entregado' (Finalized)
+            if (status === 'Entregado') {
+                // Deduct Stock
+                for (const item of order.items as any[]) {
+                    // Find product to check current stock (optional, but good for local update)
+                    // Note: accessing 'products' state here uses the value from the current render cycle.
+                    const product = products.find(p => p.id === item.id);
+                    if (product) {
+                        const currentStock = product.stock || 0;
+                        const qtyToDeduct = item.quantity || 1;
+                        const newStock = Math.max(0, currentStock - qtyToDeduct);
+
+                        // DB Update
+                        await supabase.from('products').update({ stock_quantity: newStock }).eq('id', item.id);
+
+                        // Local State Update (Partial) - To reflect change in UI immediately without full fetch
+                        setProducts(prev => prev.map(p => p.id === item.id ? { ...p, stock: newStock } : p));
+                    }
+                }
+            } else if (status === 'Pendiente') {
+                // If reverting from 'Entregado' -> 'Pendiente', RESTORE stock
+                // Check if the previous status was 'Entregado'. 
+                // Since this function is called with the *new* status, we can't easily check 'prev' status 
+                // unless we look at the 'order' object retrieved from state *before* the optimistic update? 
+                // Actually 'order' const above IS from 'orders' state, which hasn't re-rendered yet 
+                // because setOrders is async/batched? 
+                // Wait, setOrders triggers re-render. This function execution context has the 'orders' from *before* this function ran?
+                // Yes, closures capturing state. 'orders' here is the old state.
+                const oldStatus = order.status;
+
+                if (oldStatus === 'Entregado') {
+                    for (const item of order.items as any[]) {
+                        const product = products.find(p => p.id === item.id);
+                        if (product) {
+                            const currentStock = product.stock || 0;
+                            const qtyToAdd = item.quantity || 1;
+                            const newStock = currentStock + qtyToAdd;
+
+                            // DB Update
+                            await supabase.from('products').update({ stock_quantity: newStock }).eq('id', item.id);
+
+                            // Local State Update
+                            setProducts(prev => prev.map(p => p.id === item.id ? { ...p, stock: newStock } : p));
+                        }
+                    }
+                }
+            }
+
         } catch (e) {
             console.error('Exception updating order status:', e);
         }
