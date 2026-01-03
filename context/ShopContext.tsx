@@ -546,10 +546,27 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (!error) confirmedStatus = upperFinal as any;
             }
 
+            // Attempt 6: Try English 'Delivered' (Common default)
+            if (error && error.code === '22P02') {
+                const engDelivered = 'Delivered';
+                error = await attemptUpdate(engDelivered);
+                if (!error) confirmedStatus = engDelivered as any;
+
+                if (error) {
+                    const lowerDelivered = 'delivered';
+                    error = await attemptUpdate(lowerDelivered);
+                    if (!error) confirmedStatus = lowerDelivered as any;
+                }
+            }
+
             if (error) {
-                // If all attempts failed
+                // All attempts failed.
+                // DIAGNOSTIC: Fetch valid statuses from DB to show the user what IS allowed.
+                const { data: dbStatuses } = await supabase.from('orders').select('status').neq('status', 'Pendiente').limit(5);
+                const examples = dbStatuses ? dbStatuses.map(o => o.status).join(', ') : 'None found';
+
                 console.error('Error updating order status in Supabase (All formats failed):', error);
-                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCodigo: ${error.code}\n\nProbamos: ${status}, ${status.toUpperCase()}, ${status.toLowerCase()}, Finalizado, FINALIZADO.\nNinguno fue aceptado por el Enum.`);
+                alert(`Error CRÍTICO de base de datos:\n\nEl sistema intentó guardar 'Entregado' en todas sus variantes (Mayus/Minus/Inglés), pero la base de datos las rechazó.\n\nCódigo: ${error.code}\nMensaje: ${error.message}\n\nPISTA: Aquí hay algunos estados que SÍ existen en tu base de datos (copia uno de estos si ves el correcto):\n[ ${examples} ]`);
                 return;
             }
 
