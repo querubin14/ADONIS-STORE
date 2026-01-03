@@ -492,8 +492,22 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
-    const updateOrderStatus = (orderId: string, status: 'Pendiente' | 'Confirmado en Mercado' | 'En Camino' | 'Entregado') => {
+    const updateOrderStatus = async (orderId: string, status: 'Pendiente' | 'Confirmado en Mercado' | 'En Camino' | 'Entregado') => {
         setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .update({ status })
+                .eq('id', orderId);
+
+            if (error) {
+                console.error('Error updating order status in Supabase:', error);
+                alert('No se pudo guardar el estado del pedido en la nube. Revisa tu conexión.');
+            }
+        } catch (e) {
+            console.error('Exception updating order status:', e);
+        }
     };
 
     const deleteOrder = async (orderId: string) => {
