@@ -514,6 +514,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Attempt 1: As provided (PascalCase usually)
             let error = await attemptUpdate(status);
 
+            // Retry Logic for Enum Casing (Sequential Fallbacks)
             if (error && error.code === '22P02') {
                 console.warn(`Status '${status}' rejected. Trying UPPERCASE...`);
                 // Attempt 2: UPPERCASE
@@ -530,17 +531,32 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (!error) confirmedStatus = lowerStatus as any;
             }
 
+            if (error && error.code === '22P02' && status.toLowerCase() === 'entregado') {
+                console.warn(`'Entregado' rejected. Trying 'Finalizado'...`);
+                // Attempt 4: Finalizado
+                const finalizadoStatus = 'Finalizado';
+                error = await attemptUpdate(finalizadoStatus);
+                if (!error) confirmedStatus = finalizadoStatus as any;
+            }
+
+            if (error && error.code === '22P02' && confirmedStatus !== 'Finalizado') {
+                // Attempt 5: FINALIZADO (Only if previous attempt wasn't Finalizado success)
+                const upperFinal = 'FINALIZADO';
+                error = await attemptUpdate(upperFinal);
+                if (!error) confirmedStatus = upperFinal as any;
+            }
+
             if (error) {
                 // If all attempts failed
                 console.error('Error updating order status in Supabase (All formats failed):', error);
-                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCodigo: ${error.code}\n\nProbamos: ${status}, ${status.toUpperCase()}, ${status.toLowerCase()}.\nNinguno fue aceptado por el Enum.`);
+                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCodigo: ${error.code}\n\nProbamos: ${status}, ${status.toUpperCase()}, ${status.toLowerCase()}, Finalizado, FINALIZADO.\nNinguno fue aceptado por el Enum.`);
                 return;
             }
 
             // Success! Proceed with Stock Logic using the confirmed status semantics
             // We map confirmedStatus back to our logical types for the IF checks
             // (Assumes logical 'Entregado' maps to 'ENTREGADO'/'entregado'/'Entregado')
-            const isDelivered = confirmedStatus.toLowerCase() === 'entregado';
+            const isDelivered = confirmedStatus.toLowerCase() === 'entregado' || confirmedStatus.toLowerCase() === 'finalizado';
             const isPending = confirmedStatus.toLowerCase() === 'pendiente';
 
             // 3. Stock Management Logic
