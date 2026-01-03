@@ -516,48 +516,63 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Only act if we are transitioning to/from 'Entregado' (Finalized)
             if (status === 'Entregado') {
                 // Deduct Stock
+                let updatedCount = 0;
                 for (const item of order.items as any[]) {
-                    // Find product to check current stock (optional, but good for local update)
-                    // Note: accessing 'products' state here uses the value from the current render cycle.
-                    const product = products.find(p => p.id === item.id);
+                    // 1. Try to find by ID (Standard)
+                    let product = products.find(p => p.id === item.id);
+
+                    // 2. Fallback: Try to find by Name (Legacy/Migration compatibility)
+                    if (!product) {
+                        console.warn(`Product ID mismatch for ${item.name} (Items ID: ${item.id}). Trying by name...`);
+                        product = products.find(p => p.name === item.name);
+                    }
+
                     if (product) {
                         const currentStock = product.stock || 0;
                         const qtyToDeduct = item.quantity || 1;
                         const newStock = Math.max(0, currentStock - qtyToDeduct);
 
-                        // DB Update
-                        await supabase.from('products').update({ stock_quantity: newStock }).eq('id', item.id);
+                        console.log(`Updating stock for ${product.name}: ${currentStock} -> ${newStock}`);
 
-                        // Local State Update (Partial) - To reflect change in UI immediately without full fetch
-                        setProducts(prev => prev.map(p => p.id === item.id ? { ...p, stock: newStock } : p));
+                        // DB Update using the FOUND, VALID product.id (UUID)
+                        const { error: stockError } = await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
+
+                        if (stockError) {
+                            console.error('Error updating stock in DB:', stockError);
+                            alert(`Error al descontar stock de ${product.name}`);
+                        } else {
+                            // Local State Update
+                            setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: newStock } : p));
+                            updatedCount++;
+                        }
+                    } else {
+                        console.error(`CRITICO: No se encontró producto para descontar stock: ${item.name} (${item.id})`);
+                        alert(`ATENCIÓN: No se pudo descontar el stock de "${item.name}". No se encontró en la base de datos de productos.`);
                     }
                 }
+                if (updatedCount > 0) {
+                    alert(`Stock descontado correctamente de ${updatedCount} productos.`);
+                }
             } else if (status === 'Pendiente') {
-                // If reverting from 'Entregado' -> 'Pendiente', RESTORE stock
-                // Check if the previous status was 'Entregado'. 
-                // Since this function is called with the *new* status, we can't easily check 'prev' status 
-                // unless we look at the 'order' object retrieved from state *before* the optimistic update? 
-                // Actually 'order' const above IS from 'orders' state, which hasn't re-rendered yet 
-                // because setOrders is async/batched? 
-                // Wait, setOrders triggers re-render. This function execution context has the 'orders' from *before* this function ran?
-                // Yes, closures capturing state. 'orders' here is the old state.
+                // Restoration Logic (Re-opening order)
                 const oldStatus = order.status;
-
                 if (oldStatus === 'Entregado') {
                     for (const item of order.items as any[]) {
-                        const product = products.find(p => p.id === item.id);
+                        let product = products.find(p => p.id === item.id);
+                        if (!product) product = products.find(p => p.name === item.name);
+
                         if (product) {
                             const currentStock = product.stock || 0;
                             const qtyToAdd = item.quantity || 1;
                             const newStock = currentStock + qtyToAdd;
 
-                            // DB Update
-                            await supabase.from('products').update({ stock_quantity: newStock }).eq('id', item.id);
-
-                            // Local State Update
-                            setProducts(prev => prev.map(p => p.id === item.id ? { ...p, stock: newStock } : p));
+                            const { error: stockError } = await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
+                            if (!stockError) {
+                                setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: newStock } : p));
+                            }
                         }
                     }
+                    alert('Stock restaurado porque se reabrió el pedido.');
                 }
             }
 
