@@ -534,15 +534,26 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                         console.log(`Updating stock for ${product.name}: ${currentStock} -> ${newStock}`);
 
-                        // DB Update using the FOUND, VALID product.id (UUID)
-                        const { error: stockError } = await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
+                        // DB Update with Verification
+                        const { data: updatedData, error: stockError } = await supabase
+                            .from('products')
+                            .update({ stock_quantity: newStock })
+                            .eq('id', product.id)
+                            .select(); // <--- CRITICAL: Return the updated row to verify
 
                         if (stockError) {
                             console.error('Error updating stock in DB:', stockError);
-                            alert(`Error al descontar stock de ${product.name}`);
+                            alert(`Error al descontar stock de ${product.name}: ${stockError.message}`);
+                        } else if (!updatedData || updatedData.length === 0) {
+                            console.error('Update succeeded but no rows returned. Possible ID mismatch or RLS policy.');
+                            alert(`ERROR SILENCIOSO: El sistema intentó descontar stock de "${product.name}" pero la base de datos no confirmó el cambio. Verifique permisos o IDs.`);
                         } else {
+                            // Success confirmed by DB
+                            const confirmedStock = updatedData[0].stock_quantity;
+                            console.log(`DB Confirmed Stock for ${product.name}: ${confirmedStock}`);
+
                             // Local State Update
-                            setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: newStock } : p));
+                            setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: confirmedStock } : p));
                             updatedCount++;
                         }
                     } else {
@@ -551,7 +562,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     }
                 }
                 if (updatedCount > 0) {
-                    alert(`Stock descontado correctamente de ${updatedCount} productos.`);
+                    alert(`ÉXITO TOTAL: Stock descontado y verificado en la Nube para ${updatedCount} productos.`);
                 }
             } else if (status === 'Pendiente') {
                 // Restoration Logic (Re-opening order)
