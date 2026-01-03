@@ -149,6 +149,13 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 .from('products')
                 .select('*');
 
+            // Fetch Inventory (New)
+            const { data: inventoryData, error: inventoryError } = await supabase
+                .from('inventory')
+                .select('*');
+
+            if (inventoryError) console.error('Error fetching inventory:', inventoryError);
+
             if (productsError) {
                 console.error('Error fetching products from Supabase:', productsError);
                 if (productsError.code === '42501' || productsError.message.includes('row-level security')) {
@@ -167,7 +174,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     isCategoryFeatured: p.is_category_featured,
                     isNew: p.is_new,
                     subcategory: p.subcategory || '', // Handle nulls gracefully
-                    stock: p.stock_quantity
+                    stock: p.stock_quantity,
+                    inventory: inventoryData ? inventoryData.filter((i: any) => i.product_id === p.id) : []
                 })));
             }
 
@@ -471,7 +479,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 display_id: order.display_id,
                 total_amount: order.total_amount,
                 delivery_cost: order.delivery_cost,
-                status: order.status,
+                status: 'Pendiente', // Force Spanish standard
                 items: order.items,
                 customer_info: order.customerInfo,
                 product_ids: order.product_ids || []
@@ -511,10 +519,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 return error;
             };
 
-            // Attempt 1: As provided (PascalCase usually)
+            // Attempt 1: As provided (PascalCase usually - Standard 'Entregado')
             let error = await attemptUpdate(status);
 
-            // Retry Logic for Enum Casing (Sequential Fallbacks)
+            // Retry Logic for Enum Casing (Sequential Fallbacks - Spanish Only)
             if (error && error.code === '22P02') {
                 console.warn(`Status '${status}' rejected. Trying UPPERCASE...`);
                 // Attempt 2: UPPERCASE
@@ -531,42 +539,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (!error) confirmedStatus = lowerStatus as any;
             }
 
-            if (error && error.code === '22P02' && status.toLowerCase() === 'entregado') {
-                console.warn(`'Entregado' rejected. Trying 'Finalizado'...`);
-                // Attempt 4: Finalizado
-                const finalizadoStatus = 'Finalizado';
-                error = await attemptUpdate(finalizadoStatus);
-                if (!error) confirmedStatus = finalizadoStatus as any;
-            }
-
-            if (error && error.code === '22P02' && confirmedStatus !== 'Finalizado') {
-                // Attempt 5: FINALIZADO (Only if previous attempt wasn't Finalizado success)
-                const upperFinal = 'FINALIZADO';
-                error = await attemptUpdate(upperFinal);
-                if (!error) confirmedStatus = upperFinal as any;
-            }
-
-            // Attempt 6: Try English 'Delivered' (Common default)
-            if (error && error.code === '22P02') {
-                const engDelivered = 'Delivered';
-                error = await attemptUpdate(engDelivered);
-                if (!error) confirmedStatus = engDelivered as any;
-
-                if (error) {
-                    const lowerDelivered = 'delivered';
-                    error = await attemptUpdate(lowerDelivered);
-                    if (!error) confirmedStatus = lowerDelivered as any;
-                }
-            }
-
             if (error) {
-                // All attempts failed.
-                // DIAGNOSTIC: Fetch valid statuses from DB to show the user what IS allowed.
-                const { data: dbStatuses } = await supabase.from('orders').select('status').neq('status', 'Pendiente').limit(5);
-                const examples = dbStatuses ? dbStatuses.map(o => o.status).join(', ') : 'None found';
-
-                console.error('Error updating order status in Supabase (All formats failed):', error);
-                alert(`Error CRÍTICO de base de datos:\n\nEl sistema intentó guardar 'Entregado' en todas sus variantes (Mayus/Minus/Inglés), pero la base de datos las rechazó.\n\nCódigo: ${error.code}\nMensaje: ${error.message}\n\nPISTA: Aquí hay algunos estados que SÍ existen en tu base de datos (copia uno de estos si ves el correcto):\n[ ${examples} ]`);
+                // If all attempts failed
+                console.error('Error updating order status in Supabase (All Spanish formats failed):', error);
+                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCodigo: ${error.code}\n\nProbamos: ${status}, ${status.toUpperCase()}, ${status.toLowerCase()}.\nNinguno fue aceptado por el Enum. Revise que la columna status acepte 'Entregado'.`);
                 return;
             }
 

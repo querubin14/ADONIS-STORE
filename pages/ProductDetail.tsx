@@ -123,18 +123,37 @@ const ProductDetail: React.FC = () => {
                             <div className="mb-10">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle</span>
-                                    {/* <button className="text-xs text-primary underline">Guía de talles</button> */}
                                 </div>
                                 <div className="flex flex-wrap gap-3">
-                                    {product.sizes.map(size => (
-                                        <button
-                                            key={size}
-                                            onClick={() => setSelectedSize(size)}
-                                            className={`h-12 w-20 flex items-center justify-center border rounded font-mono font-medium transition-all ${selectedSize === size ? 'bg-white text-black border-white' : 'border-gray-800 text-gray-400 hover:border-gray-600'}`}
-                                        >
-                                            {size}
-                                        </button>
-                                    ))}
+                                    {product.sizes.map(size => {
+                                        // Check inventory if available
+                                        let isOutOfStock = false;
+                                        if (product.inventory && product.inventory.length > 0) {
+                                            const invItem = product.inventory.find(i => i.size === size);
+                                            // Asumimos que si existe la fila, usamos su cantidad. Si no existe, podría ser legacy (ignorar) o 0.
+                                            // La regla de negocio dice: "si un producto tiene cantidad 0...".
+                                            if (invItem && invItem.quantity === 0) {
+                                                isOutOfStock = true;
+                                            }
+                                        }
+
+                                        return (
+                                            <button
+                                                key={size}
+                                                onClick={() => !isOutOfStock && setSelectedSize(size)}
+                                                disabled={isOutOfStock}
+                                                className={`h-12 w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden ${selectedSize === size
+                                                        ? 'bg-white text-black border-white'
+                                                        : isOutOfStock
+                                                            ? 'border-gray-800 text-gray-600 cursor-not-allowed bg-white/5 opacity-50'
+                                                            : 'border-gray-800 text-gray-400 hover:border-gray-600'
+                                                    }`}
+                                            >
+                                                <span className={isOutOfStock ? 'line-through decoration-red-500' : ''}>{size}</span>
+                                                {isOutOfStock && <span className="text-[8px] text-red-500 font-bold uppercase leading-none mt-1">Agotado</span>}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                                 {product.fit && <p className="mt-4 text-sm text-gray-500">Fit: <span className="text-white font-medium">{product.fit}</span></p>}
                             </div>

@@ -15,6 +15,14 @@ export interface Product {
   isCategoryFeatured?: boolean; // Featured within its specific category
   description?: string;
   stock?: number;
+  inventory?: InventoryItem[];
+}
+
+export interface InventoryItem {
+  id?: string;
+  product_id?: string;
+  size: string;
+  quantity: number;
 }
 
 export interface Category {
