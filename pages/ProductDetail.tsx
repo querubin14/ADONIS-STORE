@@ -126,14 +126,20 @@ const ProductDetail: React.FC = () => {
                                 </div>
                                 <div className="flex flex-wrap gap-3">
                                     {product.sizes.map(size => {
+                                        // Normalize size for comparison
+                                        const normalizedSize = size.trim().toUpperCase();
+
                                         // Check inventory if available
                                         let isOutOfStock = false;
                                         if (product.inventory && product.inventory.length > 0) {
-                                            const invItem = product.inventory.find(i => i.size === size);
-                                            // Asumimos que si existe la fila, usamos su cantidad. Si no existe, podría ser legacy (ignorar) o 0.
-                                            // La regla de negocio dice: "si un producto tiene cantidad 0...".
-                                            if (invItem && invItem.quantity === 0) {
-                                                isOutOfStock = true;
+                                            const invItem = product.inventory.find(i => i.size.trim().toUpperCase() === normalizedSize);
+
+                                            // Debug log (can be removed later)
+                                            // console.log(`Checking ${product.name} Size: ${normalizedSize}`, invItem);
+
+                                            if (invItem) {
+                                                const qty = Number(invItem.quantity);
+                                                if (qty <= 0) isOutOfStock = true;
                                             }
                                         }
 
