@@ -134,9 +134,6 @@ const ProductDetail: React.FC = () => {
                                         if (product.inventory && product.inventory.length > 0) {
                                             const invItem = product.inventory.find(i => i.size.trim().toUpperCase() === normalizedSize);
 
-                                            // Debug log (can be removed later)
-                                            // console.log(`Checking ${product.name} Size: ${normalizedSize}`, invItem);
-
                                             if (invItem) {
                                                 const qty = Number(invItem.quantity);
                                                 if (qty <= 0) isOutOfStock = true;
@@ -149,10 +146,10 @@ const ProductDetail: React.FC = () => {
                                                 onClick={() => !isOutOfStock && setSelectedSize(size)}
                                                 disabled={isOutOfStock}
                                                 className={`h-12 w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden ${selectedSize === size
-                                                        ? 'bg-white text-black border-white'
-                                                        : isOutOfStock
-                                                            ? 'border-gray-800 text-gray-600 cursor-not-allowed bg-white/5 opacity-50'
-                                                            : 'border-gray-800 text-gray-400 hover:border-gray-600'
+                                                    ? 'bg-white text-black border-white'
+                                                    : isOutOfStock
+                                                        ? 'border-gray-800 text-gray-600 cursor-not-allowed bg-white/5 opacity-50'
+                                                        : 'border-gray-800 text-gray-400 hover:border-gray-600'
                                                     }`}
                                             >
                                                 <span className={isOutOfStock ? 'line-through decoration-red-500' : ''}>{size}</span>
