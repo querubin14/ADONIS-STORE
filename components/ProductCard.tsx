@@ -11,6 +11,10 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   const navigate = useNavigate();
 
+  const isTotallyOutOfStock = product.inventory && product.inventory.length > 0
+    ? product.inventory.every(i => Number(i.quantity) === 0)
+    : product.stock === 0;
+
   return (
     <div className="group flex flex-col gap-3">
       <div
@@ -18,11 +22,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         onClick={() => navigate(`/product/${product.id}`)}
       >
         <div
-          className={`w-full h-full bg-center transition-transform duration-700 group-hover:scale-110 ${product.type === 'footwear' ? 'bg-contain bg-no-repeat' : 'bg-cover'}`}
+          className={`w-full h-full bg-center transition-transform duration-700 group-hover:scale-110 ${product.type === 'footwear' ? 'bg-contain bg-no-repeat' : 'bg-cover'} ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
           style={{ backgroundImage: `url('${product.images[0]}')` }}
         />
         {/* Sold Out Overlay */}
-        {product.stock === 0 && (
+        {isTotallyOutOfStock && (
           <div className="absolute inset-0 bg-black/60 z-20 flex items-center justify-center">
             <span className="bg-red-600 text-white font-black px-4 py-2 uppercase tracking-widest text-sm border-2 border-white transform -rotate-12 shadow-xl">
               AGOTADO
@@ -30,7 +34,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           </div>
         )}
 
-        {product.stock !== 0 && (
+        {!isTotallyOutOfStock && (
           <button
             onClick={(e) => {
               e.stopPropagation();
