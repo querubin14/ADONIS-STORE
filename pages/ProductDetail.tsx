@@ -27,8 +27,12 @@ const ProductDetail: React.FC = () => {
 
     const isAccessory = product.category?.toUpperCase() === 'ACCESORIOS';
 
+    const isTotallyOutOfStock = product.inventory && product.inventory.length > 0
+        ? product.inventory.every(i => Number(i.quantity) === 0)
+        : product.stock === 0;
+
     const handleAddToCart = () => {
-        if (product.stock === 0) return;
+        if (isTotallyOutOfStock) return;
         if (!selectedSize && product.sizes.length > 0 && !isAccessory) {
             alert('Por favor selecciona un talle');
             return;
@@ -57,9 +61,9 @@ const ProductDetail: React.FC = () => {
                             <img
                                 src={product.images[selectedImage]}
                                 alt={product.name}
-                                className={`w-full h-full object-cover ${product.stock === 0 ? 'grayscale opacity-50' : ''}`}
+                                className={`w-full h-full object-cover ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
                             />
-                            {product.stock === 0 && (
+                            {isTotallyOutOfStock && (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <span className="bg-red-600 text-white font-black px-6 py-3 uppercase tracking-widest text-xl border-4 border-white transform -rotate-12 shadow-2xl">
                                         AGOTADO
@@ -166,10 +170,10 @@ const ProductDetail: React.FC = () => {
                         <div className="mt-auto space-y-4">
                             <button
                                 onClick={handleAddToCart}
-                                disabled={product.stock === 0}
-                                className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg ${product.stock === 0 ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-red-700 text-white'}`}
+                                disabled={isTotallyOutOfStock}
+                                className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-red-700 text-white'}`}
                             >
-                                {product.stock === 0 ? 'AGOTADO' : (
+                                {isTotallyOutOfStock ? 'AGOTADO' : (
                                     <>
                                         <ShoppingBag size={24} /> Agregar al Carrito
                                     </>
