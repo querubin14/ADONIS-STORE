@@ -273,7 +273,18 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
     // useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);
     useEffect(() => { localStorage.setItem('savage_social_config', JSON.stringify(socialConfig)); }, [socialConfig]);
-    useEffect(() => { localStorage.setItem('savage_social_config', JSON.stringify(socialConfig)); }, [socialConfig]);
+    // Dynamic Favicon Effect
+    useEffect(() => {
+        if (socialConfig.favicon) {
+            let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.head.appendChild(link);
+            }
+            link.href = socialConfig.favicon;
+        }
+    }, [socialConfig.favicon]);
     // useEffect(() => { localStorage.setItem('savage_delivery_zones', JSON.stringify(deliveryZones)); }, [deliveryZones]);
     // useEffect(() => { localStorage.setItem('savage_orders', JSON.stringify(orders)); }, [orders]);
     // useEffect(() => { localStorage.setItem('savage_blog_posts', JSON.stringify(blogPosts)); }, [blogPosts]);

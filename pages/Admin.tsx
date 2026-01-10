@@ -69,6 +69,10 @@ const AdminDashboard: React.FC = () => {
     const blogFileInputRef = React.useRef<HTMLInputElement>(null);
     const [isBlogUploading, setIsBlogUploading] = useState(false);
 
+    // Favicon Upload State
+    const faviconFileInputRef = React.useRef<HTMLInputElement>(null);
+    const [isFaviconUploading, setIsFaviconUploading] = useState(false);
+
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
     const [showProductForm, setShowProductForm] = useState(false);
 
@@ -376,6 +380,21 @@ const AdminDashboard: React.FC = () => {
         });
     };
 
+
+    const handleFaviconFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setIsFaviconUploading(true);
+            const file = e.target.files[0];
+            const url = await uploadProductImage(file, 'brand');
+
+            if (url) {
+                setConfigForm(prev => ({ ...prev, favicon: url }));
+            }
+
+            setIsFaviconUploading(false);
+            if (faviconFileInputRef.current) faviconFileInputRef.current.value = '';
+        }
+    };
 
     // --- Hero Handlers ---
     const handleHeroSave = async () => {
@@ -1254,6 +1273,47 @@ const AdminDashboard: React.FC = () => {
                             </header>
 
                             <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl space-y-6">
+                                {/* Brand Assets */}
+                                <div className="space-y-4 mb-6 pb-6 border-b border-gray-800">
+                                    <h3 className="text-lg font-bold text-white mb-2">Identidad de Marca</h3>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Favicon / Icono de Navegador</label>
+                                        <div className="flex gap-4 items-center">
+                                            {configForm.favicon && (
+                                                <div className="w-12 h-12 bg-gray-900 rounded-lg p-2 border border-gray-700">
+                                                    <img src={configForm.favicon} alt="Favicon" className="w-full h-full object-contain" />
+                                                </div>
+                                            )}
+                                            <div className="flex-1 flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={configForm.favicon || ''}
+                                                    readOnly
+                                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors text-gray-500"
+                                                    placeholder="URL del Favicon..."
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => faviconFileInputRef.current?.click()}
+                                                    className="bg-white text-black font-bold px-4 rounded-lg hover:bg-gray-200 transition-all uppercase text-xs tracking-widest flex items-center gap-2 whitespace-nowrap"
+                                                    disabled={isFaviconUploading}
+                                                >
+                                                    {isFaviconUploading ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
+                                                    {isFaviconUploading ? '...' : 'SUBIR'}
+                                                </button>
+                                                <input
+                                                    type="file"
+                                                    ref={faviconFileInputRef}
+                                                    onChange={handleFaviconFileSelect}
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] text-gray-500">Recomendado: PNG o ICO con fondo transparente.</p>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-500 uppercase">Instagram URL</label>
                                     <input type="text" value={configForm.instagram} onChange={e => setConfigForm({ ...configForm, instagram: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" />

@@ -76,6 +76,7 @@ export interface SocialConfig {
   shippingText?: string;
   extraShippingInfo?: string;
   topHeaderText?: string;
+  favicon?: string;
 }
 
 export interface BlogPost {
