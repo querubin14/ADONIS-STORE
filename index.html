@@ -1,58 +1,81 @@
-
 <!DOCTYPE html>
 <html lang="es" class="dark">
+
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAVAGE | Streetwear Premium</title>
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&family=Noto+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script>
-      tailwind.config = {
-        darkMode: "class",
-        theme: {
-          extend: {
-            colors: {
-              "primary": "#d41121",
-              "background-light": "#f8f6f6",
-              "background-dark": "#0a0a0a",
-              "surface-dark": "#1f1f1f",
-              "accent-gray": "#a1a1aa",
-            },
-            fontFamily: {
-              "display": ["Space Grotesk", "sans-serif"],
-              "body": ["Noto Sans", "sans-serif"],
-            },
-            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAVAGE | Streetwear Premium</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&family=Noto+Sans:wght@400;500;700&display=swap"
+    rel="stylesheet">
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#D4AF37",
+            "background-light": "#f8f6f6",
+            "background-dark": "#0a0a0a",
+            "surface-dark": "#1f1f1f",
+            "accent-gray": "#a1a1aa",
           },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"],
+            "body": ["Noto Sans", "sans-serif"],
+          },
+          borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
         },
+      },
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0a0a0a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #D4AF37;
+    }
+
+    .text-stroke {
+      -webkit-text-stroke: 1px white;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
       }
-    </script>
-    <style>
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0a0a; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #d41121; }
-        
-        .text-stroke {
-          -webkit-text-stroke: 1px white;
-        }
-        
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in-up {
-          animation: fadeInUp 0.8s ease-out forwards;
-        }
-    </style>
-<script type="importmap">
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in-up {
+      animation: fadeInUp 0.8s ease-out forwards;
+    }
+  </style>
+  <script type="importmap">
 {
   "imports": {
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
@@ -62,11 +85,15 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-tbhHZEVjsyfwVgRGQ0lvKk6tuDd62kc&libraries=geometry"></script>
+  <link rel="stylesheet" href="/index.css">
+  <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD-tbhHZEVjsyfwVgRGQ0lvKk6tuDd62kc&libraries=geometry"></script>
 </head>
-<body class="bg-background-dark text-white font-display antialiased overflow-x-hidden selection:bg-primary selection:text-white">
-    <div id="root"></div>
-<script type="module" src="/index.tsx"></script>
+
+<body
+  class="bg-background-dark text-white font-display antialiased overflow-x-hidden selection:bg-primary selection:text-white">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>

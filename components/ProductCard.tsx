@@ -60,7 +60,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         </div>
 
         {product.originalPrice && product.originalPrice > product.price && (
-          <div className="absolute top-3 right-3 bg-red-800 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
+          <div className="absolute top-3 right-3 bg-primary text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
             -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
           </div>
         )}

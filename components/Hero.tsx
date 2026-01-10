@@ -69,7 +69,7 @@ const Hero: React.FC = () => {
         <div className="flex flex-wrap justify-center gap-4">
           <Link
             to={current.buttonLink || '/'}
-            className="bg-primary hover:bg-red-700 text-white h-12 px-8 rounded font-bold text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-red-900/20 flex items-center justify-center"
+            className="bg-primary hover:opacity-90 text-white h-12 px-8 rounded font-bold text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-yellow-900/20 flex items-center justify-center"
           >
             {current.buttonText || 'EXPLORAR AHORA'}
           </Link>

@@ -171,7 +171,7 @@ const ProductDetail: React.FC = () => {
                             <button
                                 onClick={handleAddToCart}
                                 disabled={isTotallyOutOfStock}
-                                className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-red-700 text-white'}`}
+                                className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:opacity-90 text-white'}`}
                             >
                                 {isTotallyOutOfStock ? 'AGOTADO' : (
                                     <>
