@@ -41,6 +41,8 @@ export interface HeroSlide {
   buttonText: string;
   buttonLink?: string;
   image: string;
+  mobilePosition?: string; // e.g. "center top"
+  desktopPosition?: string; // e.g. "center center"
 }
 
 

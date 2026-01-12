@@ -1747,6 +1747,47 @@ const AdminDashboard: React.FC = () => {
                                                         <label className="text-xs font-bold text-gray-500 uppercase">Link Botón</label>
                                                         <input type="text" value={slide.buttonLink || ''} onChange={e => updateSlide(slide.id, 'buttonLink', e.target.value)} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" placeholder="/category/..." />
                                                     </div>
+
+                                                    {/* Image Position Controls */}
+                                                    <div className="col-span-2 border-t border-gray-800 pt-4 mt-2">
+                                                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2 mb-2">
+                                                            <span className="material-symbols-outlined text-sm">crop</span> Ajuste de Posición Imagen
+                                                        </label>
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-gray-500 uppercase block">Móvil</label>
+                                                                <select
+                                                                    value={slide.mobilePosition || 'center center'}
+                                                                    onChange={e => updateSlide(slide.id, 'mobilePosition', e.target.value)}
+                                                                    className="w-full bg-black border border-gray-800 rounded p-2 text-xs focus:border-primary focus:outline-none transition-colors text-white"
+                                                                >
+                                                                    <option value="center center">Centro (Default)</option>
+                                                                    <option value="center top">Arriba (Top)</option>
+                                                                    <option value="center bottom">Abajo (Bottom)</option>
+                                                                    <option value="left center">Izquierda</option>
+                                                                    <option value="right center">Derecha</option>
+                                                                    <option value="center 20%">Arriba 20%</option>
+                                                                    <option value="center 80%">Abajo 80%</option>
+                                                                </select>
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <label className="text-[10px] font-bold text-gray-500 uppercase block">Escritorio</label>
+                                                                <select
+                                                                    value={slide.desktopPosition || 'center center'}
+                                                                    onChange={e => updateSlide(slide.id, 'desktopPosition', e.target.value)}
+                                                                    className="w-full bg-black border border-gray-800 rounded p-2 text-xs focus:border-primary focus:outline-none transition-colors text-white"
+                                                                >
+                                                                    <option value="center center">Centro (Default)</option>
+                                                                    <option value="center top">Arriba (Top)</option>
+                                                                    <option value="center bottom">Abajo (Bottom)</option>
+                                                                    <option value="left center">Izquierda</option>
+                                                                    <option value="right center">Derecha</option>
+                                                                    <option value="center 20%">Arriba 20%</option>
+                                                                    <option value="center 80%">Abajo 80%</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
                                             </div>

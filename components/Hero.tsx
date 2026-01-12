@@ -42,6 +42,15 @@ const Hero: React.FC = () => {
     }
   }, [heroSlides.length]);
 
+  // Responsive Position Logic
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   if (!current) return null;
 
   return (
@@ -50,8 +59,13 @@ const Hero: React.FC = () => {
       {heroSlides.map((slide, index) => (
         <div
           key={slide.id}
-          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-0' : 'opacity-0 -z-10'}`}
-          style={{ backgroundImage: `url('${slide.image}')` }}
+          className={`absolute inset-0 bg-cover transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-0' : 'opacity-0 -z-10'}`}
+          style={{
+            backgroundImage: `url('${slide.image}')`,
+            backgroundPosition: isMobile
+              ? (slide.mobilePosition || 'center')
+              : (slide.desktopPosition || 'center')
+          }}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-background-dark via-background-dark/30 to-transparent"></div>
           <div className="absolute inset-0 bg-black/40"></div>
