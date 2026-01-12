@@ -688,7 +688,6 @@ const AdminDashboard: React.FC = () => {
         if (!imageUrl) return;
 
         await addDrop({
-            id: Date.now().toString(),
             title: dropTitle,
             image: imageUrl,
             created_at: new Date().toISOString()

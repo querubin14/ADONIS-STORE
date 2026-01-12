@@ -34,7 +34,7 @@ interface ShopContextType {
     addBlogPost: (post: BlogPost) => void;
     updateBlogPost: (post: BlogPost) => void;
     deleteBlogPost: (id: string) => void;
-    addDrop: (drop: Drop) => void;
+    addDrop: (drop: Omit<Drop, 'id'>) => void;
     deleteDrop: (id: string) => void;
     updateSocialConfig: (config: SocialConfig) => void;
     cartTotal: number;
@@ -136,7 +136,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Drops
     const [drops, setDrops] = useState<Drop[]>([]);
 
-    const addDrop = async (drop: Drop) => {
+    const addDrop = async (drop: Omit<Drop, 'id'>) => {
         try {
             const { data, error } = await supabase.from('drops').insert(drop).select().single();
             if (error) throw error;
