@@ -2,10 +2,12 @@ import React from 'react';
 import { useShop } from '../context/ShopContext';
 
 const UpcomingDrops: React.FC = () => {
-    const { drops, loading } = useShop();
+    const { drops, loading, dropsConfig } = useShop();
 
-    // If loading or no drops, what to show?
-    // If loading, maybe skeleton (simplified).
+    // If disabled, loading or no drops, what to show?
+    if (dropsConfig && !dropsConfig.isEnabled && !loading) return null; // If loaded config says disabled, hide.
+
+    // If loading, maybe skeleton.
     // If no drops, hide section.
     if (!loading && drops.length === 0) return null;
 

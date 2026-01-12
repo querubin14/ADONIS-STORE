@@ -41,7 +41,8 @@ const AdminDashboard: React.FC = () => {
         heroCarouselConfig,
         updateHeroCarouselConfig,
         footerColumns, updateFooterColumns,
-        saveAllData, drops, addDrop, deleteDrop, loading
+        saveAllData, drops, addDrop, deleteDrop, loading,
+        dropsConfig, updateDropsConfig
     } = useShop();
 
     const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
@@ -796,9 +797,25 @@ const AdminDashboard: React.FC = () => {
                 {/* DROPS TAB */}
                 {activeTab === 'drops' && (
                     <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <header>
-                            <h2 className="text-3xl font-bold mb-2">Próximos Drops (Hype)</h2>
-                            <p className="text-gray-400">Gestiona la sección de lanzamientos exclusivos. Se mostrarán los 6 más recientes.</p>
+                        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <div>
+                                <h2 className="text-3xl font-bold mb-2">Próximos Drops (Hype)</h2>
+                                <p className="text-gray-400">Gestiona la sección de lanzamientos exclusivos. Se mostrarán los 6 más recientes.</p>
+                            </div>
+                            <div className="flex items-center gap-3 bg-gray-900 p-3 rounded-lg border border-gray-800">
+                                <span className="text-sm font-bold text-gray-400 uppercase">VISIBILIDAD EN WEB:</span>
+                                <button
+                                    onClick={() => updateDropsConfig({ isEnabled: !dropsConfig?.isEnabled })}
+                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black ${dropsConfig?.isEnabled ? 'bg-green-500' : 'bg-gray-700'}`}
+                                >
+                                    <span
+                                        className={`${dropsConfig?.isEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                                    />
+                                </button>
+                                <span className={`text-sm font-bold ${dropsConfig?.isEnabled ? 'text-green-500' : 'text-gray-500'}`}>
+                                    {dropsConfig?.isEnabled ? 'HABITILITADO' : 'DESHABILITADO'}
+                                </span>
+                            </div>
                         </header>
 
                         <div className="bg-[#0a0a0a] border border-gray-800 p-8 rounded-xl shadow-lg">

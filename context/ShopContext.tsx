@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
 
@@ -36,6 +36,10 @@ interface ShopContextType {
     deleteBlogPost: (id: string) => void;
     addDrop: (drop: Omit<Drop, 'id'>) => void;
     deleteDrop: (id: string) => void;
+
+    dropsConfig: DropsConfig;
+    updateDropsConfig: (config: DropsConfig) => void;
+
     updateSocialConfig: (config: SocialConfig) => void;
     cartTotal: number;
     categories: Category[];
@@ -181,6 +185,24 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Hero Carousel Config
     const [heroCarouselConfig, setHeroCarouselConfig] = useState<HeroCarouselConfig>({ interval: 5000 });
 
+    // Drops Config
+    const [dropsConfig, setDropsConfig] = useState<DropsConfig>({ isEnabled: true });
+
+    const updateDropsConfig = async (config: DropsConfig) => {
+        setDropsConfig(config);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'drops_config',
+                value: config,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
+
     const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(() => {
         const saved = localStorage.getItem('savage_footer_columns');
         return saved ? JSON.parse(saved) : [];
@@ -310,6 +332,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     if (conf.key === 'hero_slides') setHeroSlides(conf.value);
                     if (conf.key === 'footer_columns') setFooterColumns(conf.value);
                     if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
+                    if (conf.key === 'drops_config') setDropsConfig(conf.value);
                 });
             }
 
@@ -1181,6 +1204,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             drops,
             addDrop,
             deleteDrop,
+            dropsConfig,
+            updateDropsConfig,
             updateSocialConfig,
 
             cartTotal,

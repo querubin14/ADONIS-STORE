@@ -170,3 +170,7 @@ export interface Drop {
   image: string;
   created_at?: string;
 }
+
+export interface DropsConfig {
+  isEnabled: boolean;
+}
