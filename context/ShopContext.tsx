@@ -54,6 +54,7 @@ interface ShopContextType {
     footerColumns: FooterColumn[];
     updateFooterColumns: (columns: FooterColumn[]) => void;
     saveAllData: () => void;
+    loading: boolean;
 }
 
 const ShopContext = createContext<ShopContextType | undefined>(undefined);
@@ -1155,7 +1156,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             updateLifestyleConfig,
             footerColumns,
             updateFooterColumns,
-            saveAllData
+            saveAllData,
+            loading
 
         }}>
             {children}

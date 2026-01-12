@@ -7,7 +7,7 @@ import { ArrowLeft, Star, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const BlogPage: React.FC = () => {
-    const { blogPosts, cart } = useShop();
+    const { blogPosts, cart, loading } = useShop();
 
     // Scroll to top on mount
     useEffect(() => {
@@ -44,9 +44,33 @@ const BlogPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Grid */}
-                {displayPosts.length > 0 ? (
+                {loading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                        {[...Array(3)].map((_, i) => (
+                            <div key={i} className="bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden h-[500px] animate-pulse">
+                                <div className="h-48 bg-gray-800" />
+                                <div className="p-8 space-y-4">
+                                    <div className="flex justify-between">
+                                        <div className="h-4 w-24 bg-gray-800 rounded" />
+                                        <div className="size-6 bg-gray-800 rounded-full" />
+                                    </div>
+                                    <div className="h-8 w-3/4 bg-gray-800 rounded" />
+                                    <div className="h-4 w-full bg-gray-800 rounded" />
+                                    <div className="h-4 w-full bg-gray-800 rounded" />
+                                    <div className="h-4 w-2/3 bg-gray-800 rounded" />
+                                    <div className="pt-6 mt-auto flex items-center gap-3">
+                                        <div className="size-10 bg-gray-800 rounded-full" />
+                                        <div className="space-y-2">
+                                            <div className="h-3 w-20 bg-gray-800 rounded" />
+                                            <div className="h-3 w-16 bg-gray-800 rounded" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : displayPosts.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 animate-in fade-in duration-700">
                         {displayPosts.map((post, index) => (
                             <div
                                 key={post.id}
@@ -59,10 +83,10 @@ const BlogPage: React.FC = () => {
                                             className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                                             style={{ backgroundImage: `url('${post.image}')` }}
                                         />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] to-transparent opacity-60" />
+                                        <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors duration-500" />
 
                                         <div className="absolute bottom-4 left-4">
-                                            <span className="bg-primary text-white text-[10px] font-black px-2 py-1 uppercase tracking-wider rounded">
+                                            <span className="bg-primary text-black text-[10px] font-black px-2 py-1 uppercase tracking-wider rounded">
                                                 {post.tag || 'CLIENTE'}
                                             </span>
                                         </div>
@@ -72,9 +96,9 @@ const BlogPage: React.FC = () => {
                                 {/* Content */}
                                 <div className="p-8 flex flex-col flex-1">
                                     <div className="flex justify-between items-start mb-6">
-                                        <div className="flex gap-1 text-yellow-500">
+                                        <div className="flex gap-1">
                                             {[...Array(post.rating || 5)].map((_, i) => (
-                                                <Star key={i} size={16} fill="currentColor" />
+                                                <Star key={i} size={16} className="text-[#FFE81F] fill-current drop-shadow-sm" />
                                             ))}
                                         </div>
                                         <Quote size={24} className="text-gray-800" />
@@ -102,7 +126,7 @@ const BlogPage: React.FC = () => {
                         ))}
                     </div>
                 ) : (
-                    <div className="py-32 text-center border border-dashed border-gray-800 rounded-3xl bg-white/5">
+                    <div className="py-32 text-center border border-dashed border-gray-800 rounded-3xl bg-white/5 animate-in fade-in zoom-in duration-500">
                         <div className="inline-flex p-4 rounded-full bg-gray-900 mb-4 text-gray-500">
                             <Quote size={32} />
                         </div>
