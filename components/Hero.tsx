@@ -74,16 +74,16 @@ const Hero: React.FC = () => {
 
       {/* Content */}
       <div className="relative z-20 flex flex-col items-center text-center px-4 max-w-4xl mx-auto animate-fade-in-up">
-        <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-none tracking-tighter mb-4 uppercase">
+        <h1 className="text-4xl md:text-7xl lg:text-8xl font-black leading-none tracking-tighter mb-2 md:mb-4 uppercase">
           {current.title.split(' ').slice(0, 1)} <span className="text-stroke text-transparent" style={{ WebkitTextStroke: '1px white' }}>{current.title.split(' ').slice(1).join(' ')}</span>
         </h1>
-        <h2 className="text-gray-300 text-lg md:text-xl font-light tracking-widest mb-8 uppercase">
+        <h2 className="text-gray-300 text-sm md:text-xl font-light tracking-widest mb-6 md:mb-8 uppercase">
           {current.subtitle}
         </h2>
         <div className="flex flex-wrap justify-center gap-4">
           <Link
             to={current.buttonLink || '/'}
-            className="bg-primary hover:opacity-90 text-white h-12 px-8 rounded font-bold text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-yellow-900/20 flex items-center justify-center"
+            className="bg-primary hover:opacity-90 text-white h-10 md:h-12 px-6 md:px-8 rounded font-bold text-xs md:text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-yellow-900/20 flex items-center justify-center"
           >
             {current.buttonText || 'EXPLORAR AHORA'}
           </Link>
@@ -96,13 +96,13 @@ const Hero: React.FC = () => {
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full border border-white/10 bg-black/20 text-white hover:bg-white/20 transition-all z-30"
+            className="hidden md:block absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full border border-white/10 bg-black/20 text-white hover:bg-white/20 transition-all z-30"
           >
             <ArrowLeft size={24} />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full border border-white/10 bg-black/20 text-white hover:bg-white/20 transition-all z-30"
+            className="hidden md:block absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full border border-white/10 bg-black/20 text-white hover:bg-white/20 transition-all z-30"
           >
             <ArrowRight size={24} />
           </button>
