@@ -89,9 +89,9 @@ const LifestyleSection: React.FC = () => {
               return (
                 <div key={`${item.id}-${index}-${activeIndex}`} className="bg-background-dark p-6 rounded border border-gray-800 flex flex-col justify-between h-full min-h-[300px] animate-in fade-in zoom-in-95 duration-500">
                   <div>
-                    <div className="flex text-yellow-500 mb-4">
+                    <div className="flex gap-1 mb-4">
                       {[...Array(item.rating || 5)].map((_, i) => (
-                        <span key={i} className="material-symbols-outlined text-sm">star</span>
+                        <span key={i} className="material-symbols-outlined text-base text-[#FFE81F] drop-shadow-sm fill-current">star</span>
                       ))}
                     </div>
                     <p className="text-gray-300 italic mb-6 line-clamp-6">"{item.content || item.text}"</p>
@@ -116,24 +116,23 @@ const LifestyleSection: React.FC = () => {
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
                     style={{ backgroundImage: `url('${item.image}')` }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors duration-500" /> {/* Added opacity overlay */}
                   <div className="absolute top-4 right-4 flex gap-1 z-10">
                     {/* Overlay Stars if rating exists on image card */}
                     {item.rating && [...Array(item.rating)].map((_, i) => (
-                      <span key={i} className="material-symbols-outlined text-xs text-yellow-500 drop-shadow-md">star</span>
+                      <span key={i} className="material-symbols-outlined text-sm text-[#FFE81F] drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] fill-current">star</span>
                     ))}
                   </div>
-                  <div className="absolute bottom-0 p-6">
+                  <div className="absolute bottom-0 p-6 z-20">
                     <span className="bg-white text-black text-[10px] font-bold px-2 py-0.5 rounded mb-2 inline-block uppercase">
                       {item.tag || item.tags?.[0] || 'LIFESTYLE'}
                     </span>
-                    <h3 className="text-white font-bold text-lg leading-tight mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                    <h3 className="text-white font-bold text-xl leading-tight mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                      {/* Scaled up title slightly */}
                       {item.title}
                     </h3>
-                    <p className="text-gray-300 text-xs line-clamp-2 mb-2">{item.content}</p>
-                    <button className="text-xs text-gray-300 border-b border-transparent group-hover:border-white transition-all uppercase font-bold">
-                      LEER MÁS
-                    </button>
+                    <p className="text-gray-200 text-xs line-clamp-2 font-medium">{item.content}</p>
+                    {/* Removed LEER MAS */}
                   </div>
                 </div>
               );

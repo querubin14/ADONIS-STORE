@@ -85,7 +85,7 @@ const DEFAULT_SOCIAL_CONFIG: SocialConfig = {
     address: 'Palermo Soho, Buenos Aires',
     shippingText: 'Envío gratis en compras mayores a 500.000 Gs',
     extraShippingInfo: 'Devoluciones gratis hasta 30 días',
-    topHeaderText: 'ENVÍOS GRATIS A TODO EL PAÍS 🇵🇾'
+    topHeaderText: 'ENVIOS A TODO EL PAIS 🇵🇾'
 };
 
 const DEFAULT_CATEGORIES: Category[] = [
