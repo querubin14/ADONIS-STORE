@@ -21,9 +21,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         className="relative w-full aspect-[3/4] overflow-hidden rounded bg-surface-dark group cursor-pointer"
         onClick={() => navigate(`/product/${product.id}`)}
       >
-        <div
-          className={`w-full h-full bg-center transition-transform duration-700 group-hover:scale-110 ${product.type === 'footwear' ? 'bg-contain bg-no-repeat' : 'bg-cover'} ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
-          style={{ backgroundImage: `url('${product.images[0]}')` }}
+        <img
+          src={product.images[0]}
+          alt={
+            (product.name.toLowerCase().includes('camiseta') || product.category.toLowerCase().includes('ropa'))
+              ? `Camiseta de fútbol ${product.name} - Savage Store Paraguay`
+              : `${product.name} - Savage Store Paraguay`
+          }
+          className={`w-full h-full transition-transform duration-700 group-hover:scale-110 ${product.type === 'footwear' ? 'object-contain' : 'object-cover'} ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
         />
         {/* Sold Out Overlay */}
         {isTotallyOutOfStock && (

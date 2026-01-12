@@ -8,8 +8,8 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-    title = 'SAVAGE STORE | Streetwear Premium & Urban Culture',
-    description = 'Descubre lo último en moda urbana y streetwear exclusivo. Calidad premium en cada prenda. Envíos a todo el país. Define tu estilo con SAVAGE.',
+    title = 'SAVAGE STORE | Camisetas de Fútbol Premium & Streetwear en Paraguay',
+    description = 'Las mejores camisetas de fútbol en Paraguay: Retro, internacionales y ediciones especiales. Además de calzado urbano, relojes y accesorios exclusivos. Calidad premium en SAVAGE.',
     image = 'https://www.savageeepy.com/crown.png'
 }) => {
     const location = useLocation();

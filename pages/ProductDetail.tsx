@@ -60,7 +60,11 @@ const ProductDetail: React.FC = () => {
                         <div className="aspect-[3/4] rounded-lg overflow-hidden bg-surface-dark border border-white/5 relative group">
                             <img
                                 src={product.images[selectedImage]}
-                                alt={product.name}
+                                alt={
+                                    (product.name.toLowerCase().includes('camiseta') || product.category?.toLowerCase().includes('ropa'))
+                                        ? `Camiseta de fútbol ${product.name} - Savage Store Paraguay`
+                                        : `${product.name} - Savage Store Paraguay`
+                                }
                                 className={`w-full h-full object-cover ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
                             />
                             {isTotallyOutOfStock && (
