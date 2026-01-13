@@ -1299,9 +1299,7 @@ const AdminDashboard: React.FC = () => {
                                                                         <tr className="text-gray-500 uppercase tracking-wider border-b border-gray-800">
                                                                             <th className="p-3 font-bold w-[40%]">Producto</th>
                                                                             <th className="p-3 font-bold text-center">Precio</th>
-                                                                            {matrixColumns.map(sz => (
-                                                                                <th key={sz} className="p-2 font-bold text-center w-8 border-l border-gray-800/30">{sz}</th>
-                                                                            ))}
+
                                                                             <th className="p-3 font-bold text-right">Acciones</th>
                                                                         </tr>
                                                                     </thead>
@@ -1326,20 +1324,7 @@ const AdminDashboard: React.FC = () => {
                                                                                 <td className="p-3 text-center font-mono text-gray-400">
                                                                                     {parseInt(p.price.toString()).toLocaleString()}
                                                                                 </td>
-                                                                                {matrixColumns.map(sz => {
-                                                                                    // Simple check: does the size array include this size?
-                                                                                    // Normalize for comparison (trim)
-                                                                                    const hasSize = p.sizes.some(s => s.trim() === sz);
-                                                                                    return (
-                                                                                        <td key={sz} className="p-0 text-center border-l border-gray-800/30 h-full relative">
-                                                                                            {hasSize && (
-                                                                                                <div className="w-full h-full py-4 flex items-center justify-center">
-                                                                                                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.6)] animate-pulse-slow"></div>
-                                                                                                </div>
-                                                                                            )}
-                                                                                        </td>
-                                                                                    );
-                                                                                })}
+
                                                                                 <td className="p-3 text-right">
                                                                                     <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                                         <button onClick={() => handleEditProduct(p)} className="p-1.5 hover:bg-white/10 rounded text-gray-400 hover:text-white" title="Editar"><Edit size={16} /></button>
