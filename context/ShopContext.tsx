@@ -120,7 +120,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     // Hero List
-    const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+    const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(() => {
+        const saved = localStorage.getItem('savage_hero_slides');
+        return saved ? JSON.parse(saved) : DEFAULT_HERO_SLIDES;
+    });
 
     // Orders
     const [orders, setOrders] = useState<Order[]>(() => {
@@ -442,831 +445,800 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // Optimistic UI update (using the temporary ID passed from Admin)
         setProducts(prev => [...prev, product]);
 
-        // DB Mapping: OMIT 'id' so Supabase generates a UUID
-        // Ensure strictly numeric values or nulls where appropriate, avoiding NaNs
+        try {
+            // DB Mapping: OMIT 'id' so Supabase generates a UUID
+            const dbProduct = {
+                // id: product.id, <--- REMOVED to let DB generate UUID
+                savage_id: `SVG-${product.id}`, // Temporary filler using the timestamp, user might want to change this later
+                name: product.name,
+                price: parseFloat(product.price.toString()),
+                original_price: product.originalPrice ? parseFloat(product.originalPrice.toString()) : null,
+                category: product.category,
+                subcategory: product.subcategory,
+                type: product.type,
+                images: product.images,
+                sizes: product.sizes,
+                tags: product.tags,
+                fit: product.fit,
+                is_new: product.isNew,
+                is_featured: product.isFeatured,
+                is_category_featured: product.isCategoryFeatured,
+                description: product.description,
+                stock_quantity: null
+            };
 
-        // Calculate total stock from inventory if available, otherwise use provided stock property
-        const totalStock = (product.inventory && product.inventory.length > 0)
-            ? product.inventory.reduce((sum, item) => sum + item.quantity, 0)
-            : (product.stock || 0);
+            const { data, error } = await supabase
+                .from('products')
+                .insert([dbProduct])
+                .select()
+                .single();
 
-        const dbProduct = {
-            // id: product.id, <--- REMOVED to let DB generate UUID
-            savage_id: `SVG-${product.id}`, // Temporary filler using the timestamp
-            name: product.name,
-            price: parseFloat(product.price.toString()) || 0,
-            original_price: product.originalPrice ? parseFloat(product.originalPrice.toString()) : null,
-            category: product.category,
-            subcategory: product.subcategory,
-            type: product.type,
-            images: product.images,
-            sizes: product.sizes,
-            tags: product.tags,
-            fit: product.fit,
-            is_new: product.isNew,
-            is_featured: product.isFeatured,
-            is_category_featured: product.isCategoryFeatured,
-            description: product.description,
-            stock_quantity: totalStock // Use calculated total or 0
-        };
+            if (error) {
+                console.error('Error adding product to Supabase:', error);
 
-        console.log('Intentando subir producto a Supabase:', dbProduct);
-
-        const { data, error } = await supabase
-            .from('products')
-            .insert([dbProduct])
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Error adding product to Supabase:', error);
-
-            // Security policy error check
-            if (error.code === '42501' || error.message.includes('permission denied')) {
-                alert('ERROR DE PERMISOS (RLS): Tu usuario no tiene permiso para escribir en la tabla "products". Revisa las políticas RLS en Supabase o inicia sesión.');
-            } else if (error.code === '23502') {
-                alert(`ERROR DE DATOS FALTANTES: La base de datos requiere un campo que no se envió. Detalle: ${error.message} (Columna: ${error.details})`);
-            } else {
-                alert(`ERROR AL GUARDAR EN BASE DE DATOS:\n${error.message}\nCodigo: ${error.code}`);
-            }
-
-            // Revert optimistic update on error
-            setProducts(prev => prev.filter(p => p.id !== product.id));
-        } else if (data) {
-            console.log('Producto subido con éxito:', data);
-
-            // If there is inventory data, insert it linking to the new product ID
-            if (product.inventory && product.inventory.length > 0) {
-                const inventoryRows = product.inventory.map(item => ({
-                    product_id: data.id,
-                    size: item.size,
-                    quantity: item.quantity
-                }));
-
-                const { error: invError } = await supabase.from('inventory').insert(inventoryRows);
-                if (invError) {
-                    console.error('Error adding inventory:', invError);
-                    alert(`Advertencia: Producto creado pero falló la carga del inventario detallado: ${invError.message}`);
+                // Security policy error check
+                if (error.code === '42501') {
+                    alert('ERROR: Permisos denegados (RLS). Revisa las políticas en Supabase.');
                 } else {
-                    console.log('Inventario cargado exitosamente');
+                    alert(`Hubo un error guardando en la base de datos: ${error.message}`);
                 }
+
+                // Revert optimistic update on error
+                setProducts(prev => prev.filter(p => p.id !== product.id));
+            } else if (data) {
+                // Success! Update the local state with the REAL UUID from the DB
+                // This replaces the temporary timestamp ID with the valid UUID
+                setProducts(prev => prev.map(p => p.id === product.id ? { ...p, id: data.id } : p));
             }
 
-            // Success! Update the local state with the REAL UUID from the DB
-            // This replaces the temporary timestamp ID with the valid UUID
-            setProducts(prev => prev.map(p => p.id === product.id ? { ...p, id: data.id, stock: totalStock } : p));
-            alert('Producto e Inventario creado exitosamente en la nube ☁️');
+        } catch (err) {
+            console.error(err);
+            setProducts(prev => prev.filter(p => p.id !== product.id));
         }
+    };
 
-    } catch (err: any) {
-        console.error('Excepción crítica en addProduct:', err);
-        alert(`Error crítico inesperado: ${err.message || err}`);
-        setProducts(prev => prev.filter(p => p.id !== product.id));
-    }
-};
+    const updateProduct = async (updatedProduct: Product) => {
+        // Optimistic UI
+        setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
 
-const updateProduct = async (updatedProduct: Product) => {
-    // Optimistic UI
-    setProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+        try {
+            const dbProduct = {
+                name: updatedProduct.name,
+                price: parseFloat(updatedProduct.price.toString()),
+                original_price: updatedProduct.originalPrice ? parseFloat(updatedProduct.originalPrice.toString()) : null,
+                category: updatedProduct.category,
+                subcategory: updatedProduct.subcategory,
+                type: updatedProduct.type,
+                images: updatedProduct.images,
+                sizes: updatedProduct.sizes,
+                tags: updatedProduct.tags,
+                fit: updatedProduct.fit,
+                is_new: updatedProduct.isNew,
+                is_featured: updatedProduct.isFeatured,
+                is_category_featured: updatedProduct.isCategoryFeatured,
+                description: updatedProduct.description
+            };
 
-    try {
-        const dbProduct = {
-            name: updatedProduct.name,
-            price: parseFloat(updatedProduct.price.toString()),
-            original_price: updatedProduct.originalPrice ? parseFloat(updatedProduct.originalPrice.toString()) : null,
-            category: updatedProduct.category,
-            subcategory: updatedProduct.subcategory,
-            type: updatedProduct.type,
-            images: updatedProduct.images,
-            sizes: updatedProduct.sizes,
-            tags: updatedProduct.tags,
-            fit: updatedProduct.fit,
-            is_new: updatedProduct.isNew,
-            is_featured: updatedProduct.isFeatured,
-            is_category_featured: updatedProduct.isCategoryFeatured,
-            description: updatedProduct.description
-        };
+            const { error } = await supabase
+                .from('products')
+                .update(dbProduct)
+                .eq('id', updatedProduct.id);
 
-        const { error } = await supabase
-            .from('products')
-            .update(dbProduct)
-            .eq('id', updatedProduct.id);
-
-        if (error) {
-            console.error('Error updating product in Supabase:', error);
+            if (error) {
+                console.error('Error updating product in Supabase:', error);
+            }
+        } catch (err) {
+            console.error(err);
         }
-    } catch (err) {
-        console.error(err);
-    }
-};
+    };
 
-const deleteProduct = async (productId: string) => {
-    // Optimistic UI
-    setProducts(prev => prev.filter(p => p.id !== productId));
+    const deleteProduct = async (productId: string) => {
+        // Optimistic UI
+        setProducts(prev => prev.filter(p => p.id !== productId));
 
-    try {
-        const { error } = await supabase
-            .from('products')
-            .delete()
-            .eq('id', productId);
+        try {
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', productId);
 
-        if (error) {
-            console.error('Error deleting product from Supabase:', error);
+            if (error) {
+                console.error('Error deleting product from Supabase:', error);
+            }
+        } catch (err) {
+            console.error(err);
         }
-    } catch (err) {
-        console.error(err);
-    }
-};
+    };
 
-const updateHeroSlides = async (slides: HeroSlide[]) => {
-    setHeroSlides(slides);
-    try {
-        const { error } = await supabase.from('store_config').upsert({
-            key: 'hero_slides',
-            value: slides,
-            updated_at: new Date().toISOString()
-        });
-        if (error) throw error;
-    } catch (e) {
-        console.error(e);
-        throw e;
-    }
-};
-
-// Order Logic
-// Order Logic - SUPABASE SYNCED
-const createOrder = async (order: Order) => {
-    // Optimistic UI
-    setOrders(prev => [order, ...prev]);
-    setCart([]); // Clear cart immediately for better UX
-    localStorage.removeItem('savage_cart');
-
-    try {
-        const dbOrder = {
-            // Let DB generate ID or use the one we created? Better to let DB generate UUID if possible,
-            // but we used crypto.randomUUID() which is valid UUID. 
-            // Let's use the generated ID to ensure consistency with the WhatsApp message.
-            id: order.id,
-            display_id: order.display_id,
-            total_amount: order.total_amount,
-            delivery_cost: order.delivery_cost,
-            status: 'Pendiente', // Force Spanish standard
-            items: order.items,
-            customer_info: order.customerInfo,
-            product_ids: order.product_ids || []
-        };
-
-        const { error } = await supabase
-            .from('orders')
-            .insert([dbOrder]);
-
-        if (error) {
-            console.error('Error creating order in Supabase:', error);
-            alert('Hubo un error guardando tu pedido en el sistema, pero el enlace de WhatsApp se generó correctamente.');
-            // Don't revert optimistic UI here to avoid confusing user, 
-            // but admins won't see it until fixed or manually added.
+    const updateHeroSlides = async (slides: HeroSlide[]) => {
+        setHeroSlides(slides);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'hero_slides',
+                value: slides,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
         }
-    } catch (e) {
-        console.error('Exception creating order:', e);
-    }
-};
+    };
 
-const updateOrderStatus = async (orderId: string, status: 'Pendiente' | 'Confirmado en Mercado' | 'En Camino' | 'Entregado') => {
-    // 1. Local State Optimistic Update (Order Status Only)
-    setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+    // Order Logic
+    // Order Logic - SUPABASE SYNCED
+    const createOrder = async (order: Order) => {
+        // Optimistic UI
+        setOrders(prev => [order, ...prev]);
+        setCart([]); // Clear cart immediately for better UX
+        localStorage.removeItem('savage_cart');
 
-    try {
-        // 2. DB Update (Order Status) with Retry Logic for Enum Casing
-        let confirmedStatus = status;
-        let dbSuccess = false;
-        let errorDetails = null;
+        try {
+            const dbOrder = {
+                // Let DB generate ID or use the one we created? Better to let DB generate UUID if possible,
+                // but we used crypto.randomUUID() which is valid UUID. 
+                // Let's use the generated ID to ensure consistency with the WhatsApp message.
+                id: order.id,
+                display_id: order.display_id,
+                total_amount: order.total_amount,
+                delivery_cost: order.delivery_cost,
+                status: 'Pendiente', // Force Spanish standard
+                items: order.items,
+                customer_info: order.customerInfo,
+                product_ids: order.product_ids || []
+            };
 
-        // Helper to attempt update
-        const attemptUpdate = async (statusToUse: string) => {
             const { error } = await supabase
                 .from('orders')
-                .update({ status: statusToUse })
-                .eq('id', orderId);
-            return error;
-        };
+                .insert([dbOrder]);
 
-        // Attempt 1: As provided (PascalCase usually - Standard 'Entregado')
-        let error = await attemptUpdate(status);
-
-        // Retry Logic for Enum Casing (Sequential Fallbacks - Spanish Only)
-        if (error && error.code === '22P02') {
-            console.warn(`Status '${status}' rejected. Trying UPPERCASE...`);
-            // Attempt 2: UPPERCASE
-            const upperStatus = status.toUpperCase();
-            error = await attemptUpdate(upperStatus);
-            if (!error) confirmedStatus = upperStatus as any;
-        }
-
-        if (error && error.code === '22P02') {
-            console.warn(`Status '${status.toUpperCase()}' rejected. Trying lowercase...`);
-            // Attempt 3: lowercase
-            const lowerStatus = status.toLowerCase();
-            error = await attemptUpdate(lowerStatus);
-            if (!error) confirmedStatus = lowerStatus as any;
-        }
-
-        if (error) {
-            // If all attempts failed
-            console.error('Error updating order status in Supabase (All Spanish formats failed):', error);
-            alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCodigo: ${error.code}\n\nProbamos: ${status}, ${status.toUpperCase()}, ${status.toLowerCase()}.\nNinguno fue aceptado por el Enum. Revise que la columna status acepte 'Entregado'.`);
-            return;
-        }
-
-        // Success! Proceed with Stock Logic using the confirmed status semantics
-        // We map confirmedStatus back to our logical types for the IF checks
-        // (Assumes logical 'Entregado' maps to 'ENTREGADO'/'entregado'/'Entregado')
-        const isDelivered = confirmedStatus.toLowerCase() === 'entregado' || confirmedStatus.toLowerCase() === 'finalizado';
-        const isPending = confirmedStatus.toLowerCase() === 'pendiente';
-
-        // 3. Stock Management Logic
-        const order = orders.find(o => o.id === orderId);
-        if (!order || !order.items) return;
-
-        // Only act if we are transitioning to/from 'Entregado' (Finalized)
-        if (isDelivered) {
-            // Deduct Stock
-            let updatedCount = 0;
-            for (const item of order.items as any[]) {
-                // 1. Try to find by ID (Standard)
-                let product = products.find(p => p.id === item.id);
-
-                // 2. Fallback: Try to find by Name (Legacy/Migration compatibility)
-                if (!product) {
-                    console.warn(`Product ID mismatch for ${item.name} (Items ID: ${item.id}). Trying by name...`);
-                    product = products.find(p => p.name === item.name);
-                }
-
-                if (product) {
-                    const currentStock = product.stock || 0;
-                    const qtyToDeduct = item.quantity || 1;
-                    const newStock = Math.max(0, currentStock - qtyToDeduct);
-
-                    console.log(`Updating stock for ${product.name}: ${currentStock} -> ${newStock}`);
-
-                    // DB Update with Verification
-                    const { data: updatedData, error: stockError } = await supabase
-                        .from('products')
-                        .update({ stock_quantity: newStock })
-                        .eq('id', product.id)
-                        .select();
-
-                    if (stockError) {
-                        console.error('Error updating stock in DB:', stockError);
-                        alert(`Error al descontar stock de ${product.name}: ${stockError.message}`);
-                    } else if (!updatedData || updatedData.length === 0) {
-                        console.error('Update succeeded but no rows returned. Possible ID mismatch or RLS policy.');
-                        alert(`ERROR SILENCIOSO: El sistema intentó descontar stock de "${product.name}" pero la base de datos no confirmó el cambio. Verifique permisos o IDs.`);
-                    } else {
-                        // Success confirmed by DB
-                        const finalRowStock = updatedData[0].stock_quantity;
-
-                        // Local State Update
-                        setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: finalRowStock } : p));
-
-                        // 4. Register Sale in 'sales' table
-                        try {
-
-                            // Determinar precio unitario:
-                            // Si el item en el pedido ya tiene precio (snapshot del momento de compra), usarlo.
-                            // Si no, usar el precio actual del producto.
-                            // Nota: item.price podría no existir si items es un array simple. Asumimos que createOrder guarda precio.
-                            const saleUnitPrice = item.price !== undefined ? Number(item.price) : Number(product.price);
-
-                            const saleRecord = {
-                                product_id: product.id,
-                                quantity: qtyToDeduct,
-                                size: item.selectedSize || 'Standard',
-                                unit_price: saleUnitPrice,
-                                cost_price: product.costPrice || 0,
-                                origin: 'web',
-                                created_at: new Date().toISOString() // Optional, DB usually handles it
-                            };
-
-                            const { error: salesError } = await supabase
-                                .from('sales')
-                                .insert([saleRecord]);
-
-                            if (salesError) {
-                                console.error('Error inserting into sales table:', salesError);
-                                // Non-blocking error alert
-                                // alert(`Atención: Stock descontado pero error al registrar venta en tabla 'sales': ${salesError.message}`);
-                            } else {
-                                console.log('Sale registered successfully for', product.name);
-                            }
-
-                        } catch (saleErr) {
-                            console.error('Exception registering sale:', saleErr);
-                        }
-                        updatedCount++;
-                    }
-                } else {
-                    console.error(`CRITICO: No se encontró producto para descontar stock: ${item.name} (${item.id})`);
-                    alert(`ATENCIÓN: No se pudo descontar el stock de "${item.name}". No se encontró en la base de datos de productos.`);
-                }
+            if (error) {
+                console.error('Error creating order in Supabase:', error);
+                alert('Hubo un error guardando tu pedido en el sistema, pero el enlace de WhatsApp se generó correctamente.');
+                // Don't revert optimistic UI here to avoid confusing user, 
+                // but admins won't see it until fixed or manually added.
             }
-            if (updatedCount > 0) {
-                alert(`ÉXITO TOTAL: Estado actualizado a "${confirmedStatus}" y stock descontado de ${updatedCount} productos.`);
+        } catch (e) {
+            console.error('Exception creating order:', e);
+        }
+    };
+
+    const updateOrderStatus = async (orderId: string, status: 'Pendiente' | 'Confirmado en Mercado' | 'En Camino' | 'Entregado') => {
+        // 1. Local State Optimistic Update (Order Status Only)
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
+
+        try {
+            // 2. DB Update (Order Status) with Retry Logic for Enum Casing
+            let confirmedStatus = status;
+            let dbSuccess = false;
+            let errorDetails = null;
+
+            // Helper to attempt update
+            const attemptUpdate = async (statusToUse: string) => {
+                const { error } = await supabase
+                    .from('orders')
+                    .update({ status: statusToUse })
+                    .eq('id', orderId);
+                return error;
+            };
+
+            // Attempt 1: As provided (PascalCase usually - Standard 'Entregado')
+            let error = await attemptUpdate(status);
+
+            // Retry Logic for Enum Casing (Sequential Fallbacks - Spanish Only)
+            if (error && error.code === '22P02') {
+                console.warn(`Status '${status}' rejected. Trying UPPERCASE...`);
+                // Attempt 2: UPPERCASE
+                const upperStatus = status.toUpperCase();
+                error = await attemptUpdate(upperStatus);
+                if (!error) confirmedStatus = upperStatus as any;
             }
-        } else if (isPending) {
-            // Restoration Logic (Re-opening order)
-            const oldStatus = order.status;
-            if (oldStatus.toLowerCase() === 'entregado') {
+
+            if (error && error.code === '22P02') {
+                console.warn(`Status '${status.toUpperCase()}' rejected. Trying lowercase...`);
+                // Attempt 3: lowercase
+                const lowerStatus = status.toLowerCase();
+                error = await attemptUpdate(lowerStatus);
+                if (!error) confirmedStatus = lowerStatus as any;
+            }
+
+            if (error) {
+                // If all attempts failed
+                console.error('Error updating order status in Supabase (All Spanish formats failed):', error);
+                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCodigo: ${error.code}\n\nProbamos: ${status}, ${status.toUpperCase()}, ${status.toLowerCase()}.\nNinguno fue aceptado por el Enum. Revise que la columna status acepte 'Entregado'.`);
+                return;
+            }
+
+            // Success! Proceed with Stock Logic using the confirmed status semantics
+            // We map confirmedStatus back to our logical types for the IF checks
+            // (Assumes logical 'Entregado' maps to 'ENTREGADO'/'entregado'/'Entregado')
+            const isDelivered = confirmedStatus.toLowerCase() === 'entregado' || confirmedStatus.toLowerCase() === 'finalizado';
+            const isPending = confirmedStatus.toLowerCase() === 'pendiente';
+
+            // 3. Stock Management Logic
+            const order = orders.find(o => o.id === orderId);
+            if (!order || !order.items) return;
+
+            // Only act if we are transitioning to/from 'Entregado' (Finalized)
+            if (isDelivered) {
+                // Deduct Stock
+                let updatedCount = 0;
                 for (const item of order.items as any[]) {
+                    // 1. Try to find by ID (Standard)
                     let product = products.find(p => p.id === item.id);
-                    if (!product) product = products.find(p => p.name === item.name);
+
+                    // 2. Fallback: Try to find by Name (Legacy/Migration compatibility)
+                    if (!product) {
+                        console.warn(`Product ID mismatch for ${item.name} (Items ID: ${item.id}). Trying by name...`);
+                        product = products.find(p => p.name === item.name);
+                    }
 
                     if (product) {
                         const currentStock = product.stock || 0;
-                        const qtyToAdd = item.quantity || 1;
-                        const newStock = currentStock + qtyToAdd;
+                        const qtyToDeduct = item.quantity || 1;
+                        const newStock = Math.max(0, currentStock - qtyToDeduct);
 
-                        const { error: stockError } = await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
-                        if (!stockError) {
-                            setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: newStock } : p));
+                        console.log(`Updating stock for ${product.name}: ${currentStock} -> ${newStock}`);
+
+                        // DB Update with Verification
+                        const { data: updatedData, error: stockError } = await supabase
+                            .from('products')
+                            .update({ stock_quantity: newStock })
+                            .eq('id', product.id)
+                            .select();
+
+                        if (stockError) {
+                            console.error('Error updating stock in DB:', stockError);
+                            alert(`Error al descontar stock de ${product.name}: ${stockError.message}`);
+                        } else if (!updatedData || updatedData.length === 0) {
+                            console.error('Update succeeded but no rows returned. Possible ID mismatch or RLS policy.');
+                            alert(`ERROR SILENCIOSO: El sistema intentó descontar stock de "${product.name}" pero la base de datos no confirmó el cambio. Verifique permisos o IDs.`);
+                        } else {
+                            // Success confirmed by DB
+                            const finalRowStock = updatedData[0].stock_quantity;
+
+                            // Local State Update
+                            setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: finalRowStock } : p));
+
+                            // 4. Register Sale in 'sales' table
+                            try {
+
+                                // Determinar precio unitario:
+                                // Si el item en el pedido ya tiene precio (snapshot del momento de compra), usarlo.
+                                // Si no, usar el precio actual del producto.
+                                // Nota: item.price podría no existir si items es un array simple. Asumimos que createOrder guarda precio.
+                                const saleUnitPrice = item.price !== undefined ? Number(item.price) : Number(product.price);
+
+                                const saleRecord = {
+                                    product_id: product.id,
+                                    quantity: qtyToDeduct,
+                                    size: item.selectedSize || 'Standard',
+                                    unit_price: saleUnitPrice,
+                                    cost_price: product.costPrice || 0,
+                                    origin: 'web',
+                                    created_at: new Date().toISOString() // Optional, DB usually handles it
+                                };
+
+                                const { error: salesError } = await supabase
+                                    .from('sales')
+                                    .insert([saleRecord]);
+
+                                if (salesError) {
+                                    console.error('Error inserting into sales table:', salesError);
+                                    // Non-blocking error alert
+                                    // alert(`Atención: Stock descontado pero error al registrar venta en tabla 'sales': ${salesError.message}`);
+                                } else {
+                                    console.log('Sale registered successfully for', product.name);
+                                }
+
+                            } catch (saleErr) {
+                                console.error('Exception registering sale:', saleErr);
+                            }
+                            updatedCount++;
                         }
+                    } else {
+                        console.error(`CRITICO: No se encontró producto para descontar stock: ${item.name} (${item.id})`);
+                        alert(`ATENCIÓN: No se pudo descontar el stock de "${item.name}". No se encontró en la base de datos de productos.`);
                     }
                 }
-                alert('Stock restaurado porque se reabrió el pedido.');
+                if (updatedCount > 0) {
+                    alert(`ÉXITO TOTAL: Estado actualizado a "${confirmedStatus}" y stock descontado de ${updatedCount} productos.`);
+                }
+            } else if (isPending) {
+                // Restoration Logic (Re-opening order)
+                const oldStatus = order.status;
+                if (oldStatus.toLowerCase() === 'entregado') {
+                    for (const item of order.items as any[]) {
+                        let product = products.find(p => p.id === item.id);
+                        if (!product) product = products.find(p => p.name === item.name);
+
+                        if (product) {
+                            const currentStock = product.stock || 0;
+                            const qtyToAdd = item.quantity || 1;
+                            const newStock = currentStock + qtyToAdd;
+
+                            const { error: stockError } = await supabase.from('products').update({ stock_quantity: newStock }).eq('id', product.id);
+                            if (!stockError) {
+                                setProducts(prev => prev.map(p => p.id === product!.id ? { ...p, stock: newStock } : p));
+                            }
+                        }
+                    }
+                    alert('Stock restaurado porque se reabrió el pedido.');
+                }
             }
+
+        } catch (e) {
+            console.error('Exception updating order status:', e);
         }
+    };
 
-    } catch (e) {
-        console.error('Exception updating order status:', e);
-    }
-};
+    const deleteOrder = async (orderId: string) => {
+        const targetId = String(orderId);
+        setOrders(prev => {
+            const filtered = prev.filter(o => String(o.id) !== targetId);
+            return filtered;
+        });
 
-const deleteOrder = async (orderId: string) => {
-    const targetId = String(orderId);
-    setOrders(prev => {
-        const filtered = prev.filter(o => String(o.id) !== targetId);
-        return filtered;
+        try {
+            const { error } = await supabase.from('orders').delete().eq('id', targetId);
+            if (error) console.error('Error deleting order:', error);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const clearOrders = async () => {
+        setOrders([]);
+        localStorage.removeItem('savage_orders');
+        try {
+            const { error } = await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            if (error) console.error('Error clearing all orders:', error);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    // Blog Logic
+    // Blog Logic - SUPABASE SYNCED
+    const addBlogPost = async (post: BlogPost) => {
+        setBlogPosts(prev => [post, ...prev]);
+
+        try {
+            // Omit ID to let DB generate it, OR use the optimistic one.
+            // Let's use optimistic ID if it's UUID, or omit if timestamp.
+            // The frontend usually generates "blog-date" or similar.
+            // Let's rely on DB UUID for cleanliness, but we need to update local or re-fetch.
+            const { data, error } = await supabase
+                .from('blog_posts')
+                .insert([{
+                    title: post.title,
+                    content: post.content,
+                    image: post.image,
+                    rating: post.rating,
+                    tag: post.tag,
+                    author: post.author
+                }])
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Error creating blog post:', error);
+                setBlogPosts(prev => prev.filter(p => p.id !== post.id));
+            } else if (data) {
+                setBlogPosts(prev => prev.map(p => p.id === post.id ? { ...p, id: data.id } : p));
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const updateBlogPost = async (updatedPost: BlogPost) => {
+        setBlogPosts(prev => prev.map(post => post.id === updatedPost.id ? updatedPost : post));
+
+        try {
+            const { error } = await supabase
+                .from('blog_posts')
+                .update({
+                    title: updatedPost.title,
+                    content: updatedPost.content,
+                    image: updatedPost.image,
+                    rating: updatedPost.rating,
+                    tag: updatedPost.tag,
+                    author: updatedPost.author
+                })
+                .eq('id', updatedPost.id);
+
+            if (error) console.error('Error updating blog post:', error);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const deleteBlogPost = async (id: string) => {
+        setBlogPosts(prev => prev.filter(p => p.id !== id));
+        try {
+            const { error } = await supabase
+                .from('blog_posts')
+                .delete()
+                .eq('id', id);
+
+            if (error) console.error('Error deleting blog post:', error);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    // Social Logic
+    const updateSocialConfig = async (config: SocialConfig) => {
+        setSocialConfig(config); // Optimistic
+
+        try {
+            const { error } = await supabase
+                .from('store_config')
+                .upsert({
+                    key: 'social_config',
+                    value: config,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (error) {
+                console.error('Error saving social config to DB:', error);
+                throw error;
+            }
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
+
+    // --- Web Layout Config ---
+
+    const DEFAULT_NAVBAR: NavbarLink[] = [
+        { id: 'nav1', label: 'INICIO', path: '/' },
+        { id: 'nav2', label: 'DEPORTIVO', path: '/category/Deportivo' },
+        { id: 'nav3', label: 'CALZADOS', path: '/category/Calzados' },
+        { id: 'nav4', label: 'CLIENTES', path: '/' }
+    ];
+
+    const DEFAULT_BANNERS: BannerBento[] = [
+        {
+            id: 'large',
+            title: 'Joyas',
+            subtitle: 'Plata esterlina y acero inoxidable. Diseños agresivos para un estilo sin límites.',
+            buttonText: 'Ver Colección',
+            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBAqGbUj2FJLIGgcAKZAKLYBngrFEDRYfQoeV7VkDrTvzr13ECdtmX2qfvHu6Qd8h9Up5ZVYnAg66Dv1QOA9uM8kN4zE3xiXEEsDqWkYlRgdrn9-7nULwBuow4fqc66fDikz66FszvQXmPZaVivdWb8Urjz5K3eTyglcRqwOmNXSLR2hI_IURHsacCZ16ekg-ZEtzvjJHTnBJn5SM0Xb7JrstUnlakaQ8iAMvY2D23ZbcsDUdHvwFwsWY5KbMOvBFBjhyaDMh0mhrc',
+            link: '/category/Joyas'
+        },
+        {
+            id: 'top_right',
+            title: 'Ropa',
+            buttonText: 'Explorar',
+            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCyAeoyNm7zGmNtvPtnOAzDOnFCMqNI5GjDezYSapx09Jzqb2J2YHFfQd-9uyoWu-hCvaOzmQsy6GbAS4FqEzWscWIUzekY1vjZjUwnjojprLpYk0VW2NPY-UofDRuLKAnpsEmj0-8a6BAJ-j_ta15GW7wu9GI3IyZiYO2wt1huNB_KCyaad9JCU4z_eRdOVUxVTBIHxytiKBBJ0aPGEnIwAWjhooQnJzAb2BXKpa842Xhj16wQ9kCXIkW1kP78huM7WzXjvu9sAoM',
+            link: '/category/Ropa'
+        },
+        {
+            id: 'bottom_right',
+            title: 'Nuevos Ingresos',
+            subtitle: 'La última gota',
+            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtj6EY5btq8X5E8_8GCid2GriBY3VTDKQBFQUT1C5CC2AiohgJiQRz0LUBMOku2H8qrVJIPPTVlwnNNIbhzigrSBC9tFulP2vcuiKTE8Y5BnVFWSoauuXZxTs0YHEP1_cbOkJE6KR3vLSsLIj61LOBTteCP5CgxQN7fN_b9kLQkH_-G9Afu1VHCOqdSebpMKz_g4qZvRlX7jmBLrnA-zjE5iBTFCd8mc_hy0FZyuRp1z0f4Ypwb1VP_tXyHN-xQiKQXcTp3i9Rpe0',
+            link: '/category/New'
+        }
+    ];
+
+    const [navbarLinks, setNavbarLinks] = useState<NavbarLink[]>(() => {
+        const saved = localStorage.getItem('savage_navbar');
+        return saved ? JSON.parse(saved) : DEFAULT_NAVBAR;
     });
 
-    try {
-        const { error } = await supabase.from('orders').delete().eq('id', targetId);
-        if (error) console.error('Error deleting order:', error);
-    } catch (e) {
-        console.error(e);
-    }
-};
+    const [bannerBento, setBannerBento] = useState<BannerBento[]>(() => {
+        const saved = localStorage.getItem('savage_banners_bento');
+        return saved ? JSON.parse(saved) : DEFAULT_BANNERS;
+    });
 
-const clearOrders = async () => {
-    setOrders([]);
-    localStorage.removeItem('savage_orders');
-    try {
-        const { error } = await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        if (error) console.error('Error clearing all orders:', error);
-    } catch (e) {
-        console.error(e);
-    }
-};
+    // ... (rest of file)
 
-// Blog Logic
-// Blog Logic - SUPABASE SYNCED
-const addBlogPost = async (post: BlogPost) => {
-    setBlogPosts(prev => [post, ...prev]);
-
-    try {
-        // Omit ID to let DB generate it, OR use the optimistic one.
-        // Let's use optimistic ID if it's UUID, or omit if timestamp.
-        // The frontend usually generates "blog-date" or similar.
-        // Let's rely on DB UUID for cleanliness, but we need to update local or re-fetch.
-        const { data, error } = await supabase
-            .from('blog_posts')
-            .insert([{
-                title: post.title,
-                content: post.content,
-                image: post.image,
-                rating: post.rating,
-                tag: post.tag,
-                author: post.author
-            }])
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Error creating blog post:', error);
-            setBlogPosts(prev => prev.filter(p => p.id !== post.id));
-        } else if (data) {
-            setBlogPosts(prev => prev.map(p => p.id === post.id ? { ...p, id: data.id } : p));
+    const updateNavbarLinks = async (links: NavbarLink[]) => {
+        setNavbarLinks(links);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'navbar_links',
+                value: links,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
         }
-    } catch (e) {
-        console.error(e);
-    }
-};
+    };
 
-const updateBlogPost = async (updatedPost: BlogPost) => {
-    setBlogPosts(prev => prev.map(post => post.id === updatedPost.id ? updatedPost : post));
+    const updateBannerBento = async (banners: BannerBento[]) => {
+        setBannerBento(banners);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'banner_bento',
+                value: banners,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
 
-    try {
-        const { error } = await supabase
-            .from('blog_posts')
-            .update({
-                title: updatedPost.title,
-                content: updatedPost.content,
-                image: updatedPost.image,
-                rating: updatedPost.rating,
-                tag: updatedPost.tag,
-                author: updatedPost.author
-            })
-            .eq('id', updatedPost.id);
 
-        if (error) console.error('Error updating blog post:', error);
-    } catch (e) {
-        console.error(e);
-    }
-};
+    // --- Footer Config ---
 
-const deleteBlogPost = async (id: string) => {
-    setBlogPosts(prev => prev.filter(p => p.id !== id));
-    try {
-        const { error } = await supabase
-            .from('blog_posts')
-            .delete()
-            .eq('id', id);
 
-        if (error) console.error('Error deleting blog post:', error);
-    } catch (e) {
-        console.error(e);
-    }
-};
+    const updateFooterColumns = async (columns: FooterColumn[]) => {
+        setFooterColumns(columns);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'footer_columns',
+                value: columns,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
 
-// Social Logic
-const updateSocialConfig = async (config: SocialConfig) => {
-    setSocialConfig(config); // Optimistic
 
-    try {
-        const { error } = await supabase
-            .from('store_config')
-            .upsert({
-                key: 'social_config',
+    const updateLifestyleConfig = async (config: LifestyleConfig) => {
+        setLifestyleConfig(config);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'lifestyle_config',
                 value: config,
                 updated_at: new Date().toISOString()
             });
-
-        if (error) {
-            console.error('Error saving social config to DB:', error);
-            throw error;
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
         }
-    } catch (e) {
-        console.error(e);
-        throw e;
-    }
-};
+    };
 
-// --- Web Layout Config ---
-
-const DEFAULT_NAVBAR: NavbarLink[] = [
-    { id: 'nav1', label: 'INICIO', path: '/' },
-    { id: 'nav2', label: 'DEPORTIVO', path: '/category/Deportivo' },
-    { id: 'nav3', label: 'CALZADOS', path: '/category/Calzados' },
-    { id: 'nav4', label: 'CLIENTES', path: '/' }
-];
-
-const DEFAULT_BANNERS: BannerBento[] = [
-    {
-        id: 'large',
-        title: 'Joyas',
-        subtitle: 'Plata esterlina y acero inoxidable. Diseños agresivos para un estilo sin límites.',
-        buttonText: 'Ver Colección',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBAqGbUj2FJLIGgcAKZAKLYBngrFEDRYfQoeV7VkDrTvzr13ECdtmX2qfvHu6Qd8h9Up5ZVYnAg66Dv1QOA9uM8kN4zE3xiXEEsDqWkYlRgdrn9-7nULwBuow4fqc66fDikz66FszvQXmPZaVivdWb8Urjz5K3eTyglcRqwOmNXSLR2hI_IURHsacCZ16ekg-ZEtzvjJHTnBJn5SM0Xb7JrstUnlakaQ8iAMvY2D23ZbcsDUdHvwFwsWY5KbMOvBFBjhyaDMh0mhrc',
-        link: '/category/Joyas'
-    },
-    {
-        id: 'top_right',
-        title: 'Ropa',
-        buttonText: 'Explorar',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCyAeoyNm7zGmNtvPtnOAzDOnFCMqNI5GjDezYSapx09Jzqb2J2YHFfQd-9uyoWu-hCvaOzmQsy6GbAS4FqEzWscWIUzekY1vjZjUwnjojprLpYk0VW2NPY-UofDRuLKAnpsEmj0-8a6BAJ-j_ta15GW7wu9GI3IyZiYO2wt1huNB_KCyaad9JCU4z_eRdOVUxVTBIHxytiKBBJ0aPGEnIwAWjhooQnJzAb2BXKpa842Xhj16wQ9kCXIkW1kP78huM7WzXjvu9sAoM',
-        link: '/category/Ropa'
-    },
-    {
-        id: 'bottom_right',
-        title: 'Nuevos Ingresos',
-        subtitle: 'La última gota',
-        image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtj6EY5btq8X5E8_8GCid2GriBY3VTDKQBFQUT1C5CC2AiohgJiQRz0LUBMOku2H8qrVJIPPTVlwnNNIbhzigrSBC9tFulP2vcuiKTE8Y5BnVFWSoauuXZxTs0YHEP1_cbOkJE6KR3vLSsLIj61LOBTteCP5CgxQN7fN_b9kLQkH_-G9Afu1VHCOqdSebpMKz_g4qZvRlX7jmBLrnA-zjE5iBTFCd8mc_hy0FZyuRp1z0f4Ypwb1VP_tXyHN-xQiKQXcTp3i9Rpe0',
-        link: '/category/New'
-    }
-];
-
-const [navbarLinks, setNavbarLinks] = useState<NavbarLink[]>(() => {
-    const saved = localStorage.getItem('savage_navbar');
-    return saved ? JSON.parse(saved) : DEFAULT_NAVBAR;
-});
-
-const [bannerBento, setBannerBento] = useState<BannerBento[]>(() => {
-    const saved = localStorage.getItem('savage_banners_bento');
-    return saved ? JSON.parse(saved) : DEFAULT_BANNERS;
-});
-
-// ... (rest of file)
-
-const updateNavbarLinks = async (links: NavbarLink[]) => {
-    setNavbarLinks(links);
-    try {
-        const { error } = await supabase.from('store_config').upsert({
-            key: 'navbar_links',
-            value: links,
-            updated_at: new Date().toISOString()
-        });
-        if (error) throw error;
-    } catch (e) {
-        console.error(e);
-        throw e;
-    }
-};
-
-const updateBannerBento = async (banners: BannerBento[]) => {
-    setBannerBento(banners);
-    try {
-        const { error } = await supabase.from('store_config').upsert({
-            key: 'banner_bento',
-            value: banners,
-            updated_at: new Date().toISOString()
-        });
-        if (error) throw error;
-    } catch (e) {
-        console.error(e);
-        throw e;
-    }
-};
-
-
-// --- Footer Config ---
-
-
-const updateFooterColumns = async (columns: FooterColumn[]) => {
-    setFooterColumns(columns);
-    try {
-        const { error } = await supabase.from('store_config').upsert({
-            key: 'footer_columns',
-            value: columns,
-            updated_at: new Date().toISOString()
-        });
-        if (error) throw error;
-    } catch (e) {
-        console.error(e);
-        throw e;
-    }
-};
-
-
-const updateLifestyleConfig = async (config: LifestyleConfig) => {
-    setLifestyleConfig(config);
-    try {
-        const { error } = await supabase.from('store_config').upsert({
-            key: 'lifestyle_config',
-            value: config,
-            updated_at: new Date().toISOString()
-        });
-        if (error) throw error;
-    } catch (e) {
-        console.error(e);
-        throw e;
-    }
-};
-
-const updateHeroCarouselConfig = async (config: HeroCarouselConfig) => {
-    setHeroCarouselConfig(config);
-    try {
-        const { error } = await supabase.from('store_config').upsert({
-            key: 'hero_carousel_config',
-            value: config,
-            updated_at: new Date().toISOString()
-        });
-        if (error) throw error;
-    } catch (e) {
-        console.error(e);
-        throw e;
-    }
-};
-// Category Logic - SUPABASE SYNCED
-const addCategory = async (category: Category) => {
-    setCategories(prev => [...prev, category]);
-
-    try {
-        const { error } = await supabase
-            .from('categories')
-            .insert([category]);
-
-        if (error) {
-            console.error('Error adding category to DB:', error);
-            alert('Error al guardar categoría en la nube.');
+    const updateHeroCarouselConfig = async (config: HeroCarouselConfig) => {
+        setHeroCarouselConfig(config);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'hero_carousel_config',
+                value: config,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
         }
-    } catch (e) {
-        console.error(e);
-    }
-};
+    };
+    // Category Logic - SUPABASE SYNCED
+    const addCategory = async (category: Category) => {
+        setCategories(prev => [...prev, category]);
 
-const deleteCategory = async (categoryId: string) => {
-    // Prevent deleting 'huerfanos'
-    if (categoryId === 'huerfanos') return;
+        try {
+            const { error } = await supabase
+                .from('categories')
+                .insert([category]);
 
-    // Optimistic UI
-    setCategories(prev => prev.filter(c => c.id !== categoryId));
-    setProducts(prev => prev.map(p =>
-        p.category === categoryId
-            ? { ...p, category: 'huerfanos', tags: [...p.tags, 'Sin Categoría'] }
-            : p
-    ));
-
-    try {
-        // 1. Move products to 'huerfanos' in DB
-        // IMPORTANT: 'huerfanos' category MUST exist in the DB for this to work if there is a FK constraint.
-        // If it doesn't exist, this might fail or create inconsistent data depending on DB setup.
-        // Assuming 'huerfanos' exists or FK is loose.
-        const { error: productsError } = await supabase
-            .from('products')
-            .update({ category: 'huerfanos' })
-            .eq('category', categoryId); // Relies on exact match. categoryId comes from UI layer.
-
-        if (productsError) {
-            console.error('Error moving products to huerfanos:', productsError);
-            throw new Error('No se pudieron mover los productos a Huérfanos.');
-        }
-
-        // 2. Delete category
-        const { error: deleteError } = await supabase
-            .from('categories')
-            .delete()
-            .eq('id', categoryId);
-
-        if (deleteError) {
-            console.error('Error deleting category from DB:', deleteError);
-            // If violation of FK, alert specific message
-            if (deleteError.code === '23503') { // foreign_key_violation
-                alert('No se pudo eliminar la categoría porque aún tiene productos vinculados. Intenta recargar la página.');
-            } else {
-                alert(`Error al eliminar categoría: ${deleteError.message}`);
+            if (error) {
+                console.error('Error adding category to DB:', error);
+                alert('Error al guardar categoría en la nube.');
             }
-            // Rollback optimistic update
-            const { data: catData } = await supabase.from('categories').select('*');
-            if (catData) setCategories(catData);
+        } catch (e) {
+            console.error(e);
         }
-    } catch (e) {
-        console.error(e);
-    }
-};
+    };
 
-const updateCategory = async (updatedCategory: Category) => {
-    setCategories(prev => prev.map(c => c.id === updatedCategory.id ? updatedCategory : c));
+    const deleteCategory = async (categoryId: string) => {
+        // Prevent deleting 'huerfanos'
+        if (categoryId === 'huerfanos') return;
 
-    try {
-        const { error } = await supabase
-            .from('categories')
-            .update(updatedCategory)
-            .eq('id', updatedCategory.id);
+        // Optimistic UI
+        setCategories(prev => prev.filter(c => c.id !== categoryId));
+        setProducts(prev => prev.map(p =>
+            p.category === categoryId
+                ? { ...p, category: 'huerfanos', tags: [...p.tags, 'Sin Categoría'] }
+                : p
+        ));
 
-        if (error) console.error('Error updating category in DB:', error);
-    } catch (e) {
-        console.error(e);
-    }
-};
+        try {
+            // 1. Move products to 'huerfanos' in DB
+            // IMPORTANT: 'huerfanos' category MUST exist in the DB for this to work if there is a FK constraint.
+            // If it doesn't exist, this might fail or create inconsistent data depending on DB setup.
+            // Assuming 'huerfanos' exists or FK is loose.
+            const { error: productsError } = await supabase
+                .from('products')
+                .update({ category: 'huerfanos' })
+                .eq('category', categoryId); // Relies on exact match. categoryId comes from UI layer.
 
-// Delivery Zone Logic
-// Delivery Zone Logic - SUPABASE SYNCED
-const addDeliveryZone = async (zone: DeliveryZone) => {
-    // Optimistic UI
-    setDeliveryZones(prev => [...prev, zone]);
+            if (productsError) {
+                console.error('Error moving products to huerfanos:', productsError);
+                throw new Error('No se pudieron mover los productos a Huérfanos.');
+            }
 
-    try {
-        console.log('Sending zone to DB:', zone);
-        const { data, error } = await supabase
-            .from('delivery_zones')
-            .insert([{
-                name: zone.name,
-                price: Number(zone.price), // Ensure number
-                points: zone.points,
-                color: zone.color
-            }])
-            .select()
-            .single();
+            // 2. Delete category
+            const { error: deleteError } = await supabase
+                .from('categories')
+                .delete()
+                .eq('id', categoryId);
 
-        if (error) {
-            console.error('Error adding zone:', error);
-            alert(`Error guardando zona en la nube: ${error.message} (${error.details || ''})`);
-            setDeliveryZones(prev => prev.filter(z => z.id !== zone.id)); // Revert
-        } else if (data) {
-            console.log('Zone saved, DB ID:', data.id);
-            // Update temp ID with real DB ID
-            setDeliveryZones(prev => prev.map(z => z.id === zone.id ? { ...z, id: data.id } : z));
+            if (deleteError) {
+                console.error('Error deleting category from DB:', deleteError);
+                // If violation of FK, alert specific message
+                if (deleteError.code === '23503') { // foreign_key_violation
+                    alert('No se pudo eliminar la categoría porque aún tiene productos vinculados. Intenta recargar la página.');
+                } else {
+                    alert(`Error al eliminar categoría: ${deleteError.message}`);
+                }
+                // Rollback optimistic update
+                const { data: catData } = await supabase.from('categories').select('*');
+                if (catData) setCategories(catData);
+            }
+        } catch (e) {
+            console.error(e);
         }
-    } catch (e) {
-        console.error('Exception adding zone:', e);
-        alert('Error inesperado al guardar zona.');
-    }
-};
+    };
 
-const deleteDeliveryZone = async (id: string) => {
-    // Optimistic
-    setDeliveryZones(prev => prev.filter(z => z.id !== id));
+    const updateCategory = async (updatedCategory: Category) => {
+        setCategories(prev => prev.map(c => c.id === updatedCategory.id ? updatedCategory : c));
 
-    try {
-        const { error } = await supabase
-            .from('delivery_zones')
-            .delete()
-            .eq('id', id);
+        try {
+            const { error } = await supabase
+                .from('categories')
+                .update(updatedCategory)
+                .eq('id', updatedCategory.id);
 
-        if (error) {
-            console.error('Error deleting zone:', error);
-            alert('No se pudo eliminar la zona de la base de datos.');
+            if (error) console.error('Error updating category in DB:', error);
+        } catch (e) {
+            console.error(e);
         }
-    } catch (e) {
-        console.error(e);
-    }
-};
+    };
 
-const updateDeliveryZone = async (zone: DeliveryZone) => {
-    // Optimistic
-    setDeliveryZones(prev => prev.map(z => z.id === zone.id ? zone : z));
+    // Delivery Zone Logic
+    // Delivery Zone Logic - SUPABASE SYNCED
+    const addDeliveryZone = async (zone: DeliveryZone) => {
+        // Optimistic UI
+        setDeliveryZones(prev => [...prev, zone]);
 
-    try {
-        const { error } = await supabase
-            .from('delivery_zones')
-            .update({
-                name: zone.name,
-                price: Number(zone.price), // Ensure number
-                points: zone.points,
-                color: zone.color
-            })
-            .eq('id', zone.id);
+        try {
+            console.log('Sending zone to DB:', zone);
+            const { data, error } = await supabase
+                .from('delivery_zones')
+                .insert([{
+                    name: zone.name,
+                    price: Number(zone.price), // Ensure number
+                    points: zone.points,
+                    color: zone.color
+                }])
+                .select()
+                .single();
 
-        if (error) {
-            console.error('Error updating zone:', error);
-            alert(`Error actualizando zona: ${error.message}`);
-            // Revert logic could be complex here, assuming simple success usually.
+            if (error) {
+                console.error('Error adding zone:', error);
+                alert(`Error guardando zona en la nube: ${error.message} (${error.details || ''})`);
+                setDeliveryZones(prev => prev.filter(z => z.id !== zone.id)); // Revert
+            } else if (data) {
+                console.log('Zone saved, DB ID:', data.id);
+                // Update temp ID with real DB ID
+                setDeliveryZones(prev => prev.map(z => z.id === zone.id ? { ...z, id: data.id } : z));
+            }
+        } catch (e) {
+            console.error('Exception adding zone:', e);
+            alert('Error inesperado al guardar zona.');
         }
-    } catch (e) {
-        console.error(e);
-    }
-};
+    };
+
+    const deleteDeliveryZone = async (id: string) => {
+        // Optimistic
+        setDeliveryZones(prev => prev.filter(z => z.id !== id));
+
+        try {
+            const { error } = await supabase
+                .from('delivery_zones')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error('Error deleting zone:', error);
+                alert('No se pudo eliminar la zona de la base de datos.');
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const updateDeliveryZone = async (zone: DeliveryZone) => {
+        // Optimistic
+        setDeliveryZones(prev => prev.map(z => z.id === zone.id ? zone : z));
+
+        try {
+            const { error } = await supabase
+                .from('delivery_zones')
+                .update({
+                    name: zone.name,
+                    price: Number(zone.price), // Ensure number
+                    points: zone.points,
+                    color: zone.color
+                })
+                .eq('id', zone.id);
+
+            if (error) {
+                console.error('Error updating zone:', error);
+                alert(`Error actualizando zona: ${error.message}`);
+                // Revert logic could be complex here, assuming simple success usually.
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
 
 
-const saveAllData = () => {
-    // Deprecated manual save, but kept for legacy manual triggers if any
-};
+    const saveAllData = () => {
+        // Deprecated manual save, but kept for legacy manual triggers if any
+    };
 
-return (
-    <ShopContext.Provider value={{
-        products,
-        cart,
-        heroSlides,
-        orders,
-        blogPosts,
-        socialConfig,
-        isCartOpen,
-        toggleCart,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        updateCartItemSize,
-        addProduct,
-        updateProduct,
-        deleteProduct,
-        updateHeroSlides,
-        createOrder,
-        updateOrderStatus,
-        deleteOrder,
-        clearOrders,
-        addBlogPost,
-        updateBlogPost,
-        deleteBlogPost,
-        drops,
-        addDrop,
-        deleteDrop,
-        dropsConfig,
-        updateDropsConfig,
-        updateSocialConfig,
+    return (
+        <ShopContext.Provider value={{
+            products,
+            cart,
+            heroSlides,
+            orders,
+            blogPosts,
+            socialConfig,
+            isCartOpen,
+            toggleCart,
+            addToCart,
+            removeFromCart,
+            updateQuantity,
+            updateCartItemSize,
+            addProduct,
+            updateProduct,
+            deleteProduct,
+            updateHeroSlides,
+            createOrder,
+            updateOrderStatus,
+            deleteOrder,
+            clearOrders,
+            addBlogPost,
+            updateBlogPost,
+            deleteBlogPost,
+            drops,
+            addDrop,
+            deleteDrop,
+            dropsConfig,
+            updateDropsConfig,
+            updateSocialConfig,
 
-        cartTotal,
-        categories,
-        addCategory,
-        updateCategory,
-        deleteCategory,
-        deliveryZones,
-        addDeliveryZone,
-        deleteDeliveryZone,
-        updateDeliveryZone,
+            cartTotal,
+            categories,
+            addCategory,
+            updateCategory,
+            deleteCategory,
+            deliveryZones,
+            addDeliveryZone,
+            deleteDeliveryZone,
+            updateDeliveryZone,
 
-        navbarLinks,
-        updateNavbarLinks,
-        bannerBento,
-        updateBannerBento,
+            navbarLinks,
+            updateNavbarLinks,
+            bannerBento,
+            updateBannerBento,
 
-        lifestyleConfig,
-        updateLifestyleConfig,
-        footerColumns,
-        updateFooterColumns,
-        saveAllData,
-        loading
+            lifestyleConfig,
+            updateLifestyleConfig,
+            footerColumns,
+            updateFooterColumns,
+            saveAllData,
+            loading
 
-    }}>
-        {children}
-    </ShopContext.Provider>
-);
+        }}>
+            {children}
+        </ShopContext.Provider>
+    );
 };

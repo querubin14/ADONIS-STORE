@@ -11,15 +11,6 @@ const Hero: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const timeoutRef = useRef<number | null>(null);
 
-  // Responsive Position Logic
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   const nextSlide = () => {
     setCurrentSlide(prev => (prev === heroSlides.length - 1 ? 0 : prev + 1));
   };
@@ -31,26 +22,34 @@ const Hero: React.FC = () => {
   // Auto-advance
   useEffect(() => {
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
-    // Only auto-advance if we have slides
-    if (heroSlides.length > 0) {
-      timeoutRef.current = window.setTimeout(() => {
-        nextSlide();
-      }, heroCarouselConfig?.interval || 5000);
-    }
+    timeoutRef.current = window.setTimeout(() => {
+      nextSlide();
+    }, heroCarouselConfig?.interval || 5000);
 
     return () => {
       if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     };
   }, [currentSlide, heroSlides.length, heroCarouselConfig]);
 
+  if (heroSlides.length === 0) return null;
+
+  const current = heroSlides[currentSlide];
 
   // Safety check to prevent crashes if slides change and index is out of bounds
   useEffect(() => {
-    if (heroSlides.length > 0 && currentSlide >= heroSlides.length) {
+    if (currentSlide >= heroSlides.length) {
       setCurrentSlide(0);
     }
-  }, [heroSlides.length, currentSlide]);
+  }, [heroSlides.length]);
 
+  // Responsive Position Logic
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Touch handlers for swipe
   const touchStartX = useRef<number | null>(null);
@@ -81,10 +80,6 @@ const Hero: React.FC = () => {
     touchEndX.current = null;
   };
 
-  // Safe return after hooks
-  if (heroSlides.length === 0) return null;
-
-  const current = heroSlides[currentSlide];
   if (!current) return null;
 
   return (
