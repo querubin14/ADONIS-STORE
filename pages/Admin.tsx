@@ -315,6 +315,48 @@ const AdminDashboard: React.FC = () => {
         resetForm();
     };
 
+    // --- STOCK MATRIX LOGIC ---
+    const applySizePreset = (type: 'standard' | 'kids' | 'accessories' | 'footwear') => {
+        let sizes: string[] = [];
+        if (type === 'standard') sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+        else if (type === 'kids') sizes = ['4', '6', '8', '10', '12', '14', '16'];
+        else if (type === 'accessories') sizes = ['One Size'];
+        else if (type === 'footwear') sizes = ['38', '39', '40', '41', '42', '43', '44'];
+
+        const newStocks = { ...sizeStocks };
+        sizes.forEach(s => {
+            if (newStocks[s] === undefined) newStocks[s] = 0;
+        });
+
+        if (type === 'footwear') setNewProduct(prev => ({ ...prev, type: 'footwear', sizes }));
+        else setNewProduct(prev => ({ ...prev, type: 'clothing', sizes }));
+
+        setSizeStocks(newStocks);
+    };
+
+    const removeSize = (sizeToRemove: string) => {
+        setNewProduct(prev => ({ ...prev, sizes: prev.sizes.filter(s => s !== sizeToRemove) }));
+        setSizeStocks(prev => {
+            const next = { ...prev };
+            delete next[sizeToRemove];
+            return next;
+        });
+    };
+
+    const addCustomSize = () => {
+        const size = prompt("Ingresa el talle:");
+        if (size && !newProduct.sizes.includes(size.toUpperCase())) {
+            const finalSize = size.toUpperCase();
+            setNewProduct(prev => ({ ...prev, sizes: [...prev.sizes, finalSize] }));
+            setSizeStocks(prev => ({ ...prev, [finalSize]: 0 }));
+        }
+    };
+
+    const updateStock = (size: string, qty: string) => {
+        const val = parseInt(qty);
+        setSizeStocks(prev => ({ ...prev, [size]: isNaN(val) ? 0 : val }));
+    };
+
     const toggleSize = (size: string) => {
         setNewProduct(prev => ({
             ...prev,
@@ -1070,15 +1112,57 @@ const AdminDashboard: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="space-y-6">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Talles Disponibles</label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {availableSizes.map(size => (
-                                                    <button key={size} type="button" onClick={() => toggleSize(size)} className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${newProduct.sizes.includes(size) ? 'bg-white text-black border-white' : 'bg-transparent text-gray-500 border-gray-800 hover:border-gray-500'}`}>
-                                                        {size}
-                                                    </button>
-                                                ))}
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-end">
+                                                <label className="text-xs font-bold text-gray-500 uppercase">Matriz de Stock</label>
+                                                <button type="button" onClick={addCustomSize} className="text-[10px] text-primary hover:underline font-bold">+ AÑADIR TALLE</button>
                                             </div>
+
+                                            {/* Quick Presets */}
+                                            <div className="grid grid-cols-4 gap-1 p-1 bg-gray-900/50 rounded-lg border border-gray-800">
+                                                <button type="button" onClick={() => applySizePreset('standard')} className="px-2 py-2 text-[10px] font-bold text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-all uppercase">Estándar</button>
+                                                <button type="button" onClick={() => applySizePreset('kids')} className="px-2 py-2 text-[10px] font-bold text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-all uppercase">Infantil</button>
+                                                <button type="button" onClick={() => applySizePreset('accessories')} className="px-2 py-2 text-[10px] font-bold text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-all uppercase">Accesorios</button>
+                                                <button type="button" onClick={() => applySizePreset('footwear')} className="px-2 py-2 text-[10px] font-bold text-gray-300 hover:bg-gray-800 hover:text-white rounded transition-all uppercase">Calzado</button>
+                                            </div>
+
+                                            {/* Stock Table */}
+                                            {newProduct.sizes.length > 0 ? (
+                                                <div className="bg-black border border-gray-800 rounded-lg overflow-hidden">
+                                                    <div className="divide-y divide-gray-800">
+                                                        {newProduct.sizes.map(size => (
+                                                            <div key={size} className="flex items-center justify-between p-3 group hover:bg-gray-900/50 transition-colors">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-8 h-8 flex items-center justify-center rounded bg-gray-800 text-white font-bold text-xs uppercase">
+                                                                        {size}
+                                                                    </div>
+                                                                    <span className="text-xs text-gray-400 hidden sm:block">Stock Disponible</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="flex items-center bg-gray-900 border border-gray-700 rounded px-2">
+                                                                        <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            value={sizeStocks[size] ?? ''}
+                                                                            onChange={e => updateStock(size, e.target.value)}
+                                                                            className="w-16 bg-transparent border-none text-right text-white font-mono text-sm focus:ring-0 p-1"
+                                                                            placeholder="0"
+                                                                        />
+                                                                        <span className="text-[10px] text-gray-500 ml-1">unid.</span>
+                                                                    </div>
+                                                                    <button type="button" onClick={() => removeSize(size)} className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-red-500 transition-colors">
+                                                                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="border border-dashed border-gray-800 rounded-lg p-6 text-center">
+                                                    <p className="text-xs text-gray-500">Selecciona un grupo de talles arriba para cargar la matriz.</p>
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-xs font-bold text-gray-500 uppercase">Etiquetas</label>
