@@ -444,11 +444,12 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         try {
             // DB Mapping: OMIT 'id' so Supabase generates a UUID
+            // Ensure strictly numeric values or nulls where appropriate, avoiding NaNs
             const dbProduct = {
                 // id: product.id, <--- REMOVED to let DB generate UUID
-                savage_id: `SVG-${product.id}`, // Temporary filler using the timestamp, user might want to change this later
+                savage_id: `SVG-${product.id}`, // Temporary filler using the timestamp
                 name: product.name,
-                price: parseFloat(product.price.toString()),
+                price: parseFloat(product.price.toString()) || 0,
                 original_price: product.originalPrice ? parseFloat(product.originalPrice.toString()) : null,
                 category: product.category,
                 subcategory: product.subcategory,
@@ -461,8 +462,10 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 is_featured: product.isFeatured,
                 is_category_featured: product.isCategoryFeatured,
                 description: product.description,
-                stock_quantity: null
+                stock_quantity: product.stock || 0 // Default to 0 instead of null to match DB constraints
             };
+
+            console.log('Intentando subir producto a Supabase:', dbProduct);
 
             const { data, error } = await supabase
                 .from('products')
@@ -474,22 +477,27 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 console.error('Error adding product to Supabase:', error);
 
                 // Security policy error check
-                if (error.code === '42501') {
-                    alert('ERROR: Permisos denegados (RLS). Revisa las políticas en Supabase.');
+                if (error.code === '42501' || error.message.includes('permission denied')) {
+                    alert('ERROR DE PERMISOS (RLS): Tu usuario no tiene permiso para escribir en la tabla "products". Revisa las políticas RLS en Supabase o inicia sesión.');
+                } else if (error.code === '23502') {
+                    alert(`ERROR DE DATOS FALTANTES: La base de datos requiere un campo que no se envió. Detalle: ${error.message} (Columna: ${error.details})`);
                 } else {
-                    alert(`Hubo un error guardando en la base de datos: ${error.message}`);
+                    alert(`ERROR AL GUARDAR EN BASE DE DATOS:\n${error.message}\nCodigo: ${error.code}`);
                 }
 
                 // Revert optimistic update on error
                 setProducts(prev => prev.filter(p => p.id !== product.id));
             } else if (data) {
+                console.log('Producto subido con éxito:', data);
                 // Success! Update the local state with the REAL UUID from the DB
                 // This replaces the temporary timestamp ID with the valid UUID
                 setProducts(prev => prev.map(p => p.id === product.id ? { ...p, id: data.id } : p));
+                alert('Producto creado exitosamente en la nube ☁️');
             }
 
-        } catch (err) {
-            console.error(err);
+        } catch (err: any) {
+            console.error('Excepción crítica en addProduct:', err);
+            alert(`Error crítico inesperado: ${err.message || err}`);
             setProducts(prev => prev.filter(p => p.id !== product.id));
         }
     };
