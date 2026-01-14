@@ -65,7 +65,12 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
       <nav className="sticky top-0 z-50 w-full border-b border-[#333] bg-[#0a0a0a]/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 h-20 flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          {/* Logo */}
+          <Link
+            to="/"
+            className="flex items-center gap-2 group"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          >
             <div className="size-10 flex items-center justify-center transition-transform group-hover:scale-110">
               <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.6)] filter brightness-110" />
             </div>
