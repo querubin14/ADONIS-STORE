@@ -61,7 +61,9 @@ const CategoryBento: React.FC = () => {
             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
             <div className="absolute bottom-0 left-0 p-6">
               <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-1">{bottomRight.title}</h3>
-              {bottomRight.subtitle && <p className="text-gray-300 text-xs uppercase tracking-wide group-hover:text-white transition-colors">{bottomRight.subtitle}</p>}
+              <span className="inline-flex items-center text-xs font-bold uppercase tracking-widest group-hover:text-primary transition-colors">
+                {bottomRight.buttonText || bottomRight.subtitle}
+              </span>
             </div>
           </Link>
         )}
