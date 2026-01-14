@@ -11,6 +11,13 @@ const Hero: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const timeoutRef = useRef<number | null>(null);
 
+  // Responsive Position Logic
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Touch handlers refs
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
   const nextSlide = () => {
     setCurrentSlide(prev => (prev === heroSlides.length - 1 ? 0 : prev + 1));
   };
@@ -31,38 +38,19 @@ const Hero: React.FC = () => {
     };
   }, [currentSlide, heroSlides.length, heroCarouselConfig]);
 
-  if (heroSlides.length === 0) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-black text-white">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">SAVAGE</h1>
-          <p className="text-gray-400">Configura el Banner Principal en el Admin</p>
-        </div>
-      </div>
-    );
-  }
-
-  const current = heroSlides[currentSlide];
-
-  // Safety check to prevent crashes if slides change and index is out of bounds
+  // Safety check
   useEffect(() => {
     if (currentSlide >= heroSlides.length) {
       setCurrentSlide(0);
     }
   }, [heroSlides.length]);
 
-  // Responsive Position Logic
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-
+  // Resize listener
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // Touch handlers for swipe
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.targetTouches[0].clientX;
@@ -88,6 +76,19 @@ const Hero: React.FC = () => {
     touchStartX.current = null;
     touchEndX.current = null;
   };
+
+  if (heroSlides.length === 0) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-black text-white">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4">SAVAGE</h1>
+          <p className="text-gray-400">Configura el Banner Principal en el Admin</p>
+        </div>
+      </div>
+    );
+  }
+
+  const current = heroSlides[currentSlide];
 
   if (!current) return null;
 
