@@ -12,6 +12,7 @@ import PaymentMethods from '../../pages/PaymentMethods';
 import Contact from '../../pages/Contact';
 import PrivacyPolicy from '../../pages/PrivacyPolicy';
 import TermsOfUse from '../../pages/TermsOfUse';
+import CareGuide from '../../pages/CareGuide';
 
 import AdminDashboard from '../../pages/Admin';
 
@@ -32,6 +33,7 @@ const WebRoutes: React.FC = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms-of-use" element={<TermsOfUse />} />
+            <Route path="/care-guide" element={<CareGuide />} />
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoute />}>
                 <Route path="/admin" element={<AdminDashboard />} />
