@@ -169,7 +169,7 @@ const ProductDetail: React.FC = () => {
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle</span>
                                 </div>
-                                <div className="flex flex-wrap gap-3">
+                                <div className="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap sm:gap-3">
                                     {product.sizes.map(size => {
                                         // Normalize size for comparison
                                         const normalizedSize = size.trim().toUpperCase();
@@ -190,15 +190,15 @@ const ProductDetail: React.FC = () => {
                                                 key={size}
                                                 onClick={() => !isOutOfStock && setSelectedSize(size)}
                                                 disabled={isOutOfStock}
-                                                className={`h-12 w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden ${selectedSize === size
+                                                className={`h-10 sm:h-12 w-full sm:w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden ${selectedSize === size
                                                     ? 'bg-white text-black border-white'
                                                     : isOutOfStock
                                                         ? 'border-gray-800 text-gray-600 cursor-not-allowed bg-white/5 opacity-50'
                                                         : 'border-gray-800 text-gray-400 hover:border-gray-600'
                                                     }`}
                                             >
-                                                <span className={isOutOfStock ? 'line-through decoration-red-500' : ''}>{size}</span>
-                                                {isOutOfStock && <span className="text-[8px] text-red-500 font-bold uppercase leading-none mt-1">Agotado</span>}
+                                                <span className={`${isOutOfStock ? 'line-through decoration-red-500' : ''} text-xs sm:text-base`}>{size}</span>
+                                                {isOutOfStock && <span className="text-[7px] sm:text-[8px] text-red-500 font-bold uppercase leading-none mt-0.5 sm:mt-1">Agotado</span>}
                                             </button>
                                         );
                                     })}

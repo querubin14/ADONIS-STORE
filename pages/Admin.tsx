@@ -286,7 +286,9 @@ const AdminDashboard: React.FC = () => {
         setEditingProductId(product.id);
         setIsImported(product.tags.includes('Importado'));
         setShowProductForm(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Scroll main content to top
+        const mainContent = document.getElementById('admin-main-content');
+        if (mainContent) mainContent.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
 
@@ -843,7 +845,7 @@ const AdminDashboard: React.FC = () => {
 
             {/* Main Content */}
             {/* Main Content */}
-            <main className="flex-1 p-4 md:p-10 overflow-y-auto h-[calc(100vh-73px)] md:h-screen">
+            <main id="admin-main-content" className="flex-1 p-4 md:p-10 overflow-y-auto h-[calc(100vh-73px)] md:h-screen">
 
                 {/* DROPS TAB */}
                 {activeTab === 'drops' && (
