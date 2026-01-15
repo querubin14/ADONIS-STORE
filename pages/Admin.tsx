@@ -1065,6 +1065,17 @@ const AdminDashboard: React.FC = () => {
                                             </div>
                                         </div>
 
+                                        {/* Description Section */}
+                                        <div className="space-y-2 pt-4 border-t border-gray-900">
+                                            <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Descripción del Producto</label>
+                                            <textarea
+                                                value={newProduct.description}
+                                                onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
+                                                className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white placeholder-gray-600 min-h-[100px]"
+                                                placeholder="Detalles del producto, materiales, cuidados..."
+                                            />
+                                        </div>
+
                                         {/* Settings Section (Imported / Featured) - Row Layout */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-900">
 

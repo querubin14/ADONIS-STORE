@@ -143,11 +143,7 @@ const ProductDetail: React.FC = () => {
                             )}
                         </div>
 
-                        {product.description && (
-                            <p className="text-gray-400 mb-8 leading-relaxed whitespace-pre-line">
-                                {product.description}
-                            </p>
-                        )}
+
 
                         {/* Size Selector - Hidden for Accessories */}
                         {!isAccessory && (
@@ -194,6 +190,14 @@ const ProductDetail: React.FC = () => {
                         )}
 
                         {/* Actions */}
+                        {product.description && (
+                            <div className="mb-6 animate-in fade-in slide-in-from-top-2 duration-500 delay-100">
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Descripción</h3>
+                                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-line font-light">
+                                    {product.description}
+                                </p>
+                            </div>
+                        )}
                         <div className="mt-auto space-y-4">
                             <button
                                 onClick={handleAddToCart}
