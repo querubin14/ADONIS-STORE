@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
@@ -13,6 +15,12 @@ const PaymentMethods: React.FC = () => {
 
             <main className="flex-grow pt-32 pb-20 px-6 lg:px-12 max-w-4xl mx-auto w-full">
                 <article className="prose prose-invert prose-lg max-w-none">
+                    <div className="flex items-center gap-4 mb-8">
+                        <Link to="/" className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 group">
+                            <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
+                            <span className="text-xs font-bold uppercase tracking-widest">Volver al Inicio</span>
+                        </Link>
+                    </div>
                     <h1 className="text-4xl font-black uppercase tracking-tight mb-8 text-white border-b border-gray-800 pb-6">
                         MÉTODOS DE PAGO
                     </h1>

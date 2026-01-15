@@ -1,4 +1,6 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import SEO from '../components/SEO';
 
 const TermsOfUse: React.FC = () => {
@@ -6,6 +8,12 @@ const TermsOfUse: React.FC = () => {
         <>
             <SEO title="Términos de Uso | SAVAGE" description="Términos y condiciones de uso para comprar en Savage." />
             <div className="pt-24 pb-16 px-6 lg:px-12 max-w-4xl mx-auto text-white">
+                <div className="flex items-center gap-4 mb-8">
+                    <Link to="/" className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 group">
+                        <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-xs font-bold uppercase tracking-widest">Volver al Inicio</span>
+                    </Link>
+                </div>
                 <h1 className="text-3xl md:text-5xl font-black mb-8 text-primary uppercase tracking-tighter">Términos de Uso</h1>
 
                 <div className="space-y-8 text-gray-300 leading-relaxed font-light text-sm md:text-base">

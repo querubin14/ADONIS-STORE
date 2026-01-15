@@ -5,6 +5,33 @@ import { Link } from 'react-router-dom';
 
 const CategoryBento: React.FC = () => {
   const { bannerBento } = useShop();
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto-scroll logic for mobile carousel
+  React.useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+
+    const interval = setInterval(() => {
+      // Only scroll if content overflows (mobile/slider view)
+      if (scrollContainer.scrollWidth <= scrollContainer.clientWidth) return;
+
+      const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+      const currentScroll = scrollContainer.scrollLeft;
+
+      // Check if we reached the end (with small tolerance)
+      if (currentScroll >= maxScroll - 10) {
+        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        // Scroll by roughly one item width (using container width as proxy for visible item or simply scrollBy)
+        // Since we use snap-x, a push is enough.
+        const scrollAmount = scrollContainer.clientWidth * 0.8;
+        scrollContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Fallback defaults in case context is empty (shouldn't happen with default state)
   // Fallback defaults or use array indices
@@ -15,7 +42,10 @@ const CategoryBento: React.FC = () => {
   return (
     <section className="py-12 px-6 lg:px-12 max-w-[1400px] mx-auto">
       <h2 className="text-3xl font-bold uppercase tracking-tight mb-8">Categorías</h2>
-      <div className="flex md:grid md:grid-cols-3 md:grid-rows-2 gap-4 h-[400px] md:h-[600px] overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+      <div
+        ref={scrollRef}
+        className="flex md:grid md:grid-cols-3 md:grid-rows-2 gap-4 h-[400px] md:h-[600px] overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+      >
         {/* JOYAS - Large Block */}
         {large && (
           <Link to={large.link} className="relative group min-w-[85vw] md:min-w-0 md:col-span-2 md:row-span-2 rounded overflow-hidden cursor-pointer block snap-center">
