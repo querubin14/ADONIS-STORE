@@ -42,6 +42,17 @@ const ProductDetail: React.FC = () => {
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
+    // Related Products for Recommendations
+    const relatedProducts = products
+        .filter(p => p.id !== product.id && p.category === product.category)
+        .sort((a, b) => {
+            // Prioritize same subcategory
+            if (a.subcategory === product.subcategory && b.subcategory !== product.subcategory) return -1;
+            if (a.subcategory !== product.subcategory && b.subcategory === product.subcategory) return 1;
+            return 0;
+        })
+        .slice(0, 3);
+
     return (
         <div className="min-h-screen bg-background-dark text-white">
             <Navbar cartCount={cartCount} />
@@ -220,6 +231,42 @@ const ProductDetail: React.FC = () => {
                                 </button>
                             </div> */}
                         </div>
+
+                        {/* Recommendations Section */}
+                        {relatedProducts.length > 0 && (
+                            <div className="mt-8 border-t border-gray-800 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
+                                    <Star size={12} className="text-primary" /> Recomendaciones
+                                </h3>
+                                <div className="grid grid-cols-3 gap-3 mb-4">
+                                    {relatedProducts.map(rp => (
+                                        <button
+                                            key={rp.id}
+                                            onClick={() => {
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                navigate(`/product/${rp.id}`);
+                                            }}
+                                            className="group text-left"
+                                        >
+                                            <div className="aspect-[3/4] rounded bg-gray-900 border border-white/10 overflow-hidden mb-2 group-hover:border-primary transition-colors relative">
+                                                <img src={rp.images[0]} alt={rp.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                {rp.images[1] && (
+                                                    <img src={rp.images[1]} alt={rp.name} className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                )}
+                                            </div>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase truncate group-hover:text-white transition-colors">{rp.name}</p>
+                                            <p className="text-[9px] text-primary font-bold">Gs. {rp.price.toLocaleString()}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                                <button
+                                    onClick={() => navigate(`/category/${product.category}`)}
+                                    className="w-full py-3 border border-gray-800 hover:bg-white/5 hover:border-white/20 rounded text-[10px] font-bold uppercase tracking-[0.2em] transition-all text-center block text-gray-400 hover:text-white"
+                                >
+                                    Ver Más Opciones
+                                </button>
+                            </div>
+                        )}
 
                         <div className="mt-8 border-t border-gray-800 pt-6 space-y-3">
                             <div className="flex items-center gap-3 text-sm text-gray-400">
