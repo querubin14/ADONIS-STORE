@@ -649,7 +649,7 @@ const AdminDashboard: React.FC = () => {
         setNavForm(navForm.filter(l => l.id !== id));
     };
 
-    const updateNavLink = (id: string, field: keyof NavbarLink, value: string) => {
+    const updateNavLink = (id: string, field: keyof NavbarLink, value: any) => {
         setNavForm(navForm.map(l => l.id === id ? { ...l, [field]: value } : l));
     };
 
@@ -2001,7 +2001,7 @@ const AdminDashboard: React.FC = () => {
                                         {navForm.map((link, idx) => (
                                             <div key={link.id} className="flex gap-4 items-center bg-black/50 p-4 rounded-lg border border-gray-800">
                                                 <span className="text-gray-500 font-mono text-xs">#{idx + 1}</span>
-                                                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
                                                     <div>
                                                         <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Texto (Label)</label>
                                                         <input
@@ -2018,6 +2018,16 @@ const AdminDashboard: React.FC = () => {
                                                             value={link.path}
                                                             onChange={(e) => updateNavLink(link.id, 'path', e.target.value)}
                                                             className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-gray-300 font-mono focus:border-primary focus:outline-none"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Subcategorías</label>
+                                                        <input
+                                                            type="text"
+                                                            value={link.subcategories ? link.subcategories.join(', ') : ''}
+                                                            onChange={(e) => updateNavLink(link.id, 'subcategories' as any, e.target.value ? e.target.value.split(',').map(s => s.trim()) : [])}
+                                                            className="w-full bg-black border border-gray-700 rounded p-2 text-sm text-gray-300 font-mono focus:border-primary focus:outline-none"
+                                                            placeholder="Ej. River, Boca, Selección..."
                                                         />
                                                     </div>
                                                 </div>

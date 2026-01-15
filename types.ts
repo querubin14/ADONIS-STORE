@@ -133,6 +133,7 @@ export interface NavbarLink {
   id: string;
   label: string;
   path: string;
+  subcategories?: string[];
 }
 
 export interface BannerBento {

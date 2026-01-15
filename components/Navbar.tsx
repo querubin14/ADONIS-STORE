@@ -82,14 +82,33 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           {/* Desktop Links - Centered */}
           <div className="hidden md:flex flex-1 justify-center gap-8 lg:gap-12 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             {navbarLinks.map(link => (
-              <Link
-                key={link.id}
-                className="text-gray-400 hover:text-white hover:font-bold transition-all text-sm font-medium uppercase tracking-widest relative group"
-                to={link.path}
-              >
-                {link.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all group-hover:w-full"></span>
-              </Link>
+              <div key={link.id} className="relative group h-full flex items-center justify-center">
+                <Link
+                  className="text-gray-400 hover:text-white hover:font-bold transition-all text-sm font-medium uppercase tracking-widest relative py-2"
+                  to={link.path}
+                >
+                  {link.label}
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-primary transition-all group-hover:w-full"></span>
+                </Link>
+
+                {/* Subcategories Dropdown */}
+                {link.subcategories && link.subcategories.length > 0 && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 pt-4 hidden group-hover:block w-48 z-50">
+                    <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-4 shadow-2xl flex flex-col gap-2 backdrop-blur-md bg-[#0a0a0a]/95">
+                      <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-[#0a0a0a] border-t border-l border-gray-800 transform rotate-45"></div>
+                      {link.subcategories.map(sub => (
+                        <Link
+                          key={sub}
+                          to={`${link.path.replace(/\/$/, '')}/${sub.trim()}`}
+                          className="text-gray-400 hover:text-primary text-[10px] font-bold uppercase tracking-widest hover:translate-x-1 transition-all"
+                        >
+                          {sub}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
 
