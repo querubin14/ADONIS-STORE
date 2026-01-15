@@ -76,10 +76,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
         )}
       </div>
 
-      <div className="flex justify-between items-start">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mt-2">
+        <div className="flex-1">
           <h3
-            className="text-white text-lg font-bold leading-tight group-hover:text-primary transition-colors cursor-pointer"
+            className="text-white text-sm sm:text-base lg:text-lg font-bold leading-tight group-hover:text-primary transition-colors cursor-pointer line-clamp-2"
             onClick={() => navigate(`/product/${product.id}`)}
           >
             {product.name}
@@ -87,17 +87,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
               <span className="hidden opacity-0 w-0 h-0"> - Camiseta de Fútbol Premium</span>
             )}
           </h3>
-          <p className="text-accent-gray text-xs uppercase tracking-wide mt-1">
+          <p className="text-accent-gray text-[10px] md:text-xs uppercase tracking-wide mt-1">
             {/* Visual helper for SEO context without cluttering UI */}
             {product.subcategory || product.category}
           </p>
         </div>
-        <div className="text-right">
-          <p className={`font-medium ${product.originalPrice && product.originalPrice > product.price ? 'text-primary' : 'text-white'}`}>
+        <div className="text-left sm:text-right flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-0">
+          <p className={`font-bold text-sm md:text-base ${product.originalPrice && product.originalPrice > product.price ? 'text-primary' : 'text-white'}`}>
             Gs. {product.price.toLocaleString()}
           </p>
           {product.originalPrice && product.originalPrice > product.price && (
-            <p className="text-gray-500 line-through text-xs font-normal">Gs. {product.originalPrice.toLocaleString()}</p>
+            <p className="text-gray-500 line-through text-[10px] md:text-xs font-normal">Gs. {product.originalPrice.toLocaleString()}</p>
           )}
         </div>
       </div>
