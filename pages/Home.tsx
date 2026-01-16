@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
 import UpcomingDrops from '../components/UpcomingDrops';
+import FeaturedCarousel from '../components/FeaturedCarousel';
 
 const Home: React.FC = () => {
     const { products, addToCart, cart, categories } = useShop();
@@ -37,19 +38,12 @@ const Home: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                        {/* Sort by isFeatured first, then fallback to original order */}
-                        {products
-                            .sort((a, b) => (a.isFeatured === b.isFeatured ? 0 : a.isFeatured ? -1 : 1))
-                            .slice(0, 8)
-                            .map(product => (
-                                <ProductCard
-                                    key={product.id}
-                                    product={product}
-                                    onAddToCart={() => addToCart(product)}
-                                />
-                            ))}
-                    </div>
+                    {/* Featured Carousel */}
+                    <FeaturedCarousel
+                        products={products.filter(p => p.isFeatured).sort((a, b) => (a.isFeatured === b.isFeatured ? 0 : a.isFeatured ? -1 : 1))}
+                        onAddToCart={addToCart}
+                    />
+
                 </section>
 
                 {/* Dynamic Category Sections */}
