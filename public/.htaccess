@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Detect Social Bots (WhatsApp, Facebook, Twitter, LinkedIn, Telegram, etc.)
+  RewriteCond %{HTTP_USER_AGENT} (facebookexternalhit|twitterbot|linkedinbot|whatsapp|telegrambot|pinterest|slackbot|vkShare|discordbot) [NC]
+  RewriteCond %{REQUEST_URI} ^/product/(.+)$
+  RewriteRule ^product/(.+)$ /bot_proxy.php?slug=$1 [L]
+  
+  # SPA Fallback for humans - ensuring all other routes go to index.html
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.html [L]
+</IfModule>
