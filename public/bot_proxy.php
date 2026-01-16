@@ -12,6 +12,7 @@ $slug = $_GET['slug'] ?? '';
 $debug = '';
 
 if ($slug) {
+    http_response_code(200); // Force 200 OK
     // Helper function to fetch via cURL
     function fetchProduct($url, $apiKey)
     {
@@ -87,6 +88,7 @@ if ($slug) {
     <meta property="og:image" content="<?php echo htmlspecialchars($image); ?>">
     <meta property="og:image:width" content="800">
     <meta property="og:image:height" content="800">
+    <meta property="og:url" content="https://www.savageeepy.com/product/<?php echo htmlspecialchars($slug); ?>">
     <meta property="og:site_name" content="Savage Store">
 
     <meta name="twitter:card" content="summary_large_image">

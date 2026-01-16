@@ -74,6 +74,8 @@ const ProductDetail: React.FC = () => {
                 description={product.description || `Comprá ${product.name} en Savage Store. Calidad Premium.`}
                 image={product.images[0]}
                 product={true}
+                // Important: Ensure this URL matches what the bot sees
+                url={window.location.href}
             />
 
             {/* Structured Data for SEO */}
