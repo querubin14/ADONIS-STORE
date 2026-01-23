@@ -50,11 +50,84 @@ const AdminDashboard: React.FC = () => {
         visibilityConfig, updateVisibilityConfig
     } = useShop();
 
+    // Login State
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        return localStorage.getItem('savage_admin_auth') === 'true';
+    });
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPass, setLoginPass] = useState('');
+    const [loginError, setLoginError] = useState('');
+
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (loginEmail === 'querubin2414@gmail.com' && loginPass === 'CHEREMBO') {
+            setIsAuthenticated(true);
+            localStorage.setItem('savage_admin_auth', 'true');
+            setLoginError('');
+        } else {
+            setLoginError('Credenciales incorrectas');
+        }
+    };
+
+    const handleLogout = () => {
+        setIsAuthenticated(false);
+        localStorage.removeItem('savage_admin_auth');
+    };
+
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
 
     const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    if (!isAuthenticated) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-black tracking-tighter text-white mb-2">ADONIS<span className="text-primary">ADMIN</span></h1>
+                        <p className="text-gray-500 text-sm">Acceso Restringido</p>
+                    </div>
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Correo Electrónico</label>
+                            <input
+                                type="email"
+                                value={loginEmail}
+                                onChange={e => setLoginEmail(e.target.value)}
+                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
+                                placeholder="admin@adonis.com"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Contraseña</label>
+                            <input
+                                type="password"
+                                value={loginPass}
+                                onChange={e => setLoginPass(e.target.value)}
+                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
+                                placeholder="••••••••"
+                            />
+                        </div>
+                        {loginError && (
+                            <div className="p-3 bg-red-900/20 border border-red-900/50 rounded text-red-500 text-xs font-bold text-center">
+                                {loginError}
+                            </div>
+                        )}
+                        <button
+                            type="submit"
+                            className="w-full bg-primary hover:bg-red-700 text-white font-bold py-4 rounded-lg tracking-widest transition-all uppercase shadow-lg"
+                        >
+                            INGRESAR
+                        </button>
+                        <Link to="/" className="block text-center text-xs text-gray-600 hover:text-white mt-4">
+                            Volver a la tienda
+                        </Link>
+                    </form>
+                </div>
+            </div>
+        );
+    }
 
     // Product Form State
     const [newProduct, setNewProduct] = useState({
@@ -998,10 +1071,16 @@ const AdminDashboard: React.FC = () => {
                     </button>
                 </nav>
 
-                <Link to="/" className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white transition-colors mt-auto">
+                <button
+                    onClick={() => {
+                        handleLogout();
+                        window.location.href = '/';
+                    }}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-500 transition-colors mt-auto w-full text-left"
+                >
                     <LogOut size={20} />
-                    <span className="font-medium text-sm">Volver a Tienda</span>
-                </Link>
+                    <span className="font-medium text-sm">Cerrar Sesión</span>
+                </button>
             </aside>
 
             {/* Main Content */}
