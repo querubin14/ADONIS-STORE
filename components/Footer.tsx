@@ -40,10 +40,9 @@ const Footer: React.FC = () => {
           {/* Brand */}
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-2 text-white">
-              <div className="size-6 text-primary">
-                <img src="/crown.png" alt="Savage Crown" className="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(212,175,55,0.6)] filter brightness-110" />
+              <div className="h-8 w-auto flex items-center justify-center text-primary">
+                <img src="/logo-final.png" alt="Adonis Logo" className="h-full w-auto object-contain filter brightness-110" />
               </div>
-              <h2 className="text-xl font-bold uppercase tracking-wider">SAVAGE</h2>
             </div>
             <p className="text-gray-500 text-sm leading-relaxed">
               {socialConfig.address || 'Ropa y joyería urbana premium diseñada para quienes no siguen tendencias, sino que las crean. Estilo agresivo, calidad intransigente.'}
@@ -90,7 +89,7 @@ const Footer: React.FC = () => {
         </div>
 
         <div className="border-t border-gray-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-600 text-xs">© 2026 SAVAGE BRAND. Todos los derechos reservados.</p>
+          <p className="text-gray-600 text-xs">© 2026 ADONIS STORE. Todos los derechos reservados.</p>
           <div className="flex gap-6 text-xs text-gray-600">
             <Link className="hover:text-gray-400" to="/privacy-policy">Política de Privacidad</Link>
             <Link className="hover:text-gray-400" to="/terms-of-use">Términos de Uso</Link>

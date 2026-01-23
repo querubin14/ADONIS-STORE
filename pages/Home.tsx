@@ -15,7 +15,7 @@ import UpcomingDrops from '../components/UpcomingDrops';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 
 const Home: React.FC = () => {
-    const { products, addToCart, cart, categories } = useShop();
+    const { products, addToCart, cart, categories, visibilityConfig } = useShop();
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -26,28 +26,30 @@ const Home: React.FC = () => {
             <Navbar cartCount={cartCount} />
 
             <main>
-                <Hero />
-                <UpcomingDrops />
+                {visibilityConfig.hero && <Hero />}
+                {visibilityConfig.drops && <UpcomingDrops />}
 
                 {/* Featured Products Section (Max 8) */}
-                <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
-                    <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
-                        <div>
-                            <h2 className="text-3xl font-bold uppercase tracking-tight">Destacados</h2>
-                            <p className="text-accent-gray mt-1 text-sm">Selección exclusiva de temporada</p>
+                {visibilityConfig.featured && (
+                    <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
+                        <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
+                            <div>
+                                <h2 className="text-3xl font-bold uppercase tracking-tight">Destacados</h2>
+                                <p className="text-accent-gray mt-1 text-sm">Selección exclusiva de temporada</p>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Featured Carousel */}
-                    <FeaturedCarousel
-                        products={products.filter(p => p.isFeatured).sort((a, b) => (a.isFeatured === b.isFeatured ? 0 : a.isFeatured ? -1 : 1))}
-                        onAddToCart={addToCart}
-                    />
+                        {/* Featured Carousel */}
+                        <FeaturedCarousel
+                            products={products.filter(p => p.isFeatured).sort((a, b) => (a.isFeatured === b.isFeatured ? 0 : a.isFeatured ? -1 : 1))}
+                            onAddToCart={addToCart}
+                        />
 
-                </section>
+                    </section>
+                )}
 
                 {/* Dynamic Category Sections */}
-                {categories.map(categoryObj => {
+                {visibilityConfig.categories && categories.map(categoryObj => {
                     const category = categoryObj.id;
                     const categoryProducts = products.filter(p =>
                         p.category.toLowerCase() === category.toLowerCase() ||
@@ -108,11 +110,9 @@ const Home: React.FC = () => {
                     );
                 })}
 
-                <CategoryBento />
+                {visibilityConfig.categories && <CategoryBento />}
 
-
-
-                <LifestyleSection />
+                {visibilityConfig.lifestyle && <LifestyleSection />}
             </main>
 
             <Footer />

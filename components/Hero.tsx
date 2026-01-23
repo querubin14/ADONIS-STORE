@@ -81,7 +81,7 @@ const Hero: React.FC = () => {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-black text-white">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">SAVAGE</h1>
+          <h1 className="text-4xl font-bold mb-4">ADONIS STORE</h1>
           <p className="text-gray-400">Configura el Banner Principal en el Admin</p>
         </div>
       </div>
@@ -94,7 +94,7 @@ const Hero: React.FC = () => {
 
   return (
     <header
-      className="relative w-full h-[85vh] min-h-[600px] flex items-center justify-center overflow-hidden bg-black"
+      className="relative w-full h-[65vh] min-h-[450px] flex items-center justify-center overflow-hidden bg-black"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

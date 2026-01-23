@@ -109,7 +109,7 @@ const ProductDetail: React.FC = () => {
                     <ArrowLeft size={20} /> Volver
                 </button>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-12">
                     {/* Gallery Section */}
                     <div className="space-y-6">
                         <div className="aspect-[3/4] rounded-lg overflow-hidden bg-surface-dark border border-white/5 relative group">
@@ -178,49 +178,81 @@ const ProductDetail: React.FC = () => {
 
 
 
-                        {/* Size Selector - Hidden for Accessories */}
-                        {!isAccessory && (
-                            <div className="mb-10">
-                                <div className="flex justify-between items-center mb-4">
-                                    <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle</span>
-                                </div>
-                                <div className="grid grid-cols-5 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-                                    {product.sizes.map(size => {
-                                        // Normalize size for comparison
-                                        const normalizedSize = size.trim().toUpperCase();
-
-                                        // Check inventory if available
-                                        let isOutOfStock = false;
-                                        if (product.inventory && product.inventory.length > 0) {
-                                            const invItem = product.inventory.find(i => i.size.trim().toUpperCase() === normalizedSize);
-
-                                            if (invItem) {
-                                                const qty = Number(invItem.quantity);
-                                                if (qty <= 0) isOutOfStock = true;
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                            {/* Size Selector */}
+                            {!isAccessory && (
+                                <div className="flex-1">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle</span>
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {product.sizes.map(size => {
+                                            const normalizedSize = size.trim().toUpperCase();
+                                            let isOutOfStock = false;
+                                            if (product.inventory && product.inventory.length > 0) {
+                                                const invItem = product.inventory.find(i => i.size.trim().toUpperCase() === normalizedSize);
+                                                if (invItem && Number(invItem.quantity) <= 0) isOutOfStock = true;
                                             }
-                                        }
 
-                                        return (
-                                            <button
-                                                key={size}
-                                                onClick={() => !isOutOfStock && setSelectedSize(size)}
-                                                disabled={isOutOfStock}
-                                                className={`h-10 sm:h-12 w-full sm:w-20 flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden ${selectedSize === size
-                                                    ? 'bg-white text-black border-white'
-                                                    : isOutOfStock
-                                                        ? 'border-gray-800 text-gray-600 cursor-not-allowed bg-white/5 opacity-50'
-                                                        : 'border-gray-800 text-gray-400 hover:border-gray-600'
-                                                    }`}
-                                            >
-                                                <span className={`${isOutOfStock ? 'line-through decoration-red-500' : ''} text-xs sm:text-base`}>{size}</span>
-                                                {isOutOfStock && <span className="text-[7px] sm:text-[8px] text-red-500 font-bold uppercase leading-none mt-0.5 sm:mt-1">Agotado</span>}
-                                            </button>
-                                        );
-                                    })}
+                                            return (
+                                                <button
+                                                    key={size}
+                                                    onClick={() => !isOutOfStock && setSelectedSize(size)}
+                                                    disabled={isOutOfStock}
+                                                    className={`h-12 w-full flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden ${selectedSize === size
+                                                        ? 'bg-white text-black border-white'
+                                                        : isOutOfStock
+                                                            ? 'border-gray-800 text-gray-600 cursor-not-allowed bg-white/5 opacity-50'
+                                                            : 'border-gray-800 text-gray-400 hover:border-gray-600'
+                                                        }`}
+                                                >
+                                                    <span className={`${isOutOfStock ? 'line-through decoration-red-500' : ''} text-xs md:text-sm`}>{size}</span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    {product.fit && <p className="mt-4 text-xs text-gray-500">Fit: <span className="text-white">{product.fit}</span></p>}
                                 </div>
-                                {product.fit && <p className="mt-4 text-sm text-gray-500">Fit: <span className="text-white font-medium">{product.fit}</span></p>}
-                            </div>
-                        )}
+                            )}
+
+                            {/* Color Selector */}
+                            {product.colors && product.colors.length > 0 && (
+                                <div className="flex-1 animate-in fade-in slide-in-from-right-4 duration-500">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
+                                            Color: <span className="text-primary ml-1">{product.colors.find(c => product.images.findIndex(img => img === c.image) === selectedImage)?.name || 'Seleccionar'}</span>
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-3">
+                                        {product.colors.map((color, idx) => {
+                                            const colorImageIndex = product.images.findIndex(img => img === color.image);
+                                            const isSelected = colorImageIndex !== -1 && selectedImage === colorImageIndex;
+
+                                            return (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => {
+                                                        if (colorImageIndex !== -1) setSelectedImage(colorImageIndex);
+                                                    }}
+                                                    className={`group relative w-16 h-16 rounded mb-2 overflow-hidden border-2 transition-all flex items-center justify-center ${isSelected ? 'border-primary ring-2 ring-primary/50 scale-105 shadow-xl' : 'border-gray-700 hover:border-gray-500 hover:scale-105'}`}
+                                                    title={color.name}
+                                                    style={{ backgroundColor: !color.image ? (color.hex || '#222') : undefined }}
+                                                >
+                                                    {/* Always Key: Show Image if available (Visual Variant) */}
+                                                    {color.image && <img src={color.image} alt={color.name} className="w-full h-full object-cover" />}
+
+                                                    {/* Fallback to hex if image broken/missing but hex exists */}
+                                                    {!color.image && !color.hex && <span className="text-[8px] text-gray-500">{color.name}</span>}
+
+                                                    {/* Active Indicator Overlay */}
+                                                    {isSelected && <div className="absolute inset-0 ring-inset ring-2 ring-primary/20 pointer-events-none" />}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Actions */}
                         {product.description && (
@@ -260,7 +292,7 @@ const ProductDetail: React.FC = () => {
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
                                     <Star size={12} className="text-primary" /> Recomendaciones
                                 </h3>
-                                <div className="grid grid-cols-3 gap-3 mb-4">
+                                <div className="grid grid-cols-3 gap-3 mb-4 max-w-[380px]">
                                     {relatedProducts.map(rp => (
                                         <button
                                             key={rp.id}

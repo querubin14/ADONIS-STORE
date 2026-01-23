@@ -11,6 +11,11 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCategoryTag }) => {
   const navigate = useNavigate();
+  const [activeImage, setActiveImage] = React.useState(product.images[0]);
+
+  React.useEffect(() => {
+    setActiveImage(product.images[0]);
+  }, [product.images]);
 
   const isTotallyOutOfStock = product.inventory && product.inventory.length > 0
     ? product.inventory.every(i => Number(i.quantity) === 0)
@@ -24,7 +29,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
       >
         <div className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110">
           <img
-            src={product.images[0]}
+            src={activeImage}
             alt={
               (product.name.toLowerCase().includes('camiseta') || product.category.toLowerCase().includes('ropa'))
                 ? `Camiseta de fútbol ${product.name} - Savage Store Paraguay`
@@ -32,7 +37,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
             }
             className={`w-full h-full ${product.type === 'footwear' ? 'object-contain' : 'object-cover'} ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
           />
-          {product.images[1] && (
+          {product.images[1] && activeImage === product.images[0] && (
             <img
               src={product.images[1]}
               alt={`${product.name} vista alternativa`}
@@ -116,9 +121,34 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
             )}
           </h3>
           <p className="text-accent-gray text-[10px] md:text-xs uppercase tracking-wide mt-1">
-            {/* Visual helper for SEO context without cluttering UI */}
             {product.subcategory || product.category}
           </p>
+
+          {/* Color Variants Swatches */}
+          {product.colors && product.colors.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {product.colors.map((color, idx) => (
+                <button
+                  key={idx}
+                  className={`w-3 h-3 md:w-4 md:h-4 rounded-full border border-gray-600 hover:scale-110 hover:border-white transition-all ${activeImage === color.image ? 'ring-1 ring-white ring-offset-1 ring-offset-black scale-110' : ''}`}
+                  style={{ backgroundColor: color.hex || '#222' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (color.image) setActiveImage(color.image);
+                  }}
+                  onMouseEnter={() => {
+                    if (color.image) setActiveImage(color.image);
+                  }}
+                  title={color.name}
+                >
+                  {!color.hex && (
+                    <span className="sr-only">{color.name}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="text-left sm:text-right flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-0">
           <p className={`font-bold text-sm md:text-base ${product.originalPrice && product.originalPrice > product.price ? 'text-primary' : 'text-white'}`}>

@@ -35,9 +35,7 @@ const WebRoutes: React.FC = () => {
             <Route path="/terms-of-use" element={<TermsOfUse />} />
             <Route path="/care-guide" element={<CareGuide />} />
             <Route path="/login" element={<Login />} />
-            <Route element={<ProtectedRoute />}>
-                <Route path="/admin" element={<AdminDashboard />} />
-            </Route>
+            <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
     );
 };

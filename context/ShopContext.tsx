@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, VisibilityConfig } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
 
@@ -62,6 +62,8 @@ interface ShopContextType {
     updateFooterColumns: (columns: FooterColumn[]) => void;
     updateCategoryOrder: (orderedIds: string[]) => void;
     saveAllData: () => void;
+    visibilityConfig: VisibilityConfig;
+    updateVisibilityConfig: (config: VisibilityConfig) => void;
     loading: boolean;
 }
 
@@ -78,7 +80,7 @@ export const useShop = () => {
 const DEFAULT_HERO_SLIDES: HeroSlide[] = [
     {
         id: 'h1',
-        title: 'SAVAGE ESSENCE 2026',
+        title: 'ADONIS ESSENCE 2026',
         subtitle: 'REDEFINIENDO EL STREETWEAR PREMIUM URBANO.',
         buttonText: 'EXPLORAR AHORA',
         buttonLink: '/category/Deportivo',
@@ -87,9 +89,9 @@ const DEFAULT_HERO_SLIDES: HeroSlide[] = [
 ];
 
 const DEFAULT_SOCIAL_CONFIG: SocialConfig = {
-    instagram: 'https://instagram.com/savage',
-    tiktok: 'https://tiktok.com/@savage',
-    email: 'contacto@savagebrand.com',
+    instagram: 'https://instagram.com/adonis',
+    tiktok: 'https://tiktok.com/@adonis',
+    email: 'contacto@adonisstore.com',
     whatsapp: '595983840235',
     address: 'Palermo Soho, Buenos Aires',
     shippingText: 'Envío gratis en compras mayores a 500.000 Gs',
@@ -177,7 +179,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [lifestyleConfig, setLifestyleConfig] = useState<LifestyleConfig>(() => {
         const saved = localStorage.getItem('savage_lifestyle_config');
         return saved ? JSON.parse(saved) : {
-            sectionTitle: 'THE SAVAGE LIFESTYLE',
+            sectionTitle: 'THE ADONIS LIFESTYLE',
             sectionSubtitle: 'Únete a la comunidad...',
             buttonText: 'LEER EL BLOG',
             buttonLink: '/blog'
@@ -211,6 +213,38 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             throw e;
         }
     };
+
+    // Visibility Config
+    const [visibilityConfig, setVisibilityConfig] = useState<VisibilityConfig>(() => {
+        const saved = localStorage.getItem('savage_visibility_config');
+        return saved ? JSON.parse(saved) : {
+            hero: true,
+            categories: true,
+            featured: true,
+            lifestyle: true,
+            drops: true
+        };
+    });
+
+    useEffect(() => {
+        localStorage.setItem('savage_visibility_config', JSON.stringify(visibilityConfig));
+    }, [visibilityConfig]);
+
+    const updateVisibilityConfig = async (config: VisibilityConfig) => {
+        setVisibilityConfig(config);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'visibility_config',
+                value: config,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
+
 
     const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(() => {
         const saved = localStorage.getItem('savage_footer_columns');
@@ -343,6 +377,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     if (conf.key === 'footer_columns') setFooterColumns(conf.value);
                     if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
                     if (conf.key === 'drops_config') setDropsConfig(conf.value);
+                    if (conf.key === 'visibility_config') setVisibilityConfig(conf.value);
                     if (conf.key === 'category_sort_order') {
                         const order = conf.value as string[];
                         setCategorySortOrder(order);
@@ -493,7 +528,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // DB Mapping: OMIT 'id' so Supabase generates a UUID
             const dbProduct = {
                 // id: product.id, <--- REMOVED to let DB generate UUID
-                savage_id: `SVG-${product.id}`, // Temporary filler using the timestamp, user might want to change this later
+                savage_id: `ADN-${product.id}`, // Temporary filler using the timestamp, user might want to change this later
                 name: product.name,
                 price: parseFloat(product.price.toString()),
                 original_price: product.originalPrice ? parseFloat(product.originalPrice.toString()) : null,
@@ -1378,6 +1413,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             deleteDrop,
             dropsConfig,
             updateDropsConfig,
+            visibilityConfig,
+            updateVisibilityConfig,
             updateSocialConfig,
 
             cartTotal,

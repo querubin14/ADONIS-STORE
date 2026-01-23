@@ -29,6 +29,7 @@ import { uploadProductImage } from '../services/uploadService';
 import { openGooglePicker } from '../services/googlePickerService';
 import { Loader2, UploadCloud, Image as GoogleIcon } from 'lucide-react';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
+import SectionVisibilityToggle from '../components/admin/SectionVisibilityToggle';
 
 const AdminDashboard: React.FC = () => {
     const {
@@ -45,7 +46,8 @@ const AdminDashboard: React.FC = () => {
         updateHeroCarouselConfig,
         footerColumns, updateFooterColumns,
         saveAllData, drops, addDrop, deleteDrop, loading,
-        dropsConfig, updateDropsConfig, updateCategoryOrder
+        dropsConfig, updateDropsConfig, updateCategoryOrder,
+        visibilityConfig, updateVisibilityConfig
     } = useShop();
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
@@ -70,10 +72,9 @@ const AdminDashboard: React.FC = () => {
         description: '',
         isFeatured: false,
         isCategoryFeatured: false,
-        isFeatured: false,
-        isCategoryFeatured: false,
         slug: '',
-        imageAlts: [] as string[]
+        imageAlts: [] as string[],
+        colors: [] as { name: string; image: string }[]
     });
 
     // Stock Matrix State
@@ -109,6 +110,12 @@ const AdminDashboard: React.FC = () => {
     // Favicon Upload State
     const faviconFileInputRef = React.useRef<HTMLInputElement>(null);
     const [isFaviconUploading, setIsFaviconUploading] = useState(false);
+
+    // Color Variant State
+    const [tempColorName, setTempColorName] = useState('');
+    const [tempColorHex, setTempColorHex] = useState('#000000');
+    const [isColorUploading, setIsColorUploading] = useState(false);
+    const colorFileInputRef = React.useRef<HTMLInputElement>(null);
 
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
     const [expandedSubcategories, setExpandedSubcategories] = useState<string[]>([]);
@@ -235,9 +242,9 @@ const AdminDashboard: React.FC = () => {
             description: '',
             isFeatured: false,
             isCategoryFeatured: false,
-            isCategoryFeatured: false,
             slug: '',
-            imageAlts: []
+            imageAlts: [],
+            colors: []
         });
         setStockMatrix([]); // Reset matrix 
         // Note: The useEffect on activeFormTab will re-init it immediately if the tab doesn't change, 
@@ -288,9 +295,9 @@ const AdminDashboard: React.FC = () => {
             description: product.description || '',
             isFeatured: product.isFeatured || false,
             isCategoryFeatured: product.isCategoryFeatured || false,
-            isCategoryFeatured: product.isCategoryFeatured || false,
             slug: product.slug, // Preserve existing slug if any
-            imageAlts: product.imageAlts || product.images.map(() => '') // Initialize alts or defaults
+            imageAlts: product.imageAlts || product.images.map(() => ''), // Initialize alts or defaults
+            colors: product.colors || []
         });
 
         // Infer Form Tab from Category for correct visuals if user switches tabs
@@ -399,10 +406,9 @@ const AdminDashboard: React.FC = () => {
             isFeatured: newProduct.isFeatured,
             isCategoryFeatured: newProduct.isCategoryFeatured,
             description: newProduct.description,
-            isCategoryFeatured: newProduct.isCategoryFeatured,
-            description: newProduct.description,
             slug: productSlug,
-            imageAlts: newProduct.imageAlts || validImages.map(() => newProduct.name) // Default to Product Name if empty
+            imageAlts: newProduct.imageAlts || validImages.map(() => newProduct.name), // Default to Product Name if empty
+            colors: newProduct.colors || []
         };
 
         if (editingProductId) {
@@ -727,6 +733,56 @@ const AdminDashboard: React.FC = () => {
     };
 
 
+    const handleColorFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!tempColorName.trim()) {
+            alert('Por favor ingresa un nombre para el color antes de subir la imagen.');
+            if (colorFileInputRef.current) colorFileInputRef.current.value = '';
+            return;
+        }
+
+        if (e.target.files && e.target.files.length > 0) {
+            setIsColorUploading(true);
+            const file = e.target.files[0];
+
+            try {
+                const optimizedFile = await optimizeImage(file, { maxWidth: 1000, maxHeight: 1000, quality: 0.8 });
+                const url = await uploadProductImage(optimizedFile, newProduct.category || 'general');
+
+                if (url) {
+                    setNewProduct(prev => {
+                        // Add to colors
+                        const newColors = [...(prev.colors || []), { name: tempColorName, image: url, hex: tempColorHex }];
+                        // Add to main images if not exists
+                        const newImages = prev.images.includes(url) ? prev.images : [...prev.images.filter(i => i), url];
+                        const newAlts = prev.images.includes(url) ? prev.imageAlts : [...(prev.imageAlts || []), `${prev.name} - Color ${tempColorName}`];
+
+                        return {
+                            ...prev,
+                            colors: newColors,
+                            images: newImages,
+                            imageAlts: newAlts
+                        };
+                    });
+                    setTempColorName('');
+                    setTempColorHex('#000000');
+                }
+            } catch (error) {
+                console.error("Error uploading color image:", error);
+                alert("Error al subir la imagen del color.");
+            } finally {
+                setIsColorUploading(false);
+                if (colorFileInputRef.current) colorFileInputRef.current.value = '';
+            }
+        }
+    };
+
+    const removeColor = (colorName: string) => {
+        setNewProduct(prev => ({
+            ...prev,
+            colors: (prev.colors || []).filter(c => c.name !== colorName)
+        }));
+    };
+
     const productsByCategory = products.reduce((acc, product) => {
         // Use raw columns from database as requested, mirroring Stock App
         const catName = product.category ? product.category.trim().toUpperCase() : 'SIN CATEGORÍA';
@@ -899,7 +955,7 @@ const AdminDashboard: React.FC = () => {
                 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 <div className="flex justify-between items-center mb-10">
-                    <h1 className="text-2xl font-black tracking-tighter text-primary">SAVAGE<span className="text-white">ADMIN</span></h1>
+                    <h1 className="text-2xl font-black tracking-tighter text-primary">ADONIS<span className="text-white">ADMIN</span></h1>
                     <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-gray-500 hover:text-white">
                         <X size={24} />
                     </button>
@@ -960,20 +1016,11 @@ const AdminDashboard: React.FC = () => {
                                 <h2 className="text-3xl font-bold mb-2">Próximos Drops (Hype)</h2>
                                 <p className="text-gray-400">Gestiona la sección de lanzamientos exclusivos. Se mostrarán los 6 más recientes.</p>
                             </div>
-                            <div className="flex items-center gap-3 bg-gray-900 p-3 rounded-lg border border-gray-800">
-                                <span className="text-sm font-bold text-gray-400 uppercase">VISIBILIDAD EN WEB:</span>
-                                <button
-                                    onClick={() => updateDropsConfig({ isEnabled: !dropsConfig?.isEnabled })}
-                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black ${dropsConfig?.isEnabled ? 'bg-green-500' : 'bg-gray-700'}`}
-                                >
-                                    <span
-                                        className={`${dropsConfig?.isEnabled ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                                    />
-                                </button>
-                                <span className={`text-sm font-bold ${dropsConfig?.isEnabled ? 'text-green-500' : 'text-gray-500'}`}>
-                                    {dropsConfig?.isEnabled ? 'HABITILITADO' : 'DESHABILITADO'}
-                                </span>
-                            </div>
+                            <SectionVisibilityToggle
+                                isEnabled={visibilityConfig.drops}
+                                onToggle={(val) => updateVisibilityConfig({ ...visibilityConfig, drops: val })}
+                                label="VISIBILIDAD EN WEB:"
+                            />
                         </header>
 
                         <div className="bg-[#0a0a0a] border border-gray-800 p-8 rounded-xl shadow-lg">
@@ -1042,497 +1089,631 @@ const AdminDashboard: React.FC = () => {
 
                         </div>
                     </div>
-                )}
+                )
+                }
 
                 {/* PRODUCTS TAB */}
-                {activeTab === 'products' && (
-                    <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <header className="flex flex-col md:flex-row justify-between md:items-end border-b border-gray-800 pb-6 gap-4">
-                            <div>
-                                <h2 className="text-3xl font-bold mb-2">Gestión de Productos</h2>
-                                <p className="text-gray-400">Administra el inventario, precios y detalles.</p>
-                            </div>
-                            {!showProductForm && !editingProductId && (
-                                <button
-                                    onClick={() => setShowProductForm(true)}
-                                    className="bg-primary text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 hover:bg-red-700 transition-all uppercase text-sm tracking-widest shadow-lg transform hover:translate-y-[-2px]"
-                                >
-                                    <Plus size={20} /> AGREGAR PRODUCTO
-                                </button>
-                            )}
-                        </header>
+                {
+                    activeTab === 'products' && (
+                        <div className="max-w-5xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <header className="flex flex-col md:flex-row justify-between md:items-end border-b border-gray-800 pb-6 gap-4">
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-2">Gestión de Productos</h2>
+                                    <p className="text-gray-400">Administra el inventario, precios y detalles.</p>
+                                </div>
+                                <SectionVisibilityToggle
+                                    isEnabled={visibilityConfig.featured}
+                                    onToggle={(val) => updateVisibilityConfig({ ...visibilityConfig, featured: val })}
+                                    label="DESTACADOS (WEB):"
+                                />
+                                {!showProductForm && !editingProductId && (
+                                    <button
+                                        onClick={() => setShowProductForm(true)}
+                                        className="bg-primary text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 hover:bg-red-700 transition-all uppercase text-sm tracking-widest shadow-lg transform hover:translate-y-[-2px]"
+                                    >
+                                        <Plus size={20} /> AGREGAR PRODUCTO
+                                    </button>
+                                )}
+                            </header>
 
-                        {/* Add Product Form */}
-                        {(showProductForm || editingProductId) && (
-                            <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl animate-in fade-in slide-in-from-top-4">
-                                <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-primary">
-                                    {editingProductId ? <Edit size={24} /> : <Plus size={24} />}
-                                    {editingProductId ? 'EDITAR PRODUCTO' : 'NUEVO PRODUCTO'}
-                                </h3>
-                                <form onSubmit={handleAddProduct} className="space-y-8">
-                                    {/* Form Tabs (Stock App Style) */}
-                                    <div className="flex gap-1 bg-black p-1 rounded-xl border border-gray-800 w-fit mb-4 overflow-x-auto max-w-full">
-                                        {['ESTÁNDAR', 'INFANTIL', 'CALZADOS', 'ACCESORIOS'].map(tab => (
-                                            <button
-                                                key={tab}
-                                                type="button"
-                                                onClick={() => setActiveFormTab(tab as any)}
-                                                className={`px-6 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-widest whitespace-nowrap ${activeFormTab === tab ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}
-                                            >
-                                                {tab}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div className="space-y-8">
-                                        {/* Name Line */}
-                                        <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Nombre del Producto</label>
-                                            <input
-                                                type="text"
-                                                value={newProduct.name}
-                                                onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
-                                                className="w-full bg-transparent border-b border-gray-800 text-xl font-bold text-white placeholder-gray-800 focus:border-white focus:outline-none transition-colors py-2"
-                                                placeholder="Ej. Camiseta Titular 2024"
-                                            />
-                                        </div>
-
-                                        {/* Categories Grid */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Categoría</label>
-                                                <input
-                                                    type="text"
-                                                    list="categories-list"
-                                                    value={newProduct.category}
-                                                    onChange={e => setNewProduct({ ...newProduct, category: e.target.value.toUpperCase() })}
-                                                    className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase placeholder-gray-600 font-bold"
-                                                    placeholder="Seleccionar..."
-                                                />
-                                                <datalist id="categories-list">
-                                                    {categories.map(cat => (
-                                                        <option key={cat.id} value={cat.name.toUpperCase()} />
-                                                    ))}
-                                                </datalist>
-                                            </div>
-
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Subcategoría</label>
-                                                <input
-                                                    type="text"
-                                                    list="subcategories-list"
-                                                    value={newProduct.subcategory}
-                                                    onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value.toUpperCase() })}
-                                                    className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase placeholder-gray-600 font-bold"
-                                                    placeholder="Seleccionar..."
-                                                />
-                                                <datalist id="subcategories-list">
-                                                    {categories.find(c => c.name.toUpperCase() === newProduct.category)?.subcategories?.map(sub => (
-                                                        <option key={sub} value={sub.toUpperCase()} />
-                                                    ))}
-                                                </datalist>
-                                            </div>
-                                        </div>
-
-                                        {/* Pricing Section */}
-                                        <div className="space-y-6 pt-4 border-t border-gray-900">
-                                            <div className="space-y-2">
-                                                <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Costo Proveedor (Gs.)</label>
-                                                <input
-                                                    type="number"
-                                                    value={newProduct.costPrice || ''}
-                                                    onChange={e => setNewProduct({ ...newProduct, costPrice: e.target.value })}
-                                                    className="w-full bg-[#050510] border border-blue-900/30 rounded-lg p-4 text-sm focus:border-blue-500 focus:outline-none transition-colors text-blue-200 font-mono"
-                                                    placeholder="Costo de adquisición"
-                                                />
-                                                <p className="text-[9px] text-gray-600">* Solo visible para administración.</p>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-8">
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Precio Regular (Gs.)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={newProduct.originalPrice}
-                                                        onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
-                                                        className="w-full bg-black border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors font-mono text-gray-300"
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Precio Oferta (Gs.)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={newProduct.price}
-                                                        onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
-                                                        className="w-full bg-black border border-red-900/50 rounded-lg p-4 text-sm focus:border-red-500 focus:outline-none transition-colors font-bold font-mono text-white"
-                                                        placeholder="0"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Description Section */}
-                                        <div className="space-y-2 pt-4 border-t border-gray-900">
-                                            <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Descripción del Producto</label>
-                                            <textarea
-                                                value={newProduct.description}
-                                                onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
-                                                className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white placeholder-gray-600 min-h-[100px]"
-                                                placeholder="Detalles del producto, materiales, cuidados..."
-                                            />
-                                        </div>
-
-                                        {/* Settings Section (Imported / Featured) - Row Layout */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-900">
-
-                                            <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
-                                                <span className="text-xs font-bold text-gray-400 uppercase">¿Es Producto Importado?</span>
+                            {/* Add Product Form */}
+                            {(showProductForm || editingProductId) && (
+                                <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl animate-in fade-in slide-in-from-top-4">
+                                    <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-primary">
+                                        {editingProductId ? <Edit size={24} /> : <Plus size={24} />}
+                                        {editingProductId ? 'EDITAR PRODUCTO' : 'NUEVO PRODUCTO'}
+                                    </h3>
+                                    <form onSubmit={handleAddProduct} className="space-y-8">
+                                        {/* Form Tabs (Stock App Style) */}
+                                        <div className="flex gap-1 bg-black p-1 rounded-xl border border-gray-800 w-fit mb-4 overflow-x-auto max-w-full">
+                                            {['ESTÁNDAR', 'INFANTIL', 'CALZADOS', 'ACCESORIOS'].map(tab => (
                                                 <button
+                                                    key={tab}
                                                     type="button"
-                                                    onClick={() => setIsImported(prev => !prev)}
-                                                    className={`w-12 h-6 rounded-full p-1 transition-colors relative ${isImported ? 'bg-purple-600' : 'bg-gray-800'}`}
+                                                    onClick={() => setActiveFormTab(tab as any)}
+                                                    className={`px-6 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-widest whitespace-nowrap ${activeFormTab === tab ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}
                                                 >
-                                                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isImported ? 'translate-x-6' : 'translate-x-0'}`} />
+                                                    {tab}
                                                 </button>
-                                            </div>
-
-                                            {/* Featured Toggles */}
-                                            <div className="flex flex-col gap-2">
-                                                <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
-                                                    <span className="text-xs font-bold text-yellow-500 uppercase flex items-center gap-2">
-                                                        <span className="material-symbols-outlined text-xs">star</span> Destacar en Home
-                                                    </span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setNewProduct({ ...newProduct, isFeatured: !newProduct.isFeatured })}
-                                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${newProduct.isFeatured ? 'bg-yellow-500 border-yellow-500 text-black' : 'border-gray-600 bg-transparent'}`}
-                                                    >
-                                                        {newProduct.isFeatured && <span className="material-symbols-outlined text-[14px] font-bold">check</span>}
-                                                    </button>
-                                                </div>
-                                                <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
-                                                    <span className="text-xs font-bold text-blue-500 uppercase flex items-center gap-2">
-                                                        <span className="material-symbols-outlined text-xs">category</span> Destacar en Categoría
-                                                    </span>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setNewProduct({ ...newProduct, isCategoryFeatured: !newProduct.isCategoryFeatured })}
-                                                        className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${newProduct.isCategoryFeatured ? 'bg-blue-500 border-blue-500 text-black' : 'border-gray-600 bg-transparent'}`}
-                                                    >
-                                                        {newProduct.isCategoryFeatured && <span className="material-symbols-outlined text-[14px] font-bold">check</span>}
-                                                    </button>
-                                                </div>
-                                            </div>
-
+                                            ))}
                                         </div>
-                                        {isImported && (
-                                            <div className="mt-2 text-[10px] text-purple-400 bg-purple-900/10 p-3 rounded border border-purple-500/20 animate-in fade-in slide-in-from-top-1">
-                                                <p className="font-bold mb-1">INFO IMPORTACIÓN:</p>
-                                                <ul className="list-disc pl-4 space-y-1 opacity-80">
-                                                    <li>Se mostrará la etiqueta "25 a 30 días".</li>
-                                                    <li>Requiere seña mínima del 50%.</li>
-                                                </ul>
-                                            </div>
-                                        )}
 
-                                        {/* Keep Type (Clothing/Footwear) but hidden if possible or discreet? 
+                                        <div className="space-y-8">
+                                            {/* Name Line */}
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Nombre del Producto</label>
+                                                <input
+                                                    type="text"
+                                                    value={newProduct.name}
+                                                    onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                                                    className="w-full bg-transparent border-b border-gray-800 text-xl font-bold text-white placeholder-gray-800 focus:border-white focus:outline-none transition-colors py-2"
+                                                    placeholder="Ej. Camiseta Titular 2024"
+                                                />
+                                            </div>
+
+                                            {/* Categories Grid */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Categoría</label>
+                                                    <input
+                                                        type="text"
+                                                        list="categories-list"
+                                                        value={newProduct.category}
+                                                        onChange={e => setNewProduct({ ...newProduct, category: e.target.value.toUpperCase() })}
+                                                        className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase placeholder-gray-600 font-bold"
+                                                        placeholder="Seleccionar..."
+                                                    />
+                                                    <datalist id="categories-list">
+                                                        {categories.map(cat => (
+                                                            <option key={cat.id} value={cat.name.toUpperCase()} />
+                                                        ))}
+                                                    </datalist>
+                                                </div>
+
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Subcategoría</label>
+                                                    <input
+                                                        type="text"
+                                                        list="subcategories-list"
+                                                        value={newProduct.subcategory}
+                                                        onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value.toUpperCase() })}
+                                                        className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase placeholder-gray-600 font-bold"
+                                                        placeholder="Seleccionar..."
+                                                    />
+                                                    <datalist id="subcategories-list">
+                                                        {categories.find(c => c.name.toUpperCase() === newProduct.category)?.subcategories?.map(sub => (
+                                                            <option key={sub} value={sub.toUpperCase()} />
+                                                        ))}
+                                                    </datalist>
+                                                </div>
+                                            </div>
+
+                                            {/* Pricing Section */}
+                                            <div className="space-y-6 pt-4 border-t border-gray-900">
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Costo Proveedor (Gs.)</label>
+                                                    <input
+                                                        type="number"
+                                                        value={newProduct.costPrice || ''}
+                                                        onChange={e => setNewProduct({ ...newProduct, costPrice: e.target.value })}
+                                                        className="w-full bg-[#050510] border border-blue-900/30 rounded-lg p-4 text-sm focus:border-blue-500 focus:outline-none transition-colors text-blue-200 font-mono"
+                                                        placeholder="Costo de adquisición"
+                                                    />
+                                                    <p className="text-[9px] text-gray-600">* Solo visible para administración.</p>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-8">
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Precio Regular (Gs.)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={newProduct.originalPrice}
+                                                            onChange={e => setNewProduct({ ...newProduct, originalPrice: e.target.value })}
+                                                            className="w-full bg-black border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors font-mono text-gray-300"
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Precio Oferta (Gs.)</label>
+                                                        <input
+                                                            type="number"
+                                                            value={newProduct.price}
+                                                            onChange={e => setNewProduct({ ...newProduct, price: e.target.value })}
+                                                            className="w-full bg-black border border-red-900/50 rounded-lg p-4 text-sm focus:border-red-500 focus:outline-none transition-colors font-bold font-mono text-white"
+                                                            placeholder="0"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Description Section */}
+                                            <div className="space-y-2 pt-4 border-t border-gray-900">
+                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Descripción del Producto</label>
+                                                <textarea
+                                                    value={newProduct.description}
+                                                    onChange={e => setNewProduct({ ...newProduct, description: e.target.value })}
+                                                    className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white placeholder-gray-600 min-h-[100px]"
+                                                    placeholder="Detalles del producto, materiales, cuidados..."
+                                                />
+                                            </div>
+
+                                            {/* Settings Section (Imported / Featured) - Row Layout */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-900">
+
+                                                <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
+                                                    <span className="text-xs font-bold text-gray-400 uppercase">¿Es Producto Importado?</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsImported(prev => !prev)}
+                                                        className={`w-12 h-6 rounded-full p-1 transition-colors relative ${isImported ? 'bg-purple-600' : 'bg-gray-800'}`}
+                                                    >
+                                                        <div className={`w-4 h-4 rounded-full bg-white transition-transform ${isImported ? 'translate-x-6' : 'translate-x-0'}`} />
+                                                    </button>
+                                                </div>
+
+                                                {/* Featured Toggles */}
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
+                                                        <span className="text-xs font-bold text-yellow-500 uppercase flex items-center gap-2">
+                                                            <span className="material-symbols-outlined text-xs">star</span> Destacar en Home
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNewProduct({ ...newProduct, isFeatured: !newProduct.isFeatured })}
+                                                            className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${newProduct.isFeatured ? 'bg-yellow-500 border-yellow-500 text-black' : 'border-gray-600 bg-transparent'}`}
+                                                        >
+                                                            {newProduct.isFeatured && <span className="material-symbols-outlined text-[14px] font-bold">check</span>}
+                                                        </button>
+                                                    </div>
+                                                    <div className="flex items-center justify-between bg-[#0F0F0F] p-4 rounded-lg border border-gray-800">
+                                                        <span className="text-xs font-bold text-blue-500 uppercase flex items-center gap-2">
+                                                            <span className="material-symbols-outlined text-xs">category</span> Destacar en Categoría
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setNewProduct({ ...newProduct, isCategoryFeatured: !newProduct.isCategoryFeatured })}
+                                                            className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${newProduct.isCategoryFeatured ? 'bg-blue-500 border-blue-500 text-black' : 'border-gray-600 bg-transparent'}`}
+                                                        >
+                                                            {newProduct.isCategoryFeatured && <span className="material-symbols-outlined text-[14px] font-bold">check</span>}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                            {isImported && (
+                                                <div className="mt-2 text-[10px] text-purple-400 bg-purple-900/10 p-3 rounded border border-purple-500/20 animate-in fade-in slide-in-from-top-1">
+                                                    <p className="font-bold mb-1">INFO IMPORTACIÓN:</p>
+                                                    <ul className="list-disc pl-4 space-y-1 opacity-80">
+                                                        <li>Se mostrará la etiqueta "25 a 30 días".</li>
+                                                        <li>Requiere seña mínima del 50%.</li>
+                                                    </ul>
+                                                </div>
+                                            )}
+
+                                            {/* Keep Type (Clothing/Footwear) but hidden if possible or discreet? 
                                             Image 2 didn't show it but it affects logic. 
                                             Let's keep it very minimal or infer it. 
                                             Actually, let's infer it! 
                                             If Category is 'CALZADOS', set type='footwear'. Else 'clothing'.
                                             I'll add a useEffect for this in a separate step or leave the visual toggle for now but cleaner.
                                         */}
-                                        <div className="flex justify-center pt-2">
-                                            <div className="inline-flex bg-gray-900 rounded-lg p-1">
-                                                <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'clothing' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'clothing' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Ropa (Talles)</button>
-                                                <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'footwear' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'footwear' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Calzado (Num)</button>
+                                            <div className="flex justify-center pt-2">
+                                                <div className="inline-flex bg-gray-900 rounded-lg p-1">
+                                                    <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'clothing' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'clothing' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Ropa (Talles)</button>
+                                                    <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'footwear' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'footwear' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Calzado (Num)</button>
+                                                </div>
                                             </div>
+
                                         </div>
+                                        <div className="space-y-6">
+                                            {/* Stock and Colors Grid */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                {/* Left Col: Stock Matrix */}
+                                                <div className="space-y-4">
+                                                    <div className="flex justify-between items-center">
+                                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Matriz de Stock (Talles)</label>
+                                                        <button type="button" onClick={() => {
+                                                            const newSize = prompt("Ingrese el nuevo talle:");
+                                                            if (newSize) setStockMatrix([...stockMatrix, { size: newSize.toUpperCase(), quantity: 0 }]);
+                                                        }} className="text-xs font-bold text-white hover:text-gray-300 transition-colors">
+                                                            + Añadir Talle
+                                                        </button>
+                                                    </div>
 
-                                    </div>
-                                    <div className="space-y-6">
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between items-center">
-                                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Matriz de Stock</label>
-                                                <button type="button" onClick={() => {
-                                                    const newSize = prompt("Ingrese el nuevo talle:");
-                                                    if (newSize) setStockMatrix([...stockMatrix, { size: newSize.toUpperCase(), quantity: 0 }]);
-                                                }} className="text-xs font-bold text-white hover:text-gray-300 transition-colors">
-                                                    + Añadir
-                                                </button>
-                                            </div>
+                                                    <div className="bg-black rounded-xl border border-gray-800 overflow-hidden">
+                                                        {stockMatrix.map((item, index) => (
+                                                            <div key={index} className="flex items-center justify-between p-4 border-b border-gray-900 last:border-0 hover:bg-white/5 transition-colors group">
+                                                                <span className="font-bold text-lg text-white w-16">{item.size}</span>
 
-                                            <div className="bg-black rounded-xl border border-gray-800 overflow-hidden">
-                                                {stockMatrix.map((item, index) => (
-                                                    <div key={index} className="flex items-center justify-between p-4 border-b border-gray-900 last:border-0 hover:bg-white/5 transition-colors group">
-                                                        <span className="font-bold text-lg text-white w-16">{item.size}</span>
-
-                                                        <div className="flex items-center gap-4">
-                                                            <div className="flex items-center gap-2">
-                                                                <input
-                                                                    type="number"
-                                                                    value={item.quantity}
-                                                                    onChange={(e) => {
-                                                                        const val = parseInt(e.target.value) || 0;
-                                                                        const newMatrix = [...stockMatrix];
-                                                                        newMatrix[index].quantity = val;
-                                                                        setStockMatrix(newMatrix);
-                                                                    }}
-                                                                    className="w-16 bg-transparent text-right font-mono text-white text-lg font-bold focus:outline-none"
-                                                                />
-                                                                <span className="text-xs text-gray-600 font-bold uppercase">unid.</span>
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <input
+                                                                            type="number"
+                                                                            value={item.quantity}
+                                                                            onChange={(e) => {
+                                                                                const val = parseInt(e.target.value) || 0;
+                                                                                const newMatrix = [...stockMatrix];
+                                                                                newMatrix[index].quantity = val;
+                                                                                setStockMatrix(newMatrix);
+                                                                            }}
+                                                                            className="w-16 bg-transparent text-right font-mono text-white text-lg font-bold focus:outline-none"
+                                                                        />
+                                                                        <span className="text-xs text-gray-600 font-bold uppercase">unid.</span>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const newMatrix = [...stockMatrix];
+                                                                            newMatrix.splice(index, 1);
+                                                                            setStockMatrix(newMatrix);
+                                                                        }}
+                                                                        className="p-2 text-gray-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                                    >
+                                                                        <Trash2 size={16} />
+                                                                    </button>
+                                                                </div>
                                                             </div>
+                                                        ))}
+                                                        {stockMatrix.length === 0 && (
+                                                            <div className="p-8 text-center text-gray-600 text-xs">
+                                                                No hay talles configurados.
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Right Col: Color Variants */}
+                                                <div className="space-y-4">
+                                                    <div className="flex justify-between items-center">
+                                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Variantes de Color</label>
+                                                    </div>
+
+                                                    <div className="space-y-4">
+                                                        {/* Add Color Form */}
+                                                        <div className="bg-[#0F0F0F] p-4 rounded-xl border border-gray-800 space-y-4">
+                                                            <div className="flex gap-2">
+                                                                <div className="flex-1 space-y-1">
+                                                                    <label className="text-[10px] text-gray-400 font-bold uppercase">Nombre</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={tempColorName}
+                                                                        onChange={(e) => setTempColorName(e.target.value)}
+                                                                        className="w-full bg-black border border-gray-700 rounded p-2 text-xs text-white focus:border-primary focus:outline-none"
+                                                                        placeholder="Ej: Rojo..."
+                                                                    />
+                                                                </div>
+                                                                <div className="space-y-1">
+                                                                    <label className="text-[10px] text-gray-400 font-bold uppercase">Color</label>
+                                                                    <div className="flex items-center">
+                                                                        <input
+                                                                            type="color"
+                                                                            value={tempColorHex}
+                                                                            onChange={(e) => setTempColorHex(e.target.value)}
+                                                                            className="h-8 w-8 bg-transparent border border-gray-700 rounded cursor-pointer p-0.5"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
                                                             <button
                                                                 type="button"
-                                                                onClick={() => {
-                                                                    const newMatrix = [...stockMatrix];
-                                                                    newMatrix.splice(index, 1);
-                                                                    setStockMatrix(newMatrix);
-                                                                }}
-                                                                className="p-2 text-gray-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                                                onClick={() => colorFileInputRef.current?.click()}
+                                                                disabled={isColorUploading || !tempColorName.trim()}
+                                                                className="w-full bg-white text-black py-2 rounded text-xs font-bold uppercase tracking-wider hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                                                             >
-                                                                <Trash2 size={16} />
+                                                                {isColorUploading ? <Loader2 size={14} className="animate-spin" /> : <UploadCloud size={14} />}
+                                                                {isColorUploading ? 'Subiendo...' : 'Subir Imagen Nueva'}
                                                             </button>
+                                                            <input
+                                                                type="file"
+                                                                ref={colorFileInputRef}
+                                                                onChange={handleColorFileSelect}
+                                                                className="hidden"
+                                                                accept="image/*"
+                                                            />
+
+                                                            {/* Gallery Selection for Color */}
+                                                            {newProduct.images.length > 0 && newProduct.images[0] !== '' && (
+                                                                <div className="space-y-2 pt-2 border-t border-gray-800/50">
+                                                                    <p className="text-[10px] text-gray-500 font-bold uppercase">O Vincular con Imagen de Galería:</p>
+                                                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-800">
+                                                                        {newProduct.images.filter(img => img && img.trim() !== '').map((img, idx) => (
+                                                                            <button
+                                                                                key={idx}
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    if (!tempColorName.trim()) {
+                                                                                        alert('Ingresa el nombre del color primero');
+                                                                                        return;
+                                                                                    }
+                                                                                    setNewProduct(prev => ({
+                                                                                        ...prev,
+                                                                                        colors: [...(prev.colors || []), {
+                                                                                            name: tempColorName,
+                                                                                            image: img,
+                                                                                            hex: tempColorHex
+                                                                                        }]
+                                                                                    }));
+                                                                                    setTempColorName('');
+                                                                                    setTempColorHex('#000000');
+                                                                                }}
+                                                                                className="relative w-10 h-10 rounded overflow-hidden border border-gray-700 hover:border-primary shrink-0 transition-colors group/img"
+                                                                                title={`Usar imagen #${idx + 1}`}
+                                                                            >
+                                                                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                                                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                                                                                    <Plus size={12} className="text-white" />
+                                                                                </div>
+                                                                            </button>
+                                                                        ))}
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
+
+                                                        {/* Colors List */}
+                                                        {newProduct.colors && newProduct.colors.length > 0 ? (
+                                                            <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                                                {newProduct.colors.map((color, idx) => (
+                                                                    <div key={idx} className="flex items-center gap-2 bg-gray-900/50 p-2 rounded border border-gray-800">
+                                                                        <div
+                                                                            className="w-6 h-6 rounded-full border border-gray-700 shrink-0 shadow-sm"
+                                                                            style={{ backgroundColor: color.hex || '#000' }}
+                                                                        />
+                                                                        <div className="w-6 h-6 rounded overflow-hidden bg-black border border-gray-700 shrink-0 opacity-50">
+                                                                            <img src={color.image} alt="Ref" className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                        <span className="text-[10px] font-bold text-white truncate flex-1">{color.name}</span>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => removeColor(color.name)}
+                                                                            className="text-gray-500 hover:text-red-500 p-1"
+                                                                        >
+                                                                            <X size={12} />
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            <div className="text-center py-4 border border-dashed border-gray-800 rounded-lg">
+                                                                <p className="text-[10px] text-gray-600">Sin variantes de color</p>
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                ))}
-                                                {stockMatrix.length === 0 && (
-                                                    <div className="p-8 text-center text-gray-600 text-xs">
-                                                        No hay talles configurados.
-                                                    </div>
-                                                )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Etiquetas</label>
-                                            <div className="flex flex-wrap gap-2">
-                                                {availableTags.map(tag => (
-                                                    <button key={tag} type="button" onClick={() => toggleTag(tag)} className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${newProduct.tags.includes(tag) ? 'bg-primary text-white border-primary' : 'bg-transparent text-gray-500 border-gray-800 hover:border-gray-500'}`}>
-                                                        {tag}
-                                                    </button>
-                                                ))}
+                                            <div className="space-y-2">
+                                                <label className="text-xs font-bold text-gray-500 uppercase">Etiquetas</label>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {availableTags.map(tag => (
+                                                        <button key={tag} type="button" onClick={() => toggleTag(tag)} className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${newProduct.tags.includes(tag) ? 'bg-primary text-white border-primary' : 'bg-transparent text-gray-500 border-gray-800 hover:border-gray-500'}`}>
+                                                            {tag}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between items-center">
-                                                <label className="text-xs font-bold text-gray-500 uppercase">Galería de Imágenes</label>
-                                                <div className="flex gap-2">
-                                                    <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-white bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded flex items-center gap-1 font-bold transition-colors">
-                                                        {isUploading ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
-                                                        {isUploading ? 'SUBIENDO...' : 'SUBIR DESDE PC'}
-                                                    </button>
-                                                    {/* <button type="button" onClick={handleGooglePhotosSelect} className="text-xs text-white bg-green-600 hover:bg-green-500 px-3 py-1 rounded flex items-center gap-1 font-bold transition-colors">
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center">
+                                                    <label className="text-xs font-bold text-gray-500 uppercase">Galería de Imágenes</label>
+                                                    <div className="flex gap-2">
+                                                        <button type="button" onClick={() => fileInputRef.current?.click()} className="text-xs text-white bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded flex items-center gap-1 font-bold transition-colors">
+                                                            {isUploading ? <Loader2 size={12} className="animate-spin" /> : <UploadCloud size={12} />}
+                                                            {isUploading ? 'SUBIENDO...' : 'SUBIR DESDE PC'}
+                                                        </button>
+                                                        {/* <button type="button" onClick={handleGooglePhotosSelect} className="text-xs text-white bg-green-600 hover:bg-green-500 px-3 py-1 rounded flex items-center gap-1 font-bold transition-colors">
                                                         <GoogleIcon size={12} />
                                                         GOOGLE PHOTOS
                                                     </button> */}
-                                                    <button type="button" onClick={addImageField} className="text-xs text-primary font-bold hover:underline">+ Agregar URL Manual</button>
-                                                    <input
-                                                        type="file"
-                                                        ref={fileInputRef}
-                                                        onChange={handleFileSelect}
-                                                        multiple
-                                                        accept="image/*"
-                                                        className="hidden"
-                                                    />
+                                                        <button type="button" onClick={addImageField} className="text-xs text-primary font-bold hover:underline">+ Agregar URL Manual</button>
+                                                        <input
+                                                            type="file"
+                                                            ref={fileInputRef}
+                                                            onChange={handleFileSelect}
+                                                            multiple
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                                                {newProduct.images.map((img, idx) => (
-                                                    <div key={idx} className="flex gap-2 items-start group bg-gray-900/50 p-3 rounded border border-gray-800">
-                                                        <span className="text-gray-600 font-mono text-xs w-4 mt-3">{idx + 1}</span>
-                                                        <div className="flex flex-col gap-2 flex-1">
-                                                            <div className="flex gap-2">
-                                                                <div className="relative w-10 h-10 bg-gray-900 rounded overflow-hidden flex-shrink-0 border border-gray-800">
-                                                                    {img && <img src={img} alt="" className="w-full h-full object-cover" />}
+                                                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                                    {newProduct.images.map((img, idx) => (
+                                                        <div key={idx} className="flex gap-2 items-start group bg-gray-900/50 p-3 rounded border border-gray-800">
+                                                            <span className="text-gray-600 font-mono text-xs w-4 mt-3">{idx + 1}</span>
+                                                            <div className="flex flex-col gap-2 flex-1">
+                                                                <div className="flex gap-2">
+                                                                    <div className="relative w-10 h-10 bg-gray-900 rounded overflow-hidden flex-shrink-0 border border-gray-800">
+                                                                        {img && <img src={img} alt="" className="w-full h-full object-cover" />}
+                                                                    </div>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={img}
+                                                                        onChange={e => handleImageChange(idx, e.target.value)}
+                                                                        className="flex-1 bg-black border border-gray-800 rounded p-2 text-xs focus:border-primary focus:outline-none transition-colors"
+                                                                        placeholder="URL de la imagen (https://...)"
+                                                                    />
                                                                 </div>
                                                                 <input
                                                                     type="text"
-                                                                    value={img}
-                                                                    onChange={e => handleImageChange(idx, e.target.value)}
-                                                                    className="flex-1 bg-black border border-gray-800 rounded p-2 text-xs focus:border-primary focus:outline-none transition-colors"
-                                                                    placeholder="URL de la imagen (https://...)"
+                                                                    value={newProduct.imageAlts?.[idx] || ''}
+                                                                    onChange={e => handleAltChange(idx, e.target.value)}
+                                                                    className="w-full bg-black/50 border border-gray-800/50 rounded p-1.5 text-[10px] text-gray-300 focus:border-gray-500 focus:outline-none transition-colors placeholder:text-gray-700"
+                                                                    placeholder={`Texto Alternativo (ALT) para imagen #${idx + 1} - Dejar vacío para usar nombre del producto`}
                                                                 />
                                                             </div>
-                                                            <input
-                                                                type="text"
-                                                                value={newProduct.imageAlts?.[idx] || ''}
-                                                                onChange={e => handleAltChange(idx, e.target.value)}
-                                                                className="w-full bg-black/50 border border-gray-800/50 rounded p-1.5 text-[10px] text-gray-300 focus:border-gray-500 focus:outline-none transition-colors placeholder:text-gray-700"
-                                                                placeholder={`Texto Alternativo (ALT) para imagen #${idx + 1} - Dejar vacío para usar nombre del producto`}
-                                                            />
-                                                        </div>
-                                                        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <button type="button" onClick={() => moveImageUp(idx)} disabled={idx === 0} className="text-gray-500 hover:text-white disabled:opacity-0"><ChevronUp size={12} /></button>
-                                                        </div>
-                                                        <button type="button" onClick={() => removeImageField(idx)} className="text-gray-600 hover:text-red-500"><X size={14} /></button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            <p className="text-[10px] text-gray-500 italic">
-                                                * La imagen #1 será la portada. Incluye descripciones ALT para mejorar el SEO.</p>
-                                        </div>
-                                    </div>
-                                    <div className="md:col-span-2 pt-4 border-t border-gray-800">
-                                        <button type="submit" className={`w-full font-black py-4 rounded-lg transition-all uppercase text-sm tracking-widest shadow-lg transform hover:translate-y-[-2px] ${editingProductId ? 'bg-yellow-500 hover:bg-yellow-400 text-black' : 'bg-white hover:bg-gray-200 text-black'}`}>
-                                            {editingProductId ? 'ACTUALIZAR PRODUCTO' : 'PUBLICAR PRODUCTO'}
-                                        </button>
-                                        <button type="button" onClick={resetForm} className="w-full bg-transparent border border-gray-800 text-gray-500 font-bold py-3 mt-3 rounded-lg hover:border-white hover:text-white transition-all uppercase text-xs tracking-widest">
-                                            {editingProductId ? 'CANCELAR EDICIÓN' : 'CANCELAR'}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        )}
-
-                        {/* Inventory List */}
-                        <div className="space-y-6">
-                            <h3 className="text-2xl font-bold border-b border-gray-800 pb-2">Inventario</h3>
-                            <div className="space-y-4">
-                                {Object.entries(productsByCategory).map(([category, catItems]: [string, Product[]]) => {
-                                    // Group by Subcategory dynamically
-                                    const subcats = catItems.reduce((acc, item) => {
-                                        const sub = item.subcategory ? item.subcategory.trim().toUpperCase() : 'OTROS';
-                                        if (!acc[sub]) acc[sub] = [];
-                                        acc[sub].push(item);
-                                        return acc;
-                                    }, {} as Record<string, Product[]>);
-
-                                    // Sort subcategories (Optional: Custom order if needed, otherwise alphabetical)
-                                    // We want 'OTROS' last usually, but simple keys is fine for now.
-                                    const subcatKeys = Object.keys(subcats).sort();
-
-                                    // Determine Matrix Columns based on Category
-                                    const isFootwear = category === 'CALZADOS';
-                                    const matrixColumns = isFootwear
-                                        ? ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45']
-                                        : ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
-
-                                    return (
-                                        <div key={category} className="border border-gray-800 rounded-xl overflow-hidden bg-[#0a0a0a] shadow-sm">
-                                            <button onClick={() => setExpandedCategory(expandedCategory === category ? null : category)} className="w-full flex justify-between items-center p-4 bg-white/5 hover:bg-white/10 transition-colors">
-                                                <div className="flex items-center gap-3">
-                                                    <span className={`transition-transform duration-300 ${expandedCategory === category ? 'rotate-180' : ''}`}><ChevronDown size={20} /></span>
-                                                    <h4 className="font-bold text-lg uppercase tracking-wide">{category}</h4>
-                                                    <span className="bg-gray-800 text-xs px-2 py-1 rounded-full text-gray-300 border border-gray-700">{catItems.length} items</span>
-                                                </div>
-                                            </button>
-
-                                            {expandedCategory === category && (
-                                                <div className="bg-black animate-in slide-in-from-top-2 duration-300">
-                                                    {subcatKeys.map(subKey => {
-                                                        const isExpanded = expandedSubcategories.includes(`${category}-${subKey}`);
-                                                        return (
-                                                            <div key={subKey} className="border-b border-gray-900 last:border-0">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const key = `${category}-${subKey}`;
-                                                                        setExpandedSubcategories(prev =>
-                                                                            prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-                                                                        );
-                                                                    }}
-                                                                    className="w-full bg-gray-900/30 px-4 py-3 flex items-center justify-between hover:bg-gray-900/50 transition-colors group/sub"
-                                                                >
-                                                                    <div className="flex items-center gap-3">
-                                                                        <span className={`transition-transform duration-200 text-gray-500 group-hover/sub:text-white ${isExpanded ? 'rotate-0' : '-rotate-90'}`}>
-                                                                            <ChevronDown size={16} />
-                                                                        </span>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="w-1.5 h-1.5 rounded-full bg-primary/50"></span>
-                                                                            <h5 className="text-xs font-black text-gray-400 group-hover/sub:text-white uppercase tracking-[0.2em] transition-colors">{subKey}</h5>
-                                                                        </div>
-                                                                    </div>
-                                                                    <span className="text-[10px] text-gray-600 font-mono bg-black/20 px-2 py-1 rounded">
-                                                                        {subcats[subKey].length} items
-                                                                    </span>
-                                                                </button>
-
-                                                                {/* Grid of products - Only shown if expanded */}
-                                                                {isExpanded && (
-                                                                    <div className="p-4 bg-black/20 border-t border-gray-900/50 animate-in slide-in-from-top-1 duration-200">
-                                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                                                                            {subcats[subKey].map(p => {
-                                                                                // Sort inventory for display (S, M, L, etc.)
-                                                                                const sortedInventory = p.inventory && p.inventory.length > 0
-                                                                                    ? [...p.inventory].sort((a, b) => {
-                                                                                        const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
-                                                                                        const aIdx = sizes.indexOf(a.size);
-                                                                                        const bIdx = sizes.indexOf(b.size);
-                                                                                        if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-                                                                                        return a.size.localeCompare(b.size);
-                                                                                    })
-                                                                                    : [];
-
-                                                                                return (
-                                                                                    <div key={p.id} className="bg-[#0F0F0F] rounded-lg p-3 flex gap-3 border border-gray-800 shadow-sm relative group hover:border-gray-600 transition-all hover:translate-y-[-2px]">
-                                                                                        {/* Image */}
-                                                                                        <div className="w-20 h-24 bg-gray-900 rounded overflow-hidden shrink-0 border border-gray-800">
-                                                                                            <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
-                                                                                        </div>
-
-                                                                                        {/* Content */}
-                                                                                        <div className="flex-1 min-w-0 flex flex-col justify-between">
-                                                                                            <div>
-                                                                                                <div className="flex justify-between items-start">
-                                                                                                    <h4 className="font-bold text-sm text-white leading-tight truncate pr-6" title={p.name}>{p.name}</h4>
-                                                                                                </div>
-
-                                                                                                <div className="flex items-center gap-2 mt-1">
-                                                                                                    <span className="text-[9px] font-black text-blue-500 uppercase">ADMIN</span>
-                                                                                                    <span className="text-[9px] font-bold text-green-500 bg-green-900/10 px-1.5 py-0.5 rounded border border-green-900/30">ACTIVE</span>
-                                                                                                    {p.isNew && <span className="text-[9px] font-bold text-purple-400 bg-purple-900/10 px-1.5 py-0.5 rounded border border-purple-900/30">NEW</span>}
-                                                                                                </div>
-
-                                                                                                <p className="text-[9px] text-gray-600 font-mono mt-1 truncate">ID: {p.id.slice(-6).toUpperCase()}</p>
-                                                                                            </div>
-
-                                                                                            {/* Stock Pills */}
-                                                                                            <div className="flex flex-wrap gap-1.5 mt-2">
-                                                                                                {sortedInventory.length > 0 ? (
-                                                                                                    sortedInventory.map(inv => (
-                                                                                                        <div key={inv.size} className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${inv.quantity > 0 ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-red-900/10 border-red-900/30 text-red-500'}`}>
-                                                                                                            <span className="text-[10px] font-bold">{inv.size}</span>
-                                                                                                            <span className={`text-[10px] font-mono ${inv.quantity > 0 ? 'text-green-400' : 'text-red-500'}`}>{inv.quantity}</span>
-                                                                                                        </div>
-                                                                                                    ))
-                                                                                                ) : (
-                                                                                                    <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded border bg-gray-800 border-gray-700 text-gray-300">
-                                                                                                        <span className="text-[10px] font-bold">Total</span>
-                                                                                                        <span className={`text-[10px] font-mono ${p.stock && p.stock > 0 ? 'text-green-400' : 'text-red-500'}`}>{p.stock || 0}</span>
-                                                                                                    </div>
-                                                                                                )}
-                                                                                            </div>
-                                                                                        </div>
-
-                                                                                        {/* Actions & Price */}
-                                                                                        <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
-                                                                                            <span className="bg-gray-900 text-gray-300 text-[10px] font-mono px-2 py-1 rounded border border-gray-800 font-bold">
-                                                                                                Gs. {(p.price).toLocaleString('es-PY')}
-                                                                                            </span>
-
-                                                                                            <div className="flex gap-1 mt-auto pt-4 md:pt-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0F0F0F]/80 backdrop-blur-sm rounded-lg p-1">
-                                                                                                <button onClick={() => handleEditProduct(p)} className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg transition-transform hover:scale-110"><Edit size={12} /></button>
-                                                                                                <button onClick={() => deleteProduct(p.id)} className="p-1.5 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white rounded-full transition-colors"><Trash2 size={12} /></button>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                );
-                                                                            })}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
+                                                            <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <button type="button" onClick={() => moveImageUp(idx)} disabled={idx === 0} className="text-gray-500 hover:text-white disabled:opacity-0"><ChevronUp size={12} /></button>
                                                             </div>
-                                                        );
-                                                    })}
+                                                            <button type="button" onClick={() => removeImageField(idx)} className="text-gray-600 hover:text-red-500"><X size={14} /></button>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            )}
+                                                <p className="text-[10px] text-gray-500 italic">
+                                                    * La imagen #1 será la portada. Incluye descripciones ALT para mejorar el SEO.</p>
+                                            </div>
+
+                                            {/* (Color Variants moved to upper section) */}
                                         </div>
-                                    );
-                                })}
+                                        <div className="md:col-span-2 pt-4 border-t border-gray-800">
+                                            <button type="submit" className={`w-full font-black py-4 rounded-lg transition-all uppercase text-sm tracking-widest shadow-lg transform hover:translate-y-[-2px] ${editingProductId ? 'bg-yellow-500 hover:bg-yellow-400 text-black' : 'bg-white hover:bg-gray-200 text-black'}`}>
+                                                {editingProductId ? 'ACTUALIZAR PRODUCTO' : 'PUBLICAR PRODUCTO'}
+                                            </button>
+                                            <button type="button" onClick={resetForm} className="w-full bg-transparent border border-gray-800 text-gray-500 font-bold py-3 mt-3 rounded-lg hover:border-white hover:text-white transition-all uppercase text-xs tracking-widest">
+                                                {editingProductId ? 'CANCELAR EDICIÓN' : 'CANCELAR'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            )}
+
+                            {/* Inventory List */}
+                            <div className="space-y-6">
+                                <h3 className="text-2xl font-bold border-b border-gray-800 pb-2">Inventario</h3>
+                                <div className="space-y-4">
+                                    {Object.entries(productsByCategory).map(([category, catItems]: [string, Product[]]) => {
+                                        // Group by Subcategory dynamically
+                                        const subcats = catItems.reduce((acc, item) => {
+                                            const sub = item.subcategory ? item.subcategory.trim().toUpperCase() : 'OTROS';
+                                            if (!acc[sub]) acc[sub] = [];
+                                            acc[sub].push(item);
+                                            return acc;
+                                        }, {} as Record<string, Product[]>);
+
+                                        // Sort subcategories (Optional: Custom order if needed, otherwise alphabetical)
+                                        // We want 'OTROS' last usually, but simple keys is fine for now.
+                                        const subcatKeys = Object.keys(subcats).sort();
+
+                                        // Determine Matrix Columns based on Category
+                                        const isFootwear = category === 'CALZADOS';
+                                        const matrixColumns = isFootwear
+                                            ? ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45']
+                                            : ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+
+                                        return (
+                                            <div key={category} className="border border-gray-800 rounded-xl overflow-hidden bg-[#0a0a0a] shadow-sm">
+                                                <button onClick={() => setExpandedCategory(expandedCategory === category ? null : category)} className="w-full flex justify-between items-center p-4 bg-white/5 hover:bg-white/10 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className={`transition-transform duration-300 ${expandedCategory === category ? 'rotate-180' : ''}`}><ChevronDown size={20} /></span>
+                                                        <h4 className="font-bold text-lg uppercase tracking-wide">{category}</h4>
+                                                        <span className="bg-gray-800 text-xs px-2 py-1 rounded-full text-gray-300 border border-gray-700">{catItems.length} items</span>
+                                                    </div>
+                                                </button>
+
+                                                {expandedCategory === category && (
+                                                    <div className="bg-black animate-in slide-in-from-top-2 duration-300">
+                                                        {subcatKeys.map(subKey => {
+                                                            const isExpanded = expandedSubcategories.includes(`${category}-${subKey}`);
+                                                            return (
+                                                                <div key={subKey} className="border-b border-gray-900 last:border-0">
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            const key = `${category}-${subKey}`;
+                                                                            setExpandedSubcategories(prev =>
+                                                                                prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+                                                                            );
+                                                                        }}
+                                                                        className="w-full bg-gray-900/30 px-4 py-3 flex items-center justify-between hover:bg-gray-900/50 transition-colors group/sub"
+                                                                    >
+                                                                        <div className="flex items-center gap-3">
+                                                                            <span className={`transition-transform duration-200 text-gray-500 group-hover/sub:text-white ${isExpanded ? 'rotate-0' : '-rotate-90'}`}>
+                                                                                <ChevronDown size={16} />
+                                                                            </span>
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className="w-1.5 h-1.5 rounded-full bg-primary/50"></span>
+                                                                                <h5 className="text-xs font-black text-gray-400 group-hover/sub:text-white uppercase tracking-[0.2em] transition-colors">{subKey}</h5>
+                                                                            </div>
+                                                                        </div>
+                                                                        <span className="text-[10px] text-gray-600 font-mono bg-black/20 px-2 py-1 rounded">
+                                                                            {subcats[subKey].length} items
+                                                                        </span>
+                                                                    </button>
+
+                                                                    {/* Grid of products - Only shown if expanded */}
+                                                                    {isExpanded && (
+                                                                        <div className="p-4 bg-black/20 border-t border-gray-900/50 animate-in slide-in-from-top-1 duration-200">
+                                                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                                                                                {subcats[subKey].map(p => {
+                                                                                    // Sort inventory for display (S, M, L, etc.)
+                                                                                    const sortedInventory = p.inventory && p.inventory.length > 0
+                                                                                        ? [...p.inventory].sort((a, b) => {
+                                                                                            const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+                                                                                            const aIdx = sizes.indexOf(a.size);
+                                                                                            const bIdx = sizes.indexOf(b.size);
+                                                                                            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+                                                                                            return a.size.localeCompare(b.size);
+                                                                                        })
+                                                                                        : [];
+
+                                                                                    return (
+                                                                                        <div key={p.id} className="bg-[#0F0F0F] rounded-lg p-3 flex gap-3 border border-gray-800 shadow-sm relative group hover:border-gray-600 transition-all hover:translate-y-[-2px]">
+                                                                                            {/* Image */}
+                                                                                            <div className="w-20 h-24 bg-gray-900 rounded overflow-hidden shrink-0 border border-gray-800">
+                                                                                                <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
+                                                                                            </div>
+
+                                                                                            {/* Content */}
+                                                                                            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                                                                                                <div>
+                                                                                                    <div className="flex justify-between items-start">
+                                                                                                        <h4 className="font-bold text-sm text-white leading-tight truncate pr-6" title={p.name}>{p.name}</h4>
+                                                                                                    </div>
+
+                                                                                                    <div className="flex items-center gap-2 mt-1">
+                                                                                                        <span className="text-[9px] font-black text-blue-500 uppercase">ADMIN</span>
+                                                                                                        <span className="text-[9px] font-bold text-green-500 bg-green-900/10 px-1.5 py-0.5 rounded border border-green-900/30">ACTIVE</span>
+                                                                                                        {p.isNew && <span className="text-[9px] font-bold text-purple-400 bg-purple-900/10 px-1.5 py-0.5 rounded border border-purple-900/30">NEW</span>}
+                                                                                                    </div>
+
+                                                                                                    <p className="text-[9px] text-gray-600 font-mono mt-1 truncate">ID: {p.id.slice(-6).toUpperCase()}</p>
+                                                                                                </div>
+
+                                                                                                {/* Stock Pills */}
+                                                                                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                                                    {sortedInventory.length > 0 ? (
+                                                                                                        sortedInventory.map(inv => (
+                                                                                                            <div key={inv.size} className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${inv.quantity > 0 ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-red-900/10 border-red-900/30 text-red-500'}`}>
+                                                                                                                <span className="text-[10px] font-bold">{inv.size}</span>
+                                                                                                                <span className={`text-[10px] font-mono ${inv.quantity > 0 ? 'text-green-400' : 'text-red-500'}`}>{inv.quantity}</span>
+                                                                                                            </div>
+                                                                                                        ))
+                                                                                                    ) : (
+                                                                                                        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded border bg-gray-800 border-gray-700 text-gray-300">
+                                                                                                            <span className="text-[10px] font-bold">Total</span>
+                                                                                                            <span className={`text-[10px] font-mono ${p.stock && p.stock > 0 ? 'text-green-400' : 'text-red-500'}`}>{p.stock || 0}</span>
+                                                                                                        </div>
+                                                                                                    )}
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            {/* Actions & Price */}
+                                                                                            <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
+                                                                                                <span className="bg-gray-900 text-gray-300 text-[10px] font-mono px-2 py-1 rounded border border-gray-800 font-bold">
+                                                                                                    Gs. {(p.price).toLocaleString('es-PY')}
+                                                                                                </span>
+
+                                                                                                <div className="flex gap-1 mt-auto pt-4 md:pt-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0F0F0F]/80 backdrop-blur-sm rounded-lg p-1">
+                                                                                                    <button onClick={() => handleEditProduct(p)} className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg transition-transform hover:scale-110"><Edit size={12} /></button>
+                                                                                                    <button onClick={() => deleteProduct(p.id)} className="p-1.5 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white rounded-full transition-colors"><Trash2 size={12} /></button>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    );
+                                                                                })}
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
 
                 {/* ORDERS TAB */}
@@ -1703,6 +1884,13 @@ const AdminDashboard: React.FC = () => {
                                     <button type="submit" className={`w-full font-black py-4 rounded-lg transition-all uppercase text-sm tracking-widest shadow-lg ${editingPostId ? 'bg-yellow-500 hover:bg-yellow-400 text-black' : 'bg-white hover:bg-gray-200 text-black'}`}>
                                         {editingPostId ? 'GUARDAR CAMBIOS' : 'PUBLICAR'}
                                     </button>
+                                    <div className="flex justify-end mt-4">
+                                        <SectionVisibilityToggle
+                                            isEnabled={visibilityConfig.lifestyle}
+                                            onToggle={(val) => updateVisibilityConfig({ ...visibilityConfig, lifestyle: val })}
+                                            label="VISIBILIDAD EN WEB:"
+                                        />
+                                    </div>
                                     {editingPostId && (
                                         <button type="button" onClick={handleCancelEditBlog} className="w-full bg-transparent border border-gray-800 text-gray-500 font-bold py-3 mt-2 rounded-lg hover:border-white hover:text-white transition-all uppercase text-xs tracking-widest">
                                             CANCELAR EDICIÓN
@@ -1817,7 +2005,14 @@ const AdminDashboard: React.FC = () => {
                                 </div>
 
                                 <hr className="border-gray-800 my-4" />
-                                <h3 className="text-lg font-bold text-white mb-2">Sección Lifestyle / Blog (Home)</h3>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-white">Sección Lifestyle / Blog (Home)</h3>
+                                    <SectionVisibilityToggle
+                                        isEnabled={visibilityConfig.lifestyle}
+                                        onToggle={(val) => updateVisibilityConfig({ ...visibilityConfig, lifestyle: val })}
+                                        label="VISIBLE:"
+                                    />
+                                </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-500 uppercase">Título de Sección</label>
                                     <input type="text" value={lifestyleForm.sectionTitle} onChange={e => setLifestyleForm({ ...lifestyleForm, sectionTitle: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" />
@@ -1858,9 +2053,16 @@ const AdminDashboard: React.FC = () => {
                 {
                     activeTab === 'categories' && (
                         <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <header className="border-b border-gray-800 pb-6">
-                                <h2 className="text-3xl font-bold mb-2">Gestión de Categorías</h2>
-                                <p className="text-gray-400">Crea y elimina categorías para organizar tu tienda.</p>
+                            <header className="border-b border-gray-800 pb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-2">Gestión de Categorías</h2>
+                                    <p className="text-gray-400">Crea y elimina categorías para organizar tu tienda.</p>
+                                </div>
+                                <SectionVisibilityToggle
+                                    isEnabled={visibilityConfig.categories}
+                                    onToggle={(val) => updateVisibilityConfig({ ...visibilityConfig, categories: val })}
+                                    label="VISIBLE:"
+                                />
                             </header>
 
                             <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl">
@@ -2010,6 +2212,11 @@ const AdminDashboard: React.FC = () => {
                                     <p className="text-gray-400">Personaliza el carrusel principal.</p>
                                 </div>
                                 <div className="flex items-center gap-4">
+                                    <SectionVisibilityToggle
+                                        isEnabled={visibilityConfig.hero}
+                                        onToggle={(val) => updateVisibilityConfig({ ...visibilityConfig, hero: val })}
+                                        label="VISIBLE:"
+                                    />
                                     <div className="flex flex-col items-end">
                                         <label className="text-[10px] font-bold text-gray-500 uppercase mb-1">Intervalo (seg)</label>
                                         <input

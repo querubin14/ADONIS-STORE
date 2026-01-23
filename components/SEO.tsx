@@ -10,9 +10,9 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-    title = 'SAVAGE STORE | Camisetas de Fútbol Premium & Streetwear en Paraguay',
-    description = 'Las mejores camisetas de fútbol en Paraguay: Retro, internacionales y ediciones especiales. Además de calzado urbano, relojes y accesorios exclusivos. Calidad premium en SAVAGE.',
-    image = 'https://www.savageeepy.com/crown.png',
+    title = 'ADONIS STORE',
+    description = 'Las mejores camisetas de fútbol en Paraguay: Retro, internacionales y ediciones especiales. Además de calzado urbano, relojes y accesorios exclusivos. Calidad premium en ADONIS STORE.',
+    image = 'https://www.savageeepy.com/logo-final.png',
     product = false
 }) => {
     const location = useLocation();

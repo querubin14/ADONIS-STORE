@@ -46,9 +46,9 @@ const CategoryPage: React.FC = () => {
             docTitle: 'Calzado Urbano - Savage Store Paraguay'
         };
         if (c?.includes('relojes') || c?.includes('accesorios') || c?.includes('joyas')) return {
-            title: 'Relojes y Accesorios Premium',
-            desc: 'Complementos de lujo: Relojes, cadenas y accesorios para destacar.',
-            docTitle: 'Accesorios y Relojes - Savage Store Paraguay'
+            title: 'ACCESORIOS PREMIUM',
+            desc: 'Complementos de lujo: Accesorios para destacar.',
+            docTitle: 'Accesorios - Adonis Store Paraguay'
         };
         return {
             title: category,
