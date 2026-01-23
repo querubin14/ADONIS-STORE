@@ -85,7 +85,7 @@ const CartDrawer: React.FC = () => {
         // Helper for formatting currency
         const formatPrice = (price: number) => price.toLocaleString('es-PY') + ' Gs';
 
-        const message = `*NUEVO PEDIDO SAVAGE #${displayId}* \n\n` +
+        const message = `*ADONIS STORE #${displayId}* \n\n` +
             cart.map(item => {
                 const imgLink = item.images && item.images.length > 0 ? `\n🖼️ Ver foto: ${item.images[0]}` : '';
                 return `▪️ *${item.name}*\n   Cant: ${item.quantity} | Talle: ${item.selectedSize}\n   Precio: ${formatPrice(item.price * item.quantity)}${imgLink}`;

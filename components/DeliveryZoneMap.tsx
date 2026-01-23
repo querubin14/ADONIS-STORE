@@ -519,64 +519,32 @@ const DeliveryZoneMap: React.FC = () => {
 
         const isNew = !editingId;
         const priceNum = Number(zonePrice);
+        const tempId = editingId || Date.now().toString();
 
         try {
-            // 2. Preparar los datos para la base de datos
-            const payload = {
+            // 2. Preparar los datos
+            const zoneForState: DeliveryZone = {
+                id: tempId,
                 name: zoneName,
                 price: priceNum,
-                points: currentPoints, // Se guarda como JSON automáticamente
+                points: currentPoints,
                 color: zoneColor
             };
 
-            let savedData;
-
+            // 3. Delegar al Context (que maneja Optimistic UI y Supabase)
             if (isNew) {
-                // A) CREAR NUEVA ZONA (INSERT)
-                const { data, error } = await supabase
-                    .from('delivery_zones')
-                    .insert([payload])
-                    .select()
-                    .single();
-
-                if (error) throw error;
-                savedData = data;
-
+                await addDeliveryZone(zoneForState);
             } else {
-                // B) ACTUALIZAR ZONA EXISTENTE (UPDATE)
-                const { data, error } = await supabase
-                    .from('delivery_zones')
-                    .update(payload)
-                    .eq('id', editingId)
-                    .select()
-                    .single();
-
-                if (error) throw error;
-                savedData = data;
-            }
-
-            // 3. Actualizar la interfaz visual (Contexto)
-            const zoneForState: DeliveryZone = {
-                id: savedData.id, // Usamos el ID real de la base de datos (UUID)
-                name: savedData.name,
-                price: savedData.price,
-                points: savedData.points, // Supabase devuelve JSON, JS lo lee como objeto
-                color: savedData.color || zoneColor
-            };
-
-            if (isNew) {
-                addDeliveryZone(zoneForState);
-            } else {
-                updateDeliveryZone(zoneForState);
+                await updateDeliveryZone(zoneForState);
             }
 
             // 4. Éxito
-            alert("✅ ¡Zona guardada en la Nube correctamente!");
+            alert("✅ ¡Zona guardada correctamente!");
             reset();
 
         } catch (error: any) {
             console.error("Error crítico al guardar:", error);
-            alert("❌ Error al guardar en base de datos: " + (error.message || error));
+            alert("❌ Error al guardar: " + (error.message || error));
         }
     };
 
