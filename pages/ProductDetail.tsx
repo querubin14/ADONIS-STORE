@@ -21,6 +21,7 @@ const ProductDetail: React.FC = () => {
     // State
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState<string>('');
+    const [zoomState, setZoomState] = useState({ show: false, x: 0, y: 0 });
 
     React.useEffect(() => {
         window.scrollTo(0, 0);
@@ -112,7 +113,17 @@ const ProductDetail: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-12">
                     {/* Gallery Section */}
                     <div className="space-y-6">
-                        <div className="aspect-[3/4] rounded-lg overflow-hidden bg-surface-dark border border-white/5 relative group">
+                        <div
+                            className="aspect-square rounded-lg overflow-hidden bg-surface-dark border border-white/5 relative group cursor-crosshair"
+                            onMouseEnter={() => setZoomState(prev => ({ ...prev, show: true }))}
+                            onMouseLeave={() => setZoomState(prev => ({ ...prev, show: false }))}
+                            onMouseMove={(e) => {
+                                const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+                                const x = ((e.clientX - left) / width) * 100;
+                                const y = ((e.clientY - top) / height) * 100;
+                                setZoomState({ show: true, x, y });
+                            }}
+                        >
                             <img
                                 src={product.images[selectedImage]}
                                 alt={
@@ -121,22 +132,26 @@ const ProductDetail: React.FC = () => {
                                         ? `Camiseta de fútbol ${product.name} - Savage Store Paraguay`
                                         : `${product.name} - Savage Store Paraguay`)
                                 }
-                                className={`w-full h-full object-cover ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
+                                className={`w-full h-full object-cover ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''} ${!zoomState.show ? 'transition-transform duration-500' : ''}`}
+                                style={{
+                                    transformOrigin: `${zoomState.x}% ${zoomState.y}%`,
+                                    transform: zoomState.show ? 'scale(2)' : 'scale(1)',
+                                }}
                             />
                             {isTotallyOutOfStock && (
-                                <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                     <span className="bg-red-600 text-white font-black px-6 py-3 uppercase tracking-widest text-xl border-4 border-white transform -rotate-12 shadow-2xl">
                                         AGOTADO
                                     </span>
                                 </div>
                             )}
                             {/* Image Navigation (Optional if multiple images) */}
-                            {product.images.length > 1 && (
+                            {product.images.length > 1 && !zoomState.show && (
                                 <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                    <button className="bg-black/50 p-2 rounded-full pointer-events-auto hover:bg-black/80" onClick={() => setSelectedImage(prev => prev > 0 ? prev - 1 : product.images.length - 1)}>
+                                    <button className="bg-black/50 p-2 rounded-full pointer-events-auto hover:bg-black/80" onClick={(e) => { e.stopPropagation(); setSelectedImage(prev => prev > 0 ? prev - 1 : product.images.length - 1); }}>
                                         <ArrowLeft size={20} />
                                     </button>
-                                    <button className="bg-black/50 p-2 rounded-full pointer-events-auto hover:bg-black/80" onClick={() => setSelectedImage(prev => prev < product.images.length - 1 ? prev + 1 : 0)}>
+                                    <button className="bg-black/50 p-2 rounded-full pointer-events-auto hover:bg-black/80" onClick={(e) => { e.stopPropagation(); setSelectedImage(prev => prev < product.images.length - 1 ? prev + 1 : 0); }}>
                                         <ArrowLeft size={20} className="rotate-180" />
                                     </button>
                                 </div>
