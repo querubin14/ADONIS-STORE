@@ -51,12 +51,82 @@ const Home: React.FC = () => {
                 {/* Dynamic Category Sections */}
                 {visibilityConfig.categories && categories.map(categoryObj => {
                     const category = categoryObj.id;
+
+                    // Special layout for 'joyas'
+                    if (category === 'joyas') {
+                        const joyasProducts = products.filter(p =>
+                            p.category.toLowerCase() === 'joyas' ||
+                            p.category.toLowerCase() === categoryObj.name.toLowerCase()
+                        );
+
+                        if (joyasProducts.length === 0) return null;
+
+                        const subcats = ['Pulseras', 'Parejas', 'Cadenas'];
+
+                        return (
+                            <section
+                                key={category}
+                                id={category}
+                                className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
+                                style={{ opacity: categoryObj.opacity !== undefined ? categoryObj.opacity : 1 }}
+                            >
+                                <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
+                                    <div>
+                                        <h2 className="text-3xl font-bold uppercase tracking-tight">{categoryObj.name}</h2>
+                                        <p className="text-accent-gray mt-1 text-sm">Explora nuestra colección de {category}</p>
+                                    </div>
+                                    <Link
+                                        to={`/category/${category}`}
+                                        className="hidden md:flex items-center text-sm font-bold text-primary hover:text-white transition-colors gap-1"
+                                    >
+                                        VER TODO <ArrowRight size={16} />
+                                    </Link>
+                                </div>
+
+                                <div className="space-y-16">
+                                    {subcats.map(subcat => {
+                                        const subProducts = joyasProducts
+                                            .filter(p => p.subcategory && p.subcategory.toLowerCase().includes(subcat.toLowerCase()))
+                                            .slice(0, 4); // Limit to 4 per row as per grid
+
+                                        if (subProducts.length === 0) return null;
+
+                                        return (
+                                            <div key={subcat} className="space-y-6">
+                                                <h3 className="text-xl font-bold uppercase tracking-wider text-gray-400 border-l-4 border-primary pl-4">{subcat}</h3>
+                                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                                                    {subProducts.map(product => (
+                                                        <ProductCard
+                                                            key={product.id}
+                                                            product={product}
+                                                            onAddToCart={() => addToCart(product)}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="mt-12 text-center md:hidden">
+                                    <Link
+                                        to={`/category/${category}`}
+                                        className="inline-flex items-center text-sm font-bold text-primary hover:text-white transition-colors gap-1 border border-primary/50 px-6 py-3 rounded"
+                                    >
+                                        VER TODO {category} <ArrowRight size={16} />
+                                    </Link>
+                                </div>
+                            </section>
+                        );
+                    }
+
+                    // Default layout for other categories
                     const categoryProducts = products.filter(p =>
                         p.category.toLowerCase() === category.toLowerCase() ||
                         p.category.toLowerCase() === categoryObj.name.toLowerCase()
                     );
-                    if (categoryProducts.length === 0 && category !== 'huerfanos') return null; // Logic to skip empty unless needed
-                    if (categoryProducts.length === 0) return null; // Safe check
+                    if (categoryProducts.length === 0 && category !== 'huerfanos') return null;
+                    if (categoryProducts.length === 0) return null;
 
                     const displayProducts = categoryProducts
                         .sort((a, b) => (a.isCategoryFeatured === b.isCategoryFeatured ? 0 : a.isCategoryFeatured ? -1 : 1))
