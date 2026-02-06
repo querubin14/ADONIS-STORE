@@ -13,6 +13,7 @@ import { ArrowRight } from 'lucide-react';
 
 import UpcomingDrops from '../components/UpcomingDrops';
 import FeaturedCarousel from '../components/FeaturedCarousel';
+import HorizontalProductList from '../components/HorizontalProductList';
 
 const Home: React.FC = () => {
     const { products, addToCart, cart, categories, visibilityConfig } = useShop();
@@ -31,8 +32,8 @@ const Home: React.FC = () => {
 
                 {/* Featured Products Section (Max 8) */}
                 {visibilityConfig.featured && (
-                    <section className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto">
-                        <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
+                    <section className="py-10 px-6 lg:px-12 max-w-[1400px] mx-auto">
+                        <div className="flex items-end justify-between mb-6 pb-4 border-b border-gray-800">
                             <div>
                                 <h2 className="text-3xl font-bold uppercase tracking-tight">Destacados</h2>
                                 <p className="text-accent-gray mt-1 text-sm">Selección exclusiva de temporada</p>
@@ -67,10 +68,10 @@ const Home: React.FC = () => {
                             <section
                                 key={category}
                                 id={category}
-                                className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
+                                className="py-10 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
                                 style={{ opacity: categoryObj.opacity !== undefined ? categoryObj.opacity : 1 }}
                             >
-                                <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
+                                <div className="flex items-end justify-between mb-6 pb-4 border-b border-gray-800">
                                     <div>
                                         <h2 className="text-3xl font-bold uppercase tracking-tight">{categoryObj.name}</h2>
                                         <p className="text-accent-gray mt-1 text-sm">Explora nuestra colección de {category}</p>
@@ -83,32 +84,28 @@ const Home: React.FC = () => {
                                     </Link>
                                 </div>
 
-                                <div className="space-y-16">
+                                <div className="space-y-10">
                                     {subcats.map(subcat => {
                                         const subProducts = joyasProducts
                                             .filter(p => p.subcategory && p.subcategory.toLowerCase().includes(subcat.toLowerCase()))
-                                            .slice(0, 4); // Limit to 4 per row as per grid
+                                            .slice(0, 10); // Limit to 10 for scroll
 
                                         if (subProducts.length === 0) return null;
 
                                         return (
-                                            <div key={subcat} className="space-y-6">
-                                                <h3 className="text-xl font-bold uppercase tracking-wider text-gray-400 border-l-4 border-primary pl-4">{subcat}</h3>
-                                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-                                                    {subProducts.map(product => (
-                                                        <ProductCard
-                                                            key={product.id}
-                                                            product={product}
-                                                            onAddToCart={() => addToCart(product)}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
+                                            <HorizontalProductList
+                                                key={subcat}
+                                                products={subProducts}
+                                                title={subcat}
+                                                viewAllLink={`/category/joyas/${subcat}`}
+                                                onAddToCart={addToCart}
+                                            />
                                         );
                                     })}
                                 </div>
 
-                                <div className="mt-12 text-center md:hidden">
+                                <div className="mt-8 text-center md:hidden">
+                                    {/* Mobile catch-all link if needed, but HorizontalProductList has its own view all card */}
                                     <Link
                                         to={`/category/${category}`}
                                         className="inline-flex items-center text-sm font-bold text-primary hover:text-white transition-colors gap-1 border border-primary/50 px-6 py-3 rounded"
@@ -138,10 +135,10 @@ const Home: React.FC = () => {
                         <section
                             key={category}
                             id={category}
-                            className="py-20 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
+                            className="py-10 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
                             style={{ opacity: categoryObj.opacity !== undefined ? categoryObj.opacity : 1 }}
                         >
-                            <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
+                            <div className="flex items-end justify-between mb-6 pb-4 border-b border-gray-800">
                                 <div>
                                     <h2 className="text-3xl font-bold uppercase tracking-tight">{categoryObj.name}</h2>
                                     <p className="text-accent-gray mt-1 text-sm">Explora nuestra colección de {category}</p>
@@ -156,7 +153,7 @@ const Home: React.FC = () => {
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                            <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
                                 {displayProducts.map(product => (
                                     <ProductCard
                                         key={product.id}

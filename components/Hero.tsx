@@ -94,7 +94,7 @@ const Hero: React.FC = () => {
 
   return (
     <header
-      className="relative w-full h-[65vh] min-h-[450px] flex items-center justify-center overflow-hidden bg-black"
+      className="relative w-full h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden bg-black"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

@@ -17,10 +17,8 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
     // Responsive items per page
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth < 640) {
-                setItemsPerPage(1);
-            } else if (window.innerWidth < 1024) {
-                setItemsPerPage(2);
+            if (window.innerWidth < 1024) {
+                setItemsPerPage(3);
             } else {
                 setItemsPerPage(4);
             }
@@ -85,14 +83,14 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
                 <>
                     <button
                         onClick={prevSlide}
-                        className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
+                        className="absolute left-0 top-[35%] -translate-y-1/2 -translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
                         disabled={products.length <= itemsPerPage}
                     >
                         <ChevronLeft size={24} />
                     </button>
                     <button
                         onClick={nextSlide}
-                        className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
+                        className="absolute right-0 top-[35%] -translate-y-1/2 translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
                         disabled={products.length <= itemsPerPage}
                     >
                         <ChevronRight size={24} />
@@ -102,10 +100,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
 
             {/* Grid */}
             <div
-                className={`grid gap-3 sm:gap-6 ${itemsPerPage === 1 ? 'grid-cols-1' :
-                    itemsPerPage === 2 ? 'grid-cols-2' :
-                        'lg:grid-cols-4'
-                    }`}
+                className={`grid gap-3 sm:gap-6 ${itemsPerPage === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}
             >
                 {visibleProducts.map(product => (
                     <div key={`${product.id}-${currentIndex}`} className="animate-in fade-in slide-in-from-right-4 duration-500 fill-mode-both">

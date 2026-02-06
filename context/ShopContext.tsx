@@ -61,6 +61,8 @@ interface ShopContextType {
     footerColumns: FooterColumn[];
     updateFooterColumns: (columns: FooterColumn[]) => void;
     updateCategoryOrder: (orderedIds: string[]) => void;
+    productSortOrder: string[];
+    updateProductOrder: (orderedIds: string[]) => void;
     saveAllData: () => void;
     visibilityConfig: VisibilityConfig;
     updateVisibilityConfig: (config: VisibilityConfig) => void;
@@ -112,6 +114,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Products
     // Products - Now synced with Supabase
     const [products, setProducts] = useState<Product[]>([]);
+    const [productSortOrder, setProductSortOrder] = useState<string[]>([]);
 
     // Categories - Now synced with Supabase
     const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
@@ -402,6 +405,26 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setCategories(categoriesData);
             }
 
+            // Products Sort Order
+            const productSortConfig = allConfigs?.find(c => c.key === 'product_sort_order');
+            if (productSortConfig && productsData) {
+                const order = productSortConfig.value as string[];
+                setProductSortOrder(order);
+
+                setProducts(prev => {
+                    const sorted = [...prev].sort((a, b) => {
+                        const idxA = order.indexOf(a.id);
+                        const idxB = order.indexOf(b.id);
+                        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                        if (idxA !== -1) return -1;
+                        if (idxB !== -1) return 1;
+                        // Secondary sort by newest
+                        return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
+                    });
+                    return sorted;
+                });
+            }
+
         } catch (error) {
             console.error('Exception fetching data:', error);
         } finally {
@@ -414,6 +437,35 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     // --- END SUPABASE FETCH ---
+
+    const updateProductOrder = async (orderedIds: string[]) => {
+        setProductSortOrder(orderedIds);
+
+        // Optimistically sort products
+        setProducts(prev => {
+            const sorted = [...prev].sort((a, b) => {
+                const idxA = orderedIds.indexOf(a.id);
+                const idxB = orderedIds.indexOf(b.id);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return 0;
+            });
+            return sorted;
+        });
+
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'product_sort_order',
+                value: orderedIds,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error('Error saving product sort order:', e);
+            // Revert? simpler to just alert or log for now.
+        }
+    };
 
     // Persistence Effects (Legacy LocalStorage for non-critical stuff or backup)
     useEffect(() => { localStorage.setItem('savage_cart', JSON.stringify(cart)); }, [cart]);
@@ -1438,7 +1490,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             footerColumns,
             updateFooterColumns,
             saveAllData,
-            loading
+            loading,
+            productSortOrder,
+            updateProductOrder,
+            heroCarouselConfig,
+            updateHeroCarouselConfig
 
         }}>
             {children}

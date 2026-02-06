@@ -55,9 +55,9 @@ const LifestyleSection: React.FC = () => {
   // Actually, let's just slide 1 by 1.
 
   return (
-    <section className="py-20 bg-surface-dark border-t border-gray-800 overflow-hidden">
+    <section className="py-10 bg-surface-dark border-t border-gray-800 overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 text-center md:text-left">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-6 gap-6 text-center md:text-left">
           <div className="mx-auto md:mx-0">
             <h2 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-white">{lifestyleConfig.sectionTitle}</h2>
             <p className="text-accent-gray mt-2 max-w-lg mx-auto md:mx-0">{lifestyleConfig.sectionSubtitle}</p>

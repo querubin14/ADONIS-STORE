@@ -30,6 +30,8 @@ import { openGooglePicker } from '../services/googlePickerService';
 import { Loader2, UploadCloud, Image as GoogleIcon } from 'lucide-react';
 import { useImageOptimizer } from '../hooks/useImageOptimizer';
 import SectionVisibilityToggle from '../components/admin/SectionVisibilityToggle';
+import ProductSorter from '../components/admin/ProductSorter';
+import SortableSubcategoryGrid from '../components/admin/SortableSubcategoryGrid';
 
 const AdminDashboard: React.FC = () => {
     const {
@@ -47,7 +49,7 @@ const AdminDashboard: React.FC = () => {
         footerColumns, updateFooterColumns,
         saveAllData, drops, addDrop, deleteDrop, loading,
         dropsConfig, updateDropsConfig, updateCategoryOrder,
-        visibilityConfig, updateVisibilityConfig
+        visibilityConfig, updateVisibilityConfig, updateProductOrder
     } = useShop();
 
     // Login State
@@ -76,7 +78,8 @@ const AdminDashboard: React.FC = () => {
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
 
-    const [activeTab, setActiveTab] = useState<'products' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
+    // Updated type union
+    const [activeTab, setActiveTab] = useState<'products' | 'productSort' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -1038,6 +1041,9 @@ const AdminDashboard: React.FC = () => {
                     <button onClick={() => setActiveTab('products')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'products' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <ShoppingBag size={20} /> <span className="font-bold text-sm">Productos</span>
                     </button>
+                    <button onClick={() => setActiveTab('productSort')} className={`w-full flex items-center gap-3 px-4 pl-8 py-2 rounded-lg transition-all ${activeTab === 'productSort' ? 'text-primary' : 'text-gray-500 hover:text-white'}`}>
+                        <ArrowUp size={16} /> <span className="font-bold text-xs uppercase">Ordenar / Mover</span>
+                    </button>
                     <button onClick={() => setActiveTab('webDesign')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'webDesign' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <Layout size={20} /> <span className="font-bold text-sm">Diseño Web / Banners</span>
                     </button>
@@ -1086,6 +1092,13 @@ const AdminDashboard: React.FC = () => {
             {/* Main Content */}
             {/* Main Content */}
             <main id="admin-main-content" className="flex-1 p-4 md:p-10 overflow-y-auto h-[calc(100vh-73px)] md:h-screen">
+
+                {/* PRODUCT SORT TAB */}
+                {activeTab === 'productSort' && (
+                    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <ProductSorter />
+                    </div>
+                )}
 
                 {/* DROPS TAB */}
                 {activeTab === 'drops' && (
@@ -1648,6 +1661,59 @@ const AdminDashboard: React.FC = () => {
                             <div className="space-y-6">
                                 <h3 className="text-2xl font-bold border-b border-gray-800 pb-2">Inventario</h3>
                                 <div className="space-y-4">
+                                    {/* Featured / Destacados Section */}
+                                    {(() => {
+                                        const featuredProducts = products.filter(p => p.isFeatured);
+                                        if (featuredProducts.length === 0) return null;
+
+                                        return (
+                                            <div className="border border-yellow-900/30 rounded-xl overflow-hidden bg-[#0a0a0a] shadow-sm mb-4">
+                                                <button onClick={() => setExpandedCategory(expandedCategory === 'DESTACADOS' ? null : 'DESTACADOS')} className="w-full flex justify-between items-center p-4 bg-yellow-900/10 hover:bg-yellow-900/20 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        <span className={`transition-transform duration-300 ${expandedCategory === 'DESTACADOS' ? 'rotate-180' : ''}`}><ChevronDown size={20} className="text-yellow-500" /></span>
+                                                        <h4 className="font-bold text-lg uppercase tracking-wide text-yellow-500 flex items-center gap-2">
+                                                            <span className="material-symbols-outlined text-yellow-500">star</span> DESTACADOS
+                                                        </h4>
+                                                        <span className="bg-yellow-900/30 text-xs px-2 py-1 rounded-full text-yellow-500 border border-yellow-700/30">{featuredProducts.length} items</span>
+                                                    </div>
+                                                </button>
+
+                                                {expandedCategory === 'DESTACADOS' && (
+                                                    <div className="bg-black/20 border-t border-yellow-900/20 p-4 animate-in slide-in-from-top-2 duration-300">
+                                                        <SortableSubcategoryGrid
+                                                            products={featuredProducts}
+                                                            onEdit={handleEditProduct}
+                                                            onDelete={deleteProduct}
+                                                            onReorder={(newSubOrder) => {
+                                                                const currentFullIds = products.map(p => p.id);
+                                                                const subcatIdsSet = new Set(newSubOrder.map(p => p.id));
+                                                                const oldSubIds = featuredProducts.map(p => p.id); // Current view order
+
+                                                                // Find indices of featured items in the global list
+                                                                const indicesInGlobal = oldSubIds.map(id => currentFullIds.indexOf(id)).filter(idx => idx !== -1).sort((a, b) => a - b);
+
+                                                                if (indicesInGlobal.length !== newSubOrder.length) {
+                                                                    console.error("Mismatch in indices length for Featured sort");
+                                                                    return;
+                                                                }
+
+                                                                const newGlobalIds = [...currentFullIds];
+
+                                                                // Place new IDs into the identified slots
+                                                                newSubOrder.forEach((product, i) => {
+                                                                    const targetGlobalIndex = indicesInGlobal[i];
+                                                                    newGlobalIds[targetGlobalIndex] = product.id;
+                                                                });
+
+                                                                updateProductOrder(newGlobalIds);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
+
                                     {Object.entries(productsByCategory).map(([category, catItems]: [string, Product[]]) => {
                                         // Group by Subcategory dynamically
                                         const subcats = catItems.reduce((acc, item) => {
@@ -1709,75 +1775,58 @@ const AdminDashboard: React.FC = () => {
                                                                     {/* Grid of products - Only shown if expanded */}
                                                                     {isExpanded && (
                                                                         <div className="p-4 bg-black/20 border-t border-gray-900/50 animate-in slide-in-from-top-1 duration-200">
-                                                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                                                                                {subcats[subKey].map(p => {
-                                                                                    // Sort inventory for display (S, M, L, etc.)
-                                                                                    const sortedInventory = p.inventory && p.inventory.length > 0
-                                                                                        ? [...p.inventory].sort((a, b) => {
-                                                                                            const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
-                                                                                            const aIdx = sizes.indexOf(a.size);
-                                                                                            const bIdx = sizes.indexOf(b.size);
-                                                                                            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
-                                                                                            return a.size.localeCompare(b.size);
-                                                                                        })
-                                                                                        : [];
+                                                                            <SortableSubcategoryGrid
+                                                                                products={subcats[subKey]}
+                                                                                onEdit={handleEditProduct}
+                                                                                onDelete={deleteProduct}
+                                                                                onReorder={(newSubOrder) => {
+                                                                                    // Logic to update global order based on this local reorder
+                                                                                    // 1. Get current full set of IDs (from productSortOrder or if empty, from products)
+                                                                                    const currentFullIds = (products && products.length > 0) ? products.map(p => p.id) : [];
 
-                                                                                    return (
-                                                                                        <div key={p.id} className="bg-[#0F0F0F] rounded-lg p-3 flex gap-3 border border-gray-800 shadow-sm relative group hover:border-gray-600 transition-all hover:translate-y-[-2px]">
-                                                                                            {/* Image */}
-                                                                                            <div className="w-20 h-24 bg-gray-900 rounded overflow-hidden shrink-0 border border-gray-800">
-                                                                                                <img src={p.images[0]} alt="" className="w-full h-full object-cover" />
-                                                                                            </div>
+                                                                                    // 2. Identify the IDs that are currently in this subcategory (the old order)
+                                                                                    const subcatIdsSet = new Set(newSubOrder.map(p => p.id));
 
-                                                                                            {/* Content */}
-                                                                                            <div className="flex-1 min-w-0 flex flex-col justify-between">
-                                                                                                <div>
-                                                                                                    <div className="flex justify-between items-start">
-                                                                                                        <h4 className="font-bold text-sm text-white leading-tight truncate pr-6" title={p.name}>{p.name}</h4>
-                                                                                                    </div>
+                                                                                    // 3. Construct new global list
+                                                                                    // Iterate through currentFullIds. 
+                                                                                    // If ID is NOT in this subcategory, keep it. 
+                                                                                    // If ID IS in this subcategory, consume the next ID from the NEW sub order.
 
-                                                                                                    <div className="flex items-center gap-2 mt-1">
-                                                                                                        <span className="text-[9px] font-black text-blue-500 uppercase">ADMIN</span>
-                                                                                                        <span className="text-[9px] font-bold text-green-500 bg-green-900/10 px-1.5 py-0.5 rounded border border-green-900/30">ACTIVE</span>
-                                                                                                        {p.isNew && <span className="text-[9px] font-bold text-purple-400 bg-purple-900/10 px-1.5 py-0.5 rounded border border-purple-900/30">NEW</span>}
-                                                                                                    </div>
+                                                                                    // Optimized strategy:
+                                                                                    // We have `subcats[subKey]` which is the OLD order of this subcategory subset.
+                                                                                    // We have `newSubOrder` which is the NEW order.
+                                                                                    // We find the indices of these items in the GLOBAL list.
+                                                                                    // We replace them in order.
 
-                                                                                                    <p className="text-[9px] text-gray-600 font-mono mt-1 truncate">ID: {p.id.slice(-6).toUpperCase()}</p>
-                                                                                                </div>
+                                                                                    // BUT, if the global list has [A(Joyas), B(Ropa), C(Joyas)], and we swap A and C locally -> [C, A].
+                                                                                    // Does C go to A's spot (index 0) and A go to C's spot (index 2)? YES.
+                                                                                    // New global: [C(Joyas), B(Ropa), A(Joyas)].
 
-                                                                                                {/* Stock Pills */}
-                                                                                                <div className="flex flex-wrap gap-1.5 mt-2">
-                                                                                                    {sortedInventory.length > 0 ? (
-                                                                                                        sortedInventory.map(inv => (
-                                                                                                            <div key={inv.size} className={`flex items-center gap-1.5 px-1.5 py-0.5 rounded border ${inv.quantity > 0 ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-red-900/10 border-red-900/30 text-red-500'}`}>
-                                                                                                                <span className="text-[10px] font-bold">{inv.size}</span>
-                                                                                                                <span className={`text-[10px] font-mono ${inv.quantity > 0 ? 'text-green-400' : 'text-red-500'}`}>{inv.quantity}</span>
-                                                                                                            </div>
-                                                                                                        ))
-                                                                                                    ) : (
-                                                                                                        <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded border bg-gray-800 border-gray-700 text-gray-300">
-                                                                                                            <span className="text-[10px] font-bold">Total</span>
-                                                                                                            <span className={`text-[10px] font-mono ${p.stock && p.stock > 0 ? 'text-green-400' : 'text-red-500'}`}>{p.stock || 0}</span>
-                                                                                                        </div>
-                                                                                                    )}
-                                                                                                </div>
-                                                                                            </div>
+                                                                                    // Implementation:
+                                                                                    // 1. Get all IDs of items in this subcategory (from props `subcats[subKey]`).
+                                                                                    const oldSubIds = subcats[subKey].map(p => p.id);
 
-                                                                                            {/* Actions & Price */}
-                                                                                            <div className="absolute top-3 right-3 flex flex-col items-end gap-2">
-                                                                                                <span className="bg-gray-900 text-gray-300 text-[10px] font-mono px-2 py-1 rounded border border-gray-800 font-bold">
-                                                                                                    Gs. {(p.price).toLocaleString('es-PY')}
-                                                                                                </span>
+                                                                                    // 2. Find their indices in the global `currentFullIds` list.
+                                                                                    const indicesInGlobal = oldSubIds.map(id => currentFullIds.indexOf(id)).filter(idx => idx !== -1).sort((a, b) => a - b);
 
-                                                                                                <div className="flex gap-1 mt-auto pt-4 md:pt-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[#0F0F0F]/80 backdrop-blur-sm rounded-lg p-1">
-                                                                                                    <button onClick={() => handleEditProduct(p)} className="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-lg transition-transform hover:scale-110"><Edit size={12} /></button>
-                                                                                                    <button onClick={() => deleteProduct(p.id)} className="p-1.5 bg-red-600/20 hover:bg-red-600 text-red-500 hover:text-white rounded-full transition-colors"><Trash2 size={12} /></button>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    );
-                                                                                })}
-                                                                            </div>
+                                                                                    if (indicesInGlobal.length !== newSubOrder.length) {
+                                                                                        console.error("Mismatch in indices length", indicesInGlobal.length, newSubOrder.length);
+                                                                                        return;
+                                                                                    }
+
+                                                                                    // 3. Create a copy of global IDs
+                                                                                    const newGlobalIds = [...currentFullIds];
+
+                                                                                    // 4. Place new IDs into the identified slots
+                                                                                    newSubOrder.forEach((product, i) => {
+                                                                                        const targetGlobalIndex = indicesInGlobal[i];
+                                                                                        newGlobalIds[targetGlobalIndex] = product.id;
+                                                                                    });
+
+                                                                                    // 5. Update Context
+                                                                                    updateProductOrder(newGlobalIds);
+                                                                                }}
+                                                                            />
                                                                         </div>
                                                                     )}
                                                                 </div>

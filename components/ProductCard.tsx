@@ -60,15 +60,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
               e.stopPropagation();
               onAddToCart(product);
             }}
-            className="absolute bottom-3 right-3 bg-white text-black p-2.5 rounded-full transition-all duration-300 hover:scale-110 hover:bg-black hover:text-white shadow-xl z-10 flex items-center justify-center"
+            className="absolute bottom-2 right-2 bg-white text-black p-1.5 md:p-2 rounded-full transition-all duration-300 hover:scale-110 hover:bg-black hover:text-white shadow-xl z-10 flex items-center justify-center"
           >
-            <span className="material-symbols-outlined">shopping_bag</span>
+            <span className="material-symbols-outlined text-[16px] md:text-[20px]">shopping_bag</span>
           </button>
         )}
 
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
           {product.isNew && (
-            <div className="bg-primary text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
+            <div className="bg-primary text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-sm">
               Nuevo
             </div>
           )}
@@ -78,7 +78,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
               return !['SIN CATEGORIA', 'SIN CATEGORÍA', 'NUEVO', 'NEW'].includes(t);
             })
             .map(tag => (
-              <div key={tag} className="bg-black/70 backdrop-blur-md text-white border border-white/20 text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
+              <div key={tag} className="bg-black/70 backdrop-blur-md text-white border border-white/20 text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-sm">
                 {tag}
               </div>
             ))}
@@ -96,14 +96,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
                 navigate(`/?category=${product.category}`); // Fallback if regular nav
               }
             }}
-            className="absolute bottom-3 left-3 bg-white/90 backdrop-blur text-black text-[10px] font-bold px-3 py-1.5 uppercase tracking-wider rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors z-20 flex items-center gap-1"
+            className="absolute bottom-2 left-2 bg-white/90 backdrop-blur text-black text-[8px] md:text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors z-20 flex items-center gap-1"
           >
-            {product.category} <span className="material-symbols-outlined text-[10px]">arrow_outward</span>
+            {product.category} <span className="material-symbols-outlined text-[8px] md:text-[10px]">arrow_outward</span>
           </button>
         )}
 
         {product.originalPrice && product.originalPrice > product.price && (
-          <div className="absolute top-3 right-3 bg-primary text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
+          <div className="absolute top-2 right-2 bg-primary text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-sm">
             -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
           </div>
         )}

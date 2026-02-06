@@ -15,12 +15,12 @@ const UpcomingDrops: React.FC = () => {
     const displayDrops = drops.slice(0, 6);
 
     return (
-        <section className="py-20 bg-background-dark border-t border-gray-900 border-b relative overflow-hidden">
+        <section className="py-10 bg-background-dark border-t border-gray-900 border-b relative overflow-hidden">
             {/* Background elements */}
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-50"></div>
 
             <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-                <div className="flex items-end justify-between mb-10 pb-4 border-b border-gray-800">
+                <div className="flex items-end justify-between mb-4 pb-4 border-b border-gray-800">
                     <div>
                         <h2 className="text-3xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
                             Próximos Drops <span className="bg-primary text-black text-[10px] px-2 py-0.5 rounded font-black animate-pulse shadow-[0_0_10px_rgba(212,175,55,0.6)]">HYPE</span>

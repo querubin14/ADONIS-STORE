@@ -40,8 +40,8 @@ const CategoryBento: React.FC = () => {
   const bottomRight = bannerBento[2];
 
   return (
-    <section className="py-12 px-6 lg:px-12 max-w-[1400px] mx-auto">
-      <h2 className="text-3xl font-bold uppercase tracking-tight mb-8">Categorías</h2>
+    <section className="py-6 px-6 lg:px-12 max-w-[1400px] mx-auto">
+      <h2 className="text-3xl font-bold uppercase tracking-tight mb-4">Categorías</h2>
       <div
         ref={scrollRef}
         className="flex md:grid md:grid-cols-3 md:grid-rows-2 gap-4 h-[400px] md:h-[600px] overflow-x-auto snap-x snap-mandatory scrollbar-hide"
