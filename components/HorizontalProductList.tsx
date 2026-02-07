@@ -48,19 +48,19 @@ const HorizontalProductList: React.FC<HorizontalProductListProps> = ({ products,
                 {/* Left Button */}
                 <button
                     onClick={(e) => { e.preventDefault(); scroll('left'); }}
-                    className="absolute left-0 top-[35%] -translate-y-1/2 -translate-x-3 z-30 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 disabled:opacity-0 flex items-center justify-center border border-white/10"
+                    className="absolute left-0 top-[35%] -translate-y-1/2 -translate-x-3 z-30 bg-black/50 hover:bg-black text-white p-1 md:p-2 rounded-full backdrop-blur-sm transition-all opacity-100 disabled:opacity-0 flex items-center justify-center border border-white/10"
                     aria-label="Scroll left"
                 >
-                    <ChevronLeft size={24} />
+                    <ChevronLeft size={16} className="md:w-6 md:h-6" />
                 </button>
 
                 {/* Right Button */}
                 <button
                     onClick={(e) => { e.preventDefault(); scroll('right'); }}
-                    className="absolute right-0 top-[35%] -translate-y-1/2 translate-x-3 z-30 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 disabled:opacity-0 flex items-center justify-center border border-white/10"
+                    className="absolute right-0 top-[35%] -translate-y-1/2 translate-x-3 z-30 bg-black/50 hover:bg-black text-white p-1 md:p-2 rounded-full backdrop-blur-sm transition-all opacity-100 disabled:opacity-0 flex items-center justify-center border border-white/10"
                     aria-label="Scroll right"
                 >
-                    <ChevronRight size={24} />
+                    <ChevronRight size={16} className="md:w-6 md:h-6" />
                 </button>
 
                 {/* Scrollable Area */}
@@ -69,7 +69,7 @@ const HorizontalProductList: React.FC<HorizontalProductListProps> = ({ products,
                     className="flex overflow-x-auto gap-4 pb-4 px-1 -mx-1 snap-x scrollbar-hide"
                 >
                     {products.map(product => (
-                        <div key={product.id} className="min-w-[28vw] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px] snap-center">
+                        <div key={product.id} className="w-[30vw] sm:w-[160px] md:w-[180px] lg:w-[200px] flex-shrink-0 snap-center">
                             <ProductCard product={product} onAddToCart={onAddToCart} />
                         </div>
                     ))}
@@ -78,7 +78,7 @@ const HorizontalProductList: React.FC<HorizontalProductListProps> = ({ products,
                     {viewAllLink && (
                         <Link
                             to={viewAllLink}
-                            className="min-w-[28vw] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px] snap-center flex flex-col items-center justify-center bg-gray-900/50 border border-gray-800 hover:bg-gray-800 hover:border-primary/50 transition-all rounded group cursor-pointer aspect-[3/4] md:aspect-auto md:h-full"
+                            className="w-[30vw] sm:w-[160px] md:w-[180px] lg:w-[200px] flex-shrink-0 snap-center flex flex-col items-center justify-center bg-gray-900/50 border border-gray-800 hover:bg-gray-800 hover:border-primary/50 transition-all rounded group cursor-pointer aspect-[3/4] md:aspect-auto md:h-full"
                         >
                             <span className="w-12 h-12 rounded-full border border-gray-600 flex items-center justify-center group-hover:border-primary group-hover:text-primary transition-colors mb-2">
                                 <ArrowRight size={24} />

@@ -79,21 +79,22 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
             onMouseLeave={() => setIsHovered(false)}
         >
             {/* Controls - Only show if enough items to scroll */}
+            {/* Controls - Only show if enough items to scroll */}
             {products.length > itemsPerPage && (
                 <>
                     <button
                         onClick={prevSlide}
-                        className="absolute left-0 top-[35%] -translate-y-1/2 -translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
+                        className="absolute left-0 top-[30%] -translate-y-1/2 md:-translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-1 md:p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
                         disabled={products.length <= itemsPerPage}
                     >
-                        <ChevronLeft size={24} />
+                        <ChevronLeft size={16} className="md:w-6 md:h-6" />
                     </button>
                     <button
                         onClick={nextSlide}
-                        className="absolute right-0 top-[35%] -translate-y-1/2 translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
+                        className="absolute right-0 top-[30%] -translate-y-1/2 md:translate-x-4 z-10 bg-black/50 hover:bg-black text-white p-1 md:p-2 rounded-full backdrop-blur-sm transition-all opacity-100 sm:opacity-0 sm:group-hover/carousel:opacity-100 disabled:opacity-0"
                         disabled={products.length <= itemsPerPage}
                     >
-                        <ChevronRight size={24} />
+                        <ChevronRight size={16} className="md:w-6 md:h-6" />
                     </button>
                 </>
             )}

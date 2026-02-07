@@ -329,7 +329,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
         )}
 
         {/* Mobile Menu */}
-        <div id="mobile-menu" className="hidden md:hidden absolute top-20 left-0 w-full bg-[#0a0a0a] border-b border-gray-800 p-6 flex flex-col gap-6 shadow-2xl animate-in slide-in-from-top-4">
+        <div id="mobile-menu" className="hidden md:hidden absolute top-16 left-0 w-full bg-[#0a0a0a] border-b border-gray-800 p-6 flex flex-col gap-6 shadow-2xl animate-in slide-in-from-top-4">
           {navbarLinks.map(link => (
             <Link
               key={link.id}

@@ -24,7 +24,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
   return (
     <div className="group flex flex-col gap-3">
       <div
-        className="relative w-full aspect-square overflow-hidden rounded bg-surface-dark group cursor-pointer"
+        className="relative w-full overflow-hidden rounded bg-surface-dark group cursor-pointer"
+        style={{ paddingBottom: '100%' }}
         onClick={() => navigate(`/product/${product.slug || product.id}`)}
       >
         <div className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110">
