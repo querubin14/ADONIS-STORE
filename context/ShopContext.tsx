@@ -263,28 +263,83 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // --- SUPABASE MIGRATION: FETCH DATA ---
     const fetchData = async () => {
         setLoading(true);
+
+        // Safety timeout in case Supabase hangs indefinitely
+        const timeoutId = setTimeout(() => {
+            setLoading(false);
+            console.warn('Force stop loading due to timeout');
+        }, 8000);
+
         try {
-            // Fetch Products
-            const { data: productsData, error: productsError } = await supabase
-                .from('products')
-                .select('*');
+            console.log('Starting parallel data fetch...');
 
-            // Fetch Inventory (New)
-            const { data: inventoryData, error: inventoryError } = await supabase
-                .from('inventory')
-                .select('*');
+            const [
+                productsResult,
+                inventoryResult,
+                categoriesResult,
+                zonesResult,
+                ordersResult,
+                blogResult,
+                dropsResult,
+                configsResult
+            ] = await Promise.all([
+                supabase.from('products').select('*'),
+                supabase.from('inventory').select('*'),
+                supabase.from('categories').select('*'),
+                supabase.from('delivery_zones').select('*'),
+                supabase.from('orders').select('*').order('created_at', { ascending: false }),
+                supabase.from('blog_posts').select('*').order('created_at', { ascending: false }),
+                supabase.from('drops').select('*').order('created_at', { ascending: false }),
+                supabase.from('store_config').select('*')
+            ]);
 
-            if (inventoryError) console.error('Error fetching inventory:', inventoryError);
+            console.log('Data fetch completed. Processing...');
 
-            if (productsError) {
-                console.error('Error fetching products from Supabase:', productsError);
-                if (productsError.code === '42501' || productsError.message.includes('row-level security')) {
-                    alert('ERROR: Bloqueo de seguridad de Base de Datos. Desactiva RLS en Supabase o agrega políticas de acceso "Select" para visualizarlos.');
-                } else {
-                    alert(`Error cargando productos: ${productsError.message}`);
+            // 1. Process Configs First (for sort orders)
+            let productSortOrder: string[] = [];
+            let categorySortOrder: string[] = [];
+
+            if (configsResult.data) {
+                configsResult.data.forEach(conf => {
+                    if (conf.key === 'social_config') setSocialConfig(conf.value);
+                    if (conf.key === 'navbar_links') setNavbarLinks(conf.value);
+                    if (conf.key === 'banner_bento') setBannerBento(conf.value);
+                    if (conf.key === 'lifestyle_config') setLifestyleConfig(conf.value);
+                    if (conf.key === 'hero_slides') setHeroSlides(conf.value);
+                    if (conf.key === 'footer_columns') setFooterColumns(conf.value);
+                    if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
+                    if (conf.key === 'drops_config') setDropsConfig(conf.value);
+                    if (conf.key === 'visibility_config') setVisibilityConfig(conf.value);
+                    if (conf.key === 'category_sort_order') categorySortOrder = conf.value as string[];
+                    if (conf.key === 'product_sort_order') productSortOrder = conf.value as string[];
+                });
+
+                // Set state for sort orders
+                if (categorySortOrder.length > 0) setCategorySortOrder(categorySortOrder);
+                if (productSortOrder.length > 0) setProductSortOrder(productSortOrder);
+            }
+
+            // 2. Process Categories
+            if (categoriesResult.data) {
+                let cats = categoriesResult.data;
+                if (categorySortOrder.length > 0) {
+                    cats = cats.sort((a, b) => {
+                        const idxA = categorySortOrder.indexOf(a.id);
+                        const idxB = categorySortOrder.indexOf(b.id);
+                        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                        if (idxA !== -1) return -1;
+                        if (idxB !== -1) return 1;
+                        return 0;
+                    });
                 }
-            } else if (productsData) {
-                setProducts(productsData.map(p => ({
+                setCategories(cats);
+            }
+
+            // 3. Process Products & Inventory
+            if (productsResult.data) {
+                const inventoryData = inventoryResult.data || [];
+
+                let prods = productsResult.data.map(p => ({
                     ...p,
                     price: Number(p.price),
                     originalPrice: p.original_price ? Number(p.original_price) : undefined,
@@ -295,140 +350,51 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     subcategory: p.subcategory || p.Subcategory || p.sub_category || '',
                     stock: p.stock_quantity,
                     costPrice: Number(p.cost_price || p.unit_cost || 0),
-                    inventory: inventoryData ? inventoryData.filter((i: any) => i.product_id === p.id) : []
-                })));
-            }
+                    inventory: inventoryData.filter((i: any) => i.product_id === p.id)
+                }));
 
-            // Fetch Categories
-            const { data: categoriesData, error: catError } = await supabase
-                .from('categories')
-                .select('*');
-
-            if (!catError && categoriesData && categoriesData.length > 0) {
-                // Don't set yet, wait for config to sort
-                // setCategories(categoriesData);
-            }
-
-            // Fetch Delivery Zones
-            const { data: zonesData, error: zonesError } = await supabase
-                .from('delivery_zones')
-                .select('*');
-
-            if (zonesError) {
-                console.error('Error fetching delivery zones:', zonesError);
-            } else if (zonesData) {
-                setDeliveryZones(zonesData.map(z => ({
-                    ...z,
-                    price: Number(z.price),
-                    points: typeof z.points === 'string' ? JSON.parse(z.points) : z.points
-                })));
-            }
-
-            // Fetch Orders
-            const { data: ordersData, error: ordersError } = await supabase
-                .from('orders')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (ordersError) {
-                console.error('Error fetching orders:', ordersError);
-            } else if (ordersData) {
-                setOrders(ordersData.map(o => ({
-                    ...o,
-                    total_amount: Number(o.total_amount),
-                    delivery_cost: Number(o.delivery_cost),
-                })));
-            }
-
-            // Fetch Blog Posts
-            const { data: blogData, error: blogError } = await supabase
-                .from('blog_posts')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (blogError) {
-                console.error('Error fetching blog posts:', blogError);
-            } else if (blogData) {
-                setBlogPosts(blogData);
-            }
-
-            // Fetch Drops
-            const { data: dropsData, error: dropsError } = await supabase
-                .from('drops')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (dropsError) {
-                console.error('Error fetching drops:', dropsError);
-            } else if (dropsData) {
-                setDrops(dropsData);
-            }
-
-            // Fetch Any Store Config
-            const { data: allConfigs, error: anyConfigError } = await supabase
-                .from('store_config')
-                .select('*');
-
-            if (anyConfigError) {
-                console.error('Error fetching store configs:', anyConfigError);
-            } else if (allConfigs) {
-                allConfigs.forEach(conf => {
-                    if (conf.key === 'social_config') setSocialConfig(conf.value);
-                    if (conf.key === 'navbar_links') setNavbarLinks(conf.value);
-                    if (conf.key === 'banner_bento') setBannerBento(conf.value);
-                    if (conf.key === 'lifestyle_config') setLifestyleConfig(conf.value);
-                    if (conf.key === 'hero_slides') setHeroSlides(conf.value);
-                    if (conf.key === 'footer_columns') setFooterColumns(conf.value);
-                    if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
-                    if (conf.key === 'drops_config') setDropsConfig(conf.value);
-                    if (conf.key === 'visibility_config') setVisibilityConfig(conf.value);
-                    if (conf.key === 'category_sort_order') {
-                        const order = conf.value as string[];
-                        setCategorySortOrder(order);
-                        // Sort categories if we already have them
-                        if (categoriesData) {
-                            const sorted = [...categoriesData].sort((a, b) => {
-                                const idxA = order.indexOf(a.id);
-                                const idxB = order.indexOf(b.id);
-                                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                                if (idxA !== -1) return -1;
-                                if (idxB !== -1) return 1;
-                                return 0;
-                            });
-                            setCategories(sorted);
-                        }
-                    }
-                });
-            }
-
-            // Fallback if no sort order in config, use basic categories
-            if (!allConfigs?.find(c => c.key === 'category_sort_order') && categoriesData) {
-                setCategories(categoriesData);
-            }
-
-            // Products Sort Order
-            const productSortConfig = allConfigs?.find(c => c.key === 'product_sort_order');
-            if (productSortConfig && productsData) {
-                const order = productSortConfig.value as string[];
-                setProductSortOrder(order);
-
-                setProducts(prev => {
-                    const sorted = [...prev].sort((a, b) => {
-                        const idxA = order.indexOf(a.id);
-                        const idxB = order.indexOf(b.id);
+                // Apply Sort Order
+                if (productSortOrder.length > 0) {
+                    prods = prods.sort((a, b) => {
+                        const idxA = productSortOrder.indexOf(a.id);
+                        const idxB = productSortOrder.indexOf(b.id);
                         if (idxA !== -1 && idxB !== -1) return idxA - idxB;
                         if (idxA !== -1) return -1;
                         if (idxB !== -1) return 1;
                         // Secondary sort by newest
                         return (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0);
                     });
-                    return sorted;
-                });
+                }
+
+                setProducts(prods);
+            } else if (productsResult.error) {
+                console.error('Error fetching products:', productsResult.error);
             }
+
+            // 4. Other Data
+            if (zonesResult.data) {
+                setDeliveryZones(zonesResult.data.map(z => ({
+                    ...z,
+                    price: Number(z.price),
+                    points: typeof z.points === 'string' ? JSON.parse(z.points) : z.points
+                })));
+            }
+
+            if (ordersResult.data) {
+                setOrders(ordersResult.data.map(o => ({
+                    ...o,
+                    total_amount: Number(o.total_amount),
+                    delivery_cost: Number(o.delivery_cost),
+                })));
+            }
+
+            if (blogResult.data) setBlogPosts(blogResult.data);
+            if (dropsResult.data) setDrops(dropsResult.data);
 
         } catch (error) {
             console.error('Exception fetching data:', error);
         } finally {
+            clearTimeout(timeoutId);
             setLoading(false);
         }
     };
