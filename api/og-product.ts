@@ -5,8 +5,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userAgent = req.headers['user-agent'] || '';
 
     // Configuration
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://cwlaqfjqgrtyhyscwpnq.supabase.co';
-    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3bGFxZmpxZ3J0eWh5c2N3cG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYxMDM3NTcsImV4cCI6MjA4MTY3OTc1N30.qt20ysweHhOMO81o6snFuBf3z5QDL-M1E0jN-ifQC4I';
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Missing Supabase environment variables');
+    }
 
     // Default metadata
     let title = 'SAVAGE STORE | Camisetas de Fútbol Premium';
