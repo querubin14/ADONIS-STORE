@@ -106,6 +106,7 @@ const DEFAULT_CATEGORIES: Category[] = [
     { id: 'deportivo', name: 'Deportivo', image: '', subcategories: ['Player', 'Fan', 'Retro'] },
     { id: 'calzados', name: 'Calzados', image: '', subcategories: ['Nike', 'Adidas', 'Puma', 'New Balance'] },
     { id: 'joyas', name: 'Joyas', image: '' },
+    { id: 'billeteras', name: 'Billeteras', image: '' },
     { id: 'accesorios', name: 'Accesorios', image: '' },
     { id: 'huerfanos', name: 'Huérfanos', image: '' }
 ];

@@ -114,7 +114,7 @@ const ProductSorter: React.FC = () => {
                 const oldIndex = items.findIndex((item) => item.id === active.id);
                 const newIndex = items.findIndex((item) => item.id === over.id);
 
-                const newOrder = arrayMove(items, oldIndex, newIndex);
+                const newOrder: Product[] = arrayMove(items, oldIndex, newIndex);
 
                 // Call context update
                 // Note: We need to pass ONLY IDs to the context

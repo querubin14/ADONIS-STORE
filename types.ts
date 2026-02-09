@@ -6,6 +6,7 @@ export interface ColorVariant {
 
 export interface Product {
   id: string;
+  display_id?: string | number;
   name: string;
   category: string;
   subcategory?: string;
