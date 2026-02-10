@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '../supabase/client';
+import { supabase } from '../services/supabase';
 import { MapContainer, TileLayer, Polygon, Marker, useMapEvents, useMap, Polyline } from 'react-leaflet';
 import { useShop } from '../context/ShopContext';
 import { DeliveryZone } from '../types';
