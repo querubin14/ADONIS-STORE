@@ -82,11 +82,11 @@ export const useShop = () => {
 const DEFAULT_HERO_SLIDES: HeroSlide[] = [
     {
         id: 'h1',
-        title: 'ADONIS ESSENCE 2026',
-        subtitle: 'REDEFINIENDO EL STREETWEAR PREMIUM URBANO.',
-        buttonText: 'EXPLORAR AHORA',
-        buttonLink: '/category/Deportivo',
-        image: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?q=80&w=2000&auto=format&fit=crop'
+        title: 'COMPLEMENTAMOS',
+        subtitle: 'TU ESTILO',
+        buttonText: 'VER COLECCIÓN',
+        buttonLink: '/category/Joyas',
+        image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&q=80&w=2000'
     }
 ];
 
@@ -130,7 +130,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Hero List
     const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(() => {
         const saved = localStorage.getItem('savage_hero_slides');
-        return saved ? JSON.parse(saved) : [];
+        return saved ? JSON.parse(saved) : DEFAULT_HERO_SLIDES;
     });
 
     // Orders

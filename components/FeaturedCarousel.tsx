@@ -20,7 +20,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
             if (window.innerWidth < 1024) {
                 setItemsPerPage(3);
             } else {
-                setItemsPerPage(4);
+                setItemsPerPage(5);
             }
         };
 
@@ -68,7 +68,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
 
     // To implement "infinite" feel or smooth wrapping, we can use an animation, 
     // but for now, React state update is sufficient for "appearing".
-    const visibleProducts = products.slice(currentIndex, currentIndex + itemsPerPage);
+    // const visibleProducts = products.slice(currentIndex, currentIndex + itemsPerPage);
 
     if (products.length === 0) return null;
 
@@ -101,9 +101,9 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
 
             {/* Grid */}
             <div
-                className={`grid gap-3 sm:gap-6 ${itemsPerPage === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}
+                className={`grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4`}
             >
-                {visibleProducts.map(product => (
+                {products.slice(currentIndex, currentIndex + itemsPerPage).map(product => (
                     <div key={`${product.id}-${currentIndex}`} className="animate-in fade-in slide-in-from-right-4 duration-500 fill-mode-both">
                         <ProductCard
                             product={product}

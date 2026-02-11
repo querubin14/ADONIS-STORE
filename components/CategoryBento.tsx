@@ -5,59 +5,28 @@ import { Link } from 'react-router-dom';
 
 const CategoryBento: React.FC = () => {
   const { bannerBento } = useShop();
-  const scrollRef = React.useRef<HTMLDivElement>(null);
 
-  // Auto-scroll logic for mobile carousel
-  React.useEffect(() => {
-    const scrollContainer = scrollRef.current;
-    if (!scrollContainer) return;
-
-    const interval = setInterval(() => {
-      // Only scroll if content overflows (mobile/slider view)
-      if (scrollContainer.scrollWidth <= scrollContainer.clientWidth) return;
-
-      const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
-      const currentScroll = scrollContainer.scrollLeft;
-
-      // Check if we reached the end (with small tolerance)
-      if (currentScroll >= maxScroll - 10) {
-        scrollContainer.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        // Scroll by roughly one item width (using container width as proxy for visible item or simply scrollBy)
-        // Since we use snap-x, a push is enough.
-        const scrollAmount = scrollContainer.clientWidth * 0.8;
-        scrollContainer.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // Fallback defaults in case context is empty (shouldn't happen with default state)
   // Fallback defaults or use array indices
   const large = bannerBento[0];
   const topRight = bannerBento[1];
   const bottomRight = bannerBento[2];
 
   return (
-    <section className="py-6 px-6 lg:px-12 max-w-[1400px] mx-auto">
-      <h2 className="text-3xl font-bold uppercase tracking-tight mb-4">Categorías</h2>
-      <div
-        ref={scrollRef}
-        className="flex md:grid md:grid-cols-3 md:grid-rows-2 gap-4 h-[400px] md:h-[600px] overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-      >
+    <section className="py-6 px-4 md:px-12 max-w-[1400px] mx-auto">
+      <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mb-4">Categorías</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 md:grid-rows-2 gap-2 md:gap-4 h-[400px] md:h-[600px]">
         {/* JOYAS - Large Block */}
         {large && (
-          <Link to={large.link} className="relative group min-w-[85vw] md:min-w-0 md:col-span-2 md:row-span-2 rounded overflow-hidden cursor-pointer block snap-center">
+          <Link to={large.link} className="relative group col-span-1 row-span-2 md:col-span-2 md:row-span-2 rounded overflow-hidden cursor-pointer block">
             <div
               className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
               style={{ backgroundImage: `url('${large.image}')` }}
             />
             <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors" />
-            <div className="absolute bottom-0 left-0 p-8">
-              <h3 className="text-4xl font-black text-white uppercase tracking-tighter mb-2">{large.title}</h3>
-              {large.subtitle && <p className="text-gray-200 text-sm max-w-xs mb-4">{large.subtitle}</p>}
-              <span className="inline-flex items-center text-sm font-bold uppercase tracking-widest border-b border-white pb-1 group-hover:text-primary group-hover:border-primary transition-colors">
+            <div className="absolute bottom-0 left-0 p-4 md:p-8">
+              <h3 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter mb-2">{large.title}</h3>
+              {large.subtitle && <p className="text-gray-200 text-xs md:text-sm max-w-xs mb-4 hidden md:block">{large.subtitle}</p>}
+              <span className="inline-flex items-center text-xs md:text-sm font-bold uppercase tracking-widest border-b border-white pb-1 group-hover:text-primary group-hover:border-primary transition-colors">
                 {large.buttonText}
               </span>
             </div>
@@ -66,15 +35,15 @@ const CategoryBento: React.FC = () => {
 
         {/* ROPA - Medium Block */}
         {topRight && (
-          <Link to={topRight.link} className="relative group min-w-[85vw] md:min-w-0 md:col-span-1 md:row-span-1 rounded overflow-hidden cursor-pointer block snap-center">
+          <Link to={topRight.link} className="relative group col-span-1 row-span-1 rounded overflow-hidden cursor-pointer block">
             <div
               className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
               style={{ backgroundImage: `url('${topRight.image}')` }}
             />
             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
-            <div className="absolute bottom-0 left-0 p-6">
-              <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-1">{topRight.title}</h3>
-              <span className="inline-flex items-center text-xs font-bold uppercase tracking-widest group-hover:text-primary transition-colors">
+            <div className="absolute bottom-0 left-0 p-3 md:p-6">
+              <h3 className="text-lg md:text-2xl font-black text-white uppercase tracking-tighter mb-1">{topRight.title}</h3>
+              <span className="inline-flex items-center text-[10px] md:text-xs font-bold uppercase tracking-widest group-hover:text-primary transition-colors">
                 {topRight.buttonText}
               </span>
             </div>
@@ -83,15 +52,15 @@ const CategoryBento: React.FC = () => {
 
         {/* NUEVOS INGRESOS - Medium Block */}
         {bottomRight && (
-          <Link to={bottomRight.link} className="relative group min-w-[85vw] md:min-w-0 md:col-span-1 md:row-span-1 rounded overflow-hidden cursor-pointer block snap-center">
+          <Link to={bottomRight.link} className="relative group col-span-1 row-span-1 rounded overflow-hidden cursor-pointer block">
             <div
               className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
               style={{ backgroundImage: `url('${bottomRight.image}')` }}
             />
             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
-            <div className="absolute bottom-0 left-0 p-6">
-              <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-1">{bottomRight.title}</h3>
-              <span className="inline-flex items-center text-xs font-bold uppercase tracking-widest group-hover:text-primary transition-colors">
+            <div className="absolute bottom-0 left-0 p-3 md:p-6">
+              <h3 className="text-lg md:text-2xl font-black text-white uppercase tracking-tighter mb-1">{bottomRight.title}</h3>
+              <span className="inline-flex items-center text-[10px] md:text-xs font-bold uppercase tracking-widest group-hover:text-primary transition-colors">
                 {bottomRight.buttonText || bottomRight.subtitle}
               </span>
             </div>
