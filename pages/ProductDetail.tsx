@@ -22,6 +22,18 @@ const ProductDetail: React.FC = () => {
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState<string>('');
     const [zoomState, setZoomState] = useState({ show: false, x: 0, y: 0 });
+    const thumbnailsRef = React.useRef<HTMLDivElement>(null);
+
+    const scrollThumbnails = (direction: 'left' | 'right') => {
+        if (thumbnailsRef.current) {
+            const container = thumbnailsRef.current;
+            const scrollAmount = container.clientWidth * 0.75;
+            container.scrollBy({
+                left: direction === 'left' ? -scrollAmount : scrollAmount,
+                behavior: 'smooth'
+            });
+        }
+    };
 
     React.useEffect(() => {
         window.scrollTo(0, 0);
@@ -159,16 +171,37 @@ const ProductDetail: React.FC = () => {
                         </div>
 
                         {product.images.length > 1 && (
-                            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                                {product.images.map((img, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setSelectedImage(idx)}
-                                        className={`relative w-24 aspect-square rounded-md overflow-hidden border-2 flex-shrink-0 transition-all ${selectedImage === idx ? 'border-primary' : 'border-transparent hover:border-gray-600'}`}
-                                    >
-                                        <img src={img} alt={product.imageAlts?.[idx] || `${product.name} Thumbnail`} className="w-full h-full object-cover" />
-                                    </button>
-                                ))}
+                            <div className="relative group/thumbs">
+                                <button
+                                    onClick={() => scrollThumbnails('left')}
+                                    className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-black/50 p-1.5 rounded-full text-white opacity-0 group-hover/thumbs:opacity-100 transition-opacity hover:bg-black/80 disabled:opacity-0 backdrop-blur-sm"
+                                    aria-label="Scroll left"
+                                >
+                                    <ArrowLeft size={16} />
+                                </button>
+
+                                <div
+                                    ref={thumbnailsRef}
+                                    className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth px-1"
+                                >
+                                    {product.images.map((img, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => setSelectedImage(idx)}
+                                            className={`relative w-24 aspect-square rounded-md overflow-hidden border-2 flex-shrink-0 transition-all ${selectedImage === idx ? 'border-primary' : 'border-transparent hover:border-gray-600'}`}
+                                        >
+                                            <img src={img} alt={product.imageAlts?.[idx] || `${product.name} Thumbnail`} className="w-full h-full object-cover" />
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() => scrollThumbnails('right')}
+                                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-black/50 p-1.5 rounded-full text-white opacity-0 group-hover/thumbs:opacity-100 transition-opacity hover:bg-black/80 backdrop-blur-sm"
+                                    aria-label="Scroll right"
+                                >
+                                    <ArrowLeft size={16} className="rotate-180" />
+                                </button>
                             </div>
                         )}
                     </div>
@@ -196,11 +229,11 @@ const ProductDetail: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
                             {/* Size Selector */}
                             {!isAccessory && (
-                                <div className="flex-1">
+                                <div className="flex-1 text-left">
                                     <div className="flex justify-between items-center mb-4">
                                         <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle</span>
                                     </div>
-                                    <div className="grid grid-cols-4 gap-2">
+                                    <div className="flex flex-wrap gap-2">
                                         {product.sizes.map(size => {
                                             const normalizedSize = size.trim().toUpperCase();
                                             let isOutOfStock = false;
@@ -214,7 +247,7 @@ const ProductDetail: React.FC = () => {
                                                     key={size}
                                                     onClick={() => !isOutOfStock && setSelectedSize(size)}
                                                     disabled={isOutOfStock}
-                                                    className={`h-12 w-full flex flex-col items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden ${selectedSize === size
+                                                    className={`h-12 px-6 flex items-center justify-center border rounded font-mono font-medium transition-all relative overflow-hidden ${selectedSize === size
                                                         ? 'bg-white text-black border-white'
                                                         : isOutOfStock
                                                             ? 'border-gray-800 text-gray-600 cursor-not-allowed bg-white/5 opacity-50'
@@ -225,6 +258,18 @@ const ProductDetail: React.FC = () => {
                                                 </button>
                                             );
                                         })}
+
+                                        <button
+                                            onClick={handleAddToCart}
+                                            disabled={isTotallyOutOfStock}
+                                            className={`h-12 px-8 font-bold tracking-widest uppercase rounded transition-all flex items-center justify-center gap-2 text-sm ml-2 ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:opacity-90 text-white'}`}
+                                        >
+                                            {isTotallyOutOfStock ? 'AGOTADO' : (
+                                                <>
+                                                    <ShoppingBag size={18} /> <span className="">AGREGAR</span>
+                                                </>
+                                            )}
+                                        </button>
                                     </div>
                                     {product.fit && <p className="mt-4 text-xs text-gray-500">Fit: <span className="text-white">{product.fit}</span></p>}
                                 </div>
@@ -279,17 +324,19 @@ const ProductDetail: React.FC = () => {
                             </div>
                         )}
                         <div className="mt-auto space-y-4">
-                            <button
-                                onClick={handleAddToCart}
-                                disabled={isTotallyOutOfStock}
-                                className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:opacity-90 text-white'}`}
-                            >
-                                {isTotallyOutOfStock ? 'AGOTADO' : (
-                                    <>
-                                        <ShoppingBag size={24} /> Agregar al Carrito
-                                    </>
-                                )}
-                            </button>
+                            {isAccessory && (
+                                <button
+                                    onClick={handleAddToCart}
+                                    disabled={isTotallyOutOfStock}
+                                    className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:opacity-90 text-white'}`}
+                                >
+                                    {isTotallyOutOfStock ? 'AGOTADO' : (
+                                        <>
+                                            <ShoppingBag size={24} /> Agregar al Carrito
+                                        </>
+                                    )}
+                                </button>
+                            )}
 
                             {/* <div className="flex gap-4">
                                 <button className="flex-1 py-3 border border-gray-800 hover:bg-white/5 rounded text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors">
