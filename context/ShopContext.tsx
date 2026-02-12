@@ -82,11 +82,11 @@ export const useShop = () => {
 const DEFAULT_HERO_SLIDES: HeroSlide[] = [
     {
         id: 'h1',
-        title: 'COMPLEMENTAMOS',
-        subtitle: 'TU ESTILO',
-        buttonText: 'VER COLECCIÓN',
+        title: 'EL LUJO DE BRILLAR',
+        subtitle: 'TODOS LOS DIAS',
+        buttonText: 'VER MÁS',
         buttonLink: '/category/Joyas',
-        image: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&q=80&w=2000'
+        image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&q=80&w=2000'
     }
 ];
 
