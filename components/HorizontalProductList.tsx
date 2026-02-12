@@ -69,7 +69,7 @@ const HorizontalProductList: React.FC<HorizontalProductListProps> = ({ products,
                     className="flex overflow-x-auto gap-3 sm:gap-4 pb-4 snap-x scrollbar-hide"
                 >
                     {products.map(product => (
-                        <div key={product.id} className="w-[calc((100%-1.5rem)/3)] sm:w-[200px] md:w-[180px] lg:w-[19%] flex-shrink-0 snap-center">
+                        <div key={product.id} className="w-[160px] sm:w-[200px] md:w-[180px] lg:w-[19%] flex-shrink-0 snap-center">
                             <ProductCard product={product} onAddToCart={onAddToCart} />
                         </div>
                     ))}

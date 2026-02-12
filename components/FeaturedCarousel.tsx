@@ -18,9 +18,9 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth < 768) {
-                setItemsPerPage(3);
+                setItemsPerPage(2);
             } else if (window.innerWidth < 1024) {
-                setItemsPerPage(4);
+                setItemsPerPage(3);
             } else {
                 setItemsPerPage(5);
             }
@@ -103,7 +103,7 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
 
             {/* Grid */}
             <div
-                className={`grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4`}
+                className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4`}
             >
                 {products.slice(currentIndex, currentIndex + itemsPerPage).map(product => (
                     <div key={`${product.id}-${currentIndex}`} className="animate-in fade-in slide-in-from-right-4 duration-500 fill-mode-both">
