@@ -21,6 +21,11 @@ const Home: React.FC = () => {
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     // Categories are now directly from context (objects)
+    const sortedCategories = [...categories].sort((a, b) => {
+        if (a.id === 'billeteras') return 1;
+        if (b.id === 'billeteras') return -1;
+        return 0;
+    });
 
     return (
         <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white">
@@ -50,7 +55,7 @@ const Home: React.FC = () => {
                 )}
 
                 {/* Dynamic Category Sections */}
-                {visibilityConfig.categories && categories.map(categoryObj => {
+                {visibilityConfig.categories && sortedCategories.map(categoryObj => {
                     const category = categoryObj.id;
 
                     // Special layout for 'joyas'
