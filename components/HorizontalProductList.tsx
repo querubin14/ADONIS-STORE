@@ -69,7 +69,7 @@ const HorizontalProductList: React.FC<HorizontalProductListProps> = ({ products,
                     className="flex overflow-x-auto gap-3 sm:gap-4 pb-4 snap-x scrollbar-hide"
                 >
                     {products.map(product => (
-                        <div key={product.id} className="min-w-[calc((100%-1.5rem)/3)] sm:min-w-[200px] md:min-w-[180px] lg:min-w-[19%] snap-center">
+                        <div key={product.id} className="w-[calc((100%-1.5rem)/3)] sm:w-[200px] md:w-[180px] lg:w-[19%] flex-shrink-0 snap-center">
                             <ProductCard product={product} onAddToCart={onAddToCart} />
                         </div>
                     ))}
@@ -78,7 +78,7 @@ const HorizontalProductList: React.FC<HorizontalProductListProps> = ({ products,
                     {viewAllLink && (
                         <Link
                             to={viewAllLink}
-                            className="min-w-[calc((100%-1.5rem)/3)] sm:min-w-[200px] md:min-w-[180px] lg:min-w-[19%] snap-center flex flex-col items-center justify-center bg-gray-900/50 border border-gray-800 hover:bg-gray-800 hover:border-primary/50 transition-all rounded group cursor-pointer aspect-[3/4] md:aspect-auto md:h-full"
+                            className="w-[calc((100%-1.5rem)/3)] sm:w-[200px] md:w-[180px] lg:w-[19%] flex-shrink-0 snap-center flex flex-col items-center justify-center bg-gray-900/50 border border-gray-800 hover:bg-gray-800 hover:border-primary/50 transition-all rounded group cursor-pointer aspect-[3/4] md:aspect-auto md:h-full"
                         >
                             <span className="w-12 h-12 rounded-full border border-gray-600 flex items-center justify-center group-hover:border-primary group-hover:text-primary transition-colors mb-2">
                                 <ArrowRight size={24} />
