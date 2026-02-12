@@ -17,8 +17,10 @@ const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ products, onAddToCa
     // Responsive items per page
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth < 1024) {
+            if (window.innerWidth < 768) {
                 setItemsPerPage(3);
+            } else if (window.innerWidth < 1024) {
+                setItemsPerPage(4);
             } else {
                 setItemsPerPage(5);
             }
