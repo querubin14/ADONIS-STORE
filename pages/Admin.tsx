@@ -190,6 +190,8 @@ const AdminDashboard: React.FC = () => {
     // Color Variant State
     const [tempColorName, setTempColorName] = useState('');
     const [tempColorHex, setTempColorHex] = useState('#000000');
+    const [tempColorStock, setTempColorStock] = useState('');
+    const [tempColorPrice, setTempColorPrice] = useState('');
     const [isColorUploading, setIsColorUploading] = useState(false);
     const colorFileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -827,7 +829,13 @@ const AdminDashboard: React.FC = () => {
                 if (url) {
                     setNewProduct(prev => {
                         // Add to colors
-                        const newColors = [...(prev.colors || []), { name: tempColorName, image: url, hex: tempColorHex }];
+                        const newColors = [...(prev.colors || []), {
+                            name: tempColorName,
+                            image: url,
+                            hex: tempColorHex,
+                            stock: tempColorStock ? Number(tempColorStock) : undefined,
+                            price: tempColorPrice ? Number(tempColorPrice) : undefined
+                        }];
                         // Add to main images if not exists
                         const newImages = prev.images.includes(url) ? prev.images : [...prev.images.filter(i => i), url];
                         const newAlts = prev.images.includes(url) ? prev.imageAlts : [...(prev.imageAlts || []), `${prev.name} - Color ${tempColorName}`];
@@ -841,6 +849,8 @@ const AdminDashboard: React.FC = () => {
                     });
                     setTempColorName('');
                     setTempColorHex('#000000');
+                    setTempColorStock('');
+                    setTempColorPrice('');
                 }
             } catch (error) {
                 console.error("Error uploading color image:", error);
@@ -1486,6 +1496,28 @@ const AdminDashboard: React.FC = () => {
                                                                     </div>
                                                                 </div>
                                                             </div>
+                                                            <div className="flex gap-2">
+                                                                <div className="flex-1 space-y-1">
+                                                                    <label className="text-[10px] text-gray-400 font-bold uppercase">Stock (Opcional)</label>
+                                                                    <input
+                                                                        type="number"
+                                                                        value={tempColorStock}
+                                                                        onChange={e => setTempColorStock(e.target.value)}
+                                                                        className="w-full bg-black border border-gray-700 rounded p-2 text-xs text-white focus:border-primary focus:outline-none"
+                                                                        placeholder="Ej: 10"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex-1 space-y-1">
+                                                                    <label className="text-[10px] text-gray-400 font-bold uppercase">Precio (Si Varía)</label>
+                                                                    <input
+                                                                        type="number"
+                                                                        value={tempColorPrice}
+                                                                        onChange={e => setTempColorPrice(e.target.value)}
+                                                                        className="w-full bg-black border border-gray-700 rounded p-2 text-xs text-white focus:border-primary focus:outline-none"
+                                                                        placeholder="Ej: 150000"
+                                                                    />
+                                                                </div>
+                                                            </div>
 
                                                             <button
                                                                 type="button"
@@ -1507,12 +1539,17 @@ const AdminDashboard: React.FC = () => {
                                                             {/* Gallery Selection for Color */}
                                                             {newProduct.images.length > 0 && newProduct.images[0] !== '' && (
                                                                 <div className="space-y-2 pt-2 border-t border-gray-800/50">
-                                                                    <p className="text-[10px] text-gray-500 font-bold uppercase">O Vincular con Imagen de Galería:</p>
+                                                                    <p className="text-[10px] text-gray-500 font-bold uppercase">Arrastra o Vincula con Galería:</p>
                                                                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-800">
                                                                         {newProduct.images.filter(img => img && img.trim() !== '').map((img, idx) => (
                                                                             <button
                                                                                 key={idx}
                                                                                 type="button"
+                                                                                draggable={true}
+                                                                                onDragStart={(e) => {
+                                                                                    e.dataTransfer.setData('text/plain', img);
+                                                                                    e.dataTransfer.effectAllowed = 'copy';
+                                                                                }}
                                                                                 onClick={() => {
                                                                                     if (!tempColorName.trim()) {
                                                                                         alert('Ingresa el nombre del color primero');
@@ -1523,14 +1560,18 @@ const AdminDashboard: React.FC = () => {
                                                                                         colors: [...(prev.colors || []), {
                                                                                             name: tempColorName,
                                                                                             image: img,
-                                                                                            hex: tempColorHex
+                                                                                            hex: tempColorHex,
+                                                                                            stock: tempColorStock ? Number(tempColorStock) : undefined,
+                                                                                            price: tempColorPrice ? Number(tempColorPrice) : undefined
                                                                                         }]
                                                                                     }));
                                                                                     setTempColorName('');
                                                                                     setTempColorHex('#000000');
+                                                                                    setTempColorStock('');
+                                                                                    setTempColorPrice('');
                                                                                 }}
-                                                                                className="relative w-10 h-10 rounded overflow-hidden border border-gray-700 hover:border-primary shrink-0 transition-colors group/img"
-                                                                                title={`Usar imagen #${idx + 1}`}
+                                                                                className="relative w-10 h-10 rounded overflow-hidden border border-gray-700 hover:border-primary shrink-0 transition-colors group/img cursor-grab active:cursor-grabbing"
+                                                                                title={`Arrastra o Click para usar imagen #${idx + 1}`}
                                                                             >
                                                                                 <img src={img} alt="" className="w-full h-full object-cover" />
                                                                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
@@ -1547,7 +1588,27 @@ const AdminDashboard: React.FC = () => {
                                                         {newProduct.colors && newProduct.colors.length > 0 ? (
                                                             <div className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
                                                                 {newProduct.colors.map((color, idx) => (
-                                                                    <div key={idx} className="flex items-center gap-2 bg-gray-900/50 p-2 rounded border border-gray-800">
+                                                                    <div
+                                                                        key={idx}
+                                                                        className="flex items-center gap-2 bg-gray-900/50 p-2 rounded border border-gray-800 transition-colors hover:border-gray-600"
+                                                                        onDragOver={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.currentTarget.classList.add('border-primary', 'bg-white/5');
+                                                                        }}
+                                                                        onDragLeave={(e) => {
+                                                                            e.currentTarget.classList.remove('border-primary', 'bg-white/5');
+                                                                        }}
+                                                                        onDrop={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.currentTarget.classList.remove('border-primary', 'bg-white/5');
+                                                                            const url = e.dataTransfer.getData('text/plain');
+                                                                            if (url) {
+                                                                                const newColors = [...newProduct.colors];
+                                                                                newColors[idx] = { ...newColors[idx], image: url };
+                                                                                setNewProduct(prev => ({ ...prev, colors: newColors }));
+                                                                            }
+                                                                        }}
+                                                                    >
                                                                         <div
                                                                             className="w-6 h-6 rounded-full border border-gray-700 shrink-0 shadow-sm"
                                                                             style={{ backgroundColor: color.hex || '#000' }}
@@ -1555,7 +1616,11 @@ const AdminDashboard: React.FC = () => {
                                                                         <div className="w-6 h-6 rounded overflow-hidden bg-black border border-gray-700 shrink-0 opacity-50">
                                                                             <img src={color.image} alt="Ref" className="w-full h-full object-cover" />
                                                                         </div>
-                                                                        <span className="text-[10px] font-bold text-white truncate flex-1">{color.name}</span>
+                                                                        <div className="flex-1 flex flex-col overflow-hidden">
+                                                                            <span className="text-[10px] font-bold text-white truncate">{color.name}</span>
+                                                                            {color.stock !== undefined && <span className="text-[8px] text-gray-400">Stock: {color.stock}</span>}
+                                                                            {color.price !== undefined && <span className="text-[8px] text-gray-400">Gs. {color.price.toLocaleString()}</span>}
+                                                                        </div>
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => removeColor(color.name)}
@@ -2117,8 +2182,14 @@ const AdminDashboard: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase">WhatsApp (Número sin +)</label>
-                                    <input type="text" value={configForm.whatsapp} onChange={e => setConfigForm({ ...configForm, whatsapp: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" />
+                                    <label className="text-xs font-bold text-gray-500 uppercase">WhatsApp (Número o Link Completo)</label>
+                                    <input
+                                        type="text"
+                                        value={configForm.whatsapp}
+                                        onChange={e => setConfigForm({ ...configForm, whatsapp: e.target.value })}
+                                        className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors"
+                                        placeholder="Ej: 595983840235 o https://chat.whatsapp.com/..."
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-gray-500 uppercase">Dirección / Footer Info</label>

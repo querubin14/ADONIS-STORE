@@ -8,6 +8,7 @@ import { ShopProvider, useShop } from './context/ShopContext';
 import { AuthProvider } from './context/AuthContext';
 import SEO from './components/SEO';
 import LoadingScreen from './components/LoadingScreen';
+import WhatsAppButton from './components/WhatsAppButton';
 
 const MainContent: React.FC = () => {
   const { loading } = useShop();
@@ -21,7 +22,12 @@ const MainContent: React.FC = () => {
     <BrowserRouter>
       <SEO />
       {/* Only show CartDrawer on Web App, not Stock App, unless requested otherwise. Keeping it separate is cleaner. */}
-      {!isStockApp && <CartDrawer />}
+      {!isStockApp && (
+        <>
+          <CartDrawer />
+          <WhatsAppButton />
+        </>
+      )}
 
       {isStockApp ? (
         <StockRoutes />

@@ -85,10 +85,20 @@ const CartDrawer: React.FC = () => {
         // Helper for formatting currency
         const formatPrice = (price: number) => price.toLocaleString('es-PY') + ' Gs';
 
-        const message = `*ADONIS STORE #${displayId}* \n\n` +
+        // Find the first valid image to use as the "Preview Header"
+        // This forces WhatsApp to attempt to render a preview card for this image
+        const previewImage = cart.find(item => item.images && item.images.length > 0 && item.images[0])?.images?.[0];
+
+        const message =
+            (previewImage ? `${previewImage}\n\n` : '') + // Header Image Link for Preview
+            `*ADONIS STORE #${displayId}* \n` +
+            `Hola! Quiero confirmar mi pedido:\n\n` +
             cart.map(item => {
-                const imgLink = item.images && item.images.length > 0 ? `\n🖼️ Ver foto: ${item.images[0]}` : '';
-                return `▪️ *${item.name}*\n   Cant: ${item.quantity} | Talle: ${item.selectedSize}\n   Precio: ${formatPrice(item.price * item.quantity)}${imgLink}`;
+                // If this item's image is the same as the header preview, we can skip showing the link again to keep it clean, 
+                // OR we keep it for clarity. Let's keep it but maybe shorter.
+                const imgLink = item.images && item.images.length > 0 ? `\n🔗 Foto: ${item.images[0]}` : '';
+                const colorInfo = item.selectedColor ? ` | Color: ${item.selectedColor}` : '';
+                return `▪️ *${item.name}*\n   Cant: ${item.quantity} | Talle: ${item.selectedSize}${colorInfo}\n   Precio: ${formatPrice(item.price * item.quantity)}${imgLink}`;
             }).join('\n\n') +
             `\n\n--------------------------------\n` +
             `*SUBTOTAL:* ${formatPrice(cartTotal)}\n` +
@@ -138,7 +148,7 @@ const CartDrawer: React.FC = () => {
                         </div>
                     ) : (
                         cart.map(item => (
-                            <div key={`${item.id}-${item.selectedSize}`} className="flex gap-4 p-3 bg-white/5 rounded-lg border border-white/5">
+                            <div key={`${item.id}-${item.selectedSize}-${item.selectedColor || 'default'}`} className="flex gap-4 p-3 bg-white/5 rounded-lg border border-white/5">
                                 <img
                                     src={item.images ? item.images[0] : 'https://via.placeholder.com/150'}
                                     alt={item.name}
@@ -148,20 +158,21 @@ const CartDrawer: React.FC = () => {
                                     <div className="flex justify-between items-start">
                                         <h3 className="font-bold text-sm">{item.name}</h3>
                                         <button
-                                            onClick={() => removeFromCart(item.id, item.selectedSize)}
+                                            onClick={() => removeFromCart(item.id, item.selectedSize, item.selectedColor)}
                                             className="text-gray-500 hover:text-red-500 transition-colors"
                                         >
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
                                     <p className="text-accent-gray text-xs mb-2">{item.category}</p>
+                                    {item.selectedColor && <p className="text-white text-xs mb-1 font-bold">Color: {item.selectedColor}</p>}
 
                                     {/* Size Selector */}
                                     <div className="mb-3">
                                         {item.sizes && item.sizes.length > 0 && (
                                             <select
                                                 value={item.selectedSize}
-                                                onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value)}
+                                                onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value, item.selectedColor)}
                                                 className="w-full bg-black border border-gray-700 text-white text-sm rounded-md px-3 py-2 outline-none focus:border-white appearance-none cursor-pointer hover:bg-white/5 transition-colors"
                                                 style={{ backgroundImage: 'none' }} // Remove default arrow if needed, or keep it. Let's keep appearance-none and maybe add a custom SVG if I could, but standard is fine with border.
                                             >
@@ -179,14 +190,14 @@ const CartDrawer: React.FC = () => {
                                         <span className="font-mono font-bold">Gs. {item.price.toLocaleString()}</span>
                                         <div className="flex items-center gap-3 bg-black rounded-lg px-2 py-1 border border-gray-800">
                                             <button
-                                                onClick={() => updateQuantity(item.id, item.selectedSize, -1)}
+                                                onClick={() => updateQuantity(item.id, item.selectedSize, -1, item.selectedColor)}
                                                 className="p-1 hover:text-primary transition-colors disabled:opacity-50"
                                             >
                                                 <Minus size={12} />
                                             </button>
                                             <span className="text-sm w-4 text-center">{item.quantity}</span>
                                             <button
-                                                onClick={() => updateQuantity(item.id, item.selectedSize, 1)}
+                                                onClick={() => updateQuantity(item.id, item.selectedSize, 1, item.selectedColor)}
                                                 className="p-1 hover:text-primary transition-colors"
                                             >
                                                 <Plus size={12} />

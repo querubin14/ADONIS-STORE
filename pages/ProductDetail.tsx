@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SEO from '../components/SEO';
 import { ShoppingBag, ArrowLeft, Star, Share2 } from 'lucide-react';
+import { ColorVariant } from '../types';
 
 const ProductDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -21,6 +22,7 @@ const ProductDetail: React.FC = () => {
     // State
     const [selectedImage, setSelectedImage] = useState(0);
     const [selectedSize, setSelectedSize] = useState<string>('');
+    const [selectedColor, setSelectedColor] = useState<ColorVariant | null>(null);
     const [zoomState, setZoomState] = useState({ show: false, x: 0, y: 0 });
     const thumbnailsRef = React.useRef<HTMLDivElement>(null);
 
@@ -45,9 +47,11 @@ const ProductDetail: React.FC = () => {
 
     const isAccessory = product.category?.toUpperCase() === 'ACCESORIOS';
 
+    // Stock Logic considering Variant
+    const currentStock = selectedColor?.stock !== undefined ? selectedColor.stock : product.stock;
     const isTotallyOutOfStock = product.inventory && product.inventory.length > 0
         ? product.inventory.every(i => Number(i.quantity) === 0)
-        : product.stock === 0;
+        : currentStock === 0;
 
     const handleAddToCart = () => {
         if (isTotallyOutOfStock) return;
@@ -55,7 +59,7 @@ const ProductDetail: React.FC = () => {
             alert('Por favor selecciona un talle');
             return;
         }
-        addToCart(product, selectedSize || (isAccessory ? 'Talle Único' : 'One Size'));
+        addToCart(product, selectedSize || (isAccessory ? 'Talle Único' : 'One Size'), selectedColor?.name);
     };
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -218,18 +222,18 @@ const ProductDetail: React.FC = () => {
                         <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4 leading-none">{product.name}</h1>
 
                         <div className="flex items-end gap-4 mb-8">
-                            <span className="text-4xl font-bold font-mono text-primary">Gs. {product.price.toLocaleString()}</span>
-                            {product.originalPrice && product.originalPrice > product.price && (
+                            <span className="text-4xl font-bold font-mono text-primary">Gs. {(selectedColor?.price || product.price).toLocaleString()}</span>
+                            {product.originalPrice && product.originalPrice > (selectedColor?.price || product.price) && (
                                 <span className="text-xl text-gray-500 line-through mb-1">Gs. {product.originalPrice.toLocaleString()}</span>
                             )}
                         </div>
 
 
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                        <div className="flex flex-col gap-8 mb-10">
                             {/* Size Selector */}
                             {!isAccessory && (
-                                <div className="flex-1 text-left">
+                                <div className="w-full text-left">
                                     <div className="flex justify-between items-center mb-4">
                                         <span className="text-sm font-bold uppercase tracking-widest text-gray-300">Talle</span>
                                     </div>
@@ -258,18 +262,6 @@ const ProductDetail: React.FC = () => {
                                                 </button>
                                             );
                                         })}
-
-                                        <button
-                                            onClick={handleAddToCart}
-                                            disabled={isTotallyOutOfStock}
-                                            className={`h-12 px-8 font-bold tracking-widest uppercase rounded transition-all flex items-center justify-center gap-2 text-sm ml-2 ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:opacity-90 text-white'}`}
-                                        >
-                                            {isTotallyOutOfStock ? 'AGOTADO' : (
-                                                <>
-                                                    <ShoppingBag size={18} /> <span className="">AGREGAR</span>
-                                                </>
-                                            )}
-                                        </button>
                                     </div>
                                     {product.fit && <p className="mt-4 text-xs text-gray-500">Fit: <span className="text-white">{product.fit}</span></p>}
                                 </div>
@@ -277,22 +269,26 @@ const ProductDetail: React.FC = () => {
 
                             {/* Color Selector */}
                             {product.colors && product.colors.length > 0 && (
-                                <div className="flex-1 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <div className="w-full animate-in fade-in slide-in-from-right-4 duration-500">
                                     <div className="flex justify-between items-center mb-4">
                                         <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
-                                            Color: <span className="text-primary ml-1">{product.colors.find(c => product.images.findIndex(img => img === c.image) === selectedImage)?.name || 'Seleccionar'}</span>
+                                            Color: <span className="text-primary ml-1">{selectedColor?.name || (product.colors.find(c => product.images.findIndex(img => img === c.image) === selectedImage)?.name) || 'Seleccionar'}</span>
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap gap-3">
                                         {product.colors.map((color, idx) => {
                                             const colorImageIndex = product.images.findIndex(img => img === color.image);
-                                            const isSelected = colorImageIndex !== -1 && selectedImage === colorImageIndex;
+                                            const isSelected = (selectedColor && selectedColor.name === color.name) || (!selectedColor && colorImageIndex !== -1 && selectedImage === colorImageIndex);
 
                                             return (
                                                 <button
                                                     key={idx}
                                                     onClick={() => {
-                                                        if (colorImageIndex !== -1) setSelectedImage(colorImageIndex);
+                                                        setSelectedColor(color);
+                                                        // Update image if this color has a linked image
+                                                        if (colorImageIndex !== -1) {
+                                                            setSelectedImage(colorImageIndex);
+                                                        }
                                                     }}
                                                     className={`group relative w-16 h-16 rounded mb-2 overflow-hidden border-2 transition-all flex items-center justify-center ${isSelected ? 'border-primary ring-2 ring-primary/50 scale-105 shadow-xl' : 'border-gray-700 hover:border-gray-500 hover:scale-105'}`}
                                                     title={color.name}
@@ -302,7 +298,7 @@ const ProductDetail: React.FC = () => {
                                                     {color.image && <img src={color.image} alt={color.name} className="w-full h-full object-cover" />}
 
                                                     {/* Fallback to hex if image broken/missing but hex exists */}
-                                                    {!color.image && !color.hex && <span className="text-[8px] text-gray-500">{color.name}</span>}
+                                                    {!color.image && <span className={`text-[8px] font-bold ${color.hex === '#ffffff' || color.hex === '#fff' ? 'text-black' : 'text-white'} drop-shadow-md`}>{!color.image && !color.hex ? color.name : ''}</span>}
 
                                                     {/* Active Indicator Overlay */}
                                                     {isSelected && <div className="absolute inset-0 ring-inset ring-2 ring-primary/20 pointer-events-none" />}
@@ -312,6 +308,22 @@ const ProductDetail: React.FC = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Add To Cart Button - Moved to bottom for better mobile/desktop flow */}
+                            <div className="pt-4 border-t border-gray-800">
+                                <button
+                                    onClick={handleAddToCart}
+                                    disabled={isTotallyOutOfStock}
+                                    className={`w-full md:w-auto h-14 px-10 font-black tracking-widest uppercase rounded transition-all flex items-center justify-center gap-3 text-base ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-red-700 text-white shadow-lg hover:shadow-red-900/20 hover:-translate-y-1'}`}
+                                >
+                                    {isTotallyOutOfStock ? 'AGOTADO' : (
+                                        <>
+                                            <ShoppingBag size={20} /> <span className="">AGREGAR AL CARRITO</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+
                         </div>
 
                         {/* Actions */}

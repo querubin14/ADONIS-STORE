@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, VisibilityConfig } from '../types';
+import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, VisibilityConfig, ColorVariant } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
 
@@ -281,6 +281,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 ordersResult,
                 blogResult,
                 dropsResult,
+                variantsResult,
                 configsResult
             ] = await Promise.all([
                 supabase.from('products').select('*'),
@@ -290,6 +291,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 supabase.from('orders').select('*').order('created_at', { ascending: false }),
                 supabase.from('blog_posts').select('*').order('created_at', { ascending: false }),
                 supabase.from('drops').select('*').order('created_at', { ascending: false }),
+                supabase.from('product_variants').select('*'),
                 supabase.from('store_config').select('*')
             ]);
 
@@ -338,6 +340,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // 3. Process Products & Inventory
             if (productsResult.data) {
                 const inventoryData = inventoryResult.data || [];
+                const variantsData = variantsResult.data || [];
 
                 let prods = productsResult.data.map(p => ({
                     ...p,
@@ -350,7 +353,14 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     subcategory: p.subcategory || p.Subcategory || p.sub_category || '',
                     stock: p.stock_quantity,
                     costPrice: Number(p.cost_price || p.unit_cost || 0),
-                    inventory: inventoryData.filter((i: any) => i.product_id === p.id)
+                    inventory: inventoryData.filter((i: any) => i.product_id === p.id),
+                    colors: variantsData.filter((v: any) => v.product_id === p.id).map((v: any) => ({
+                        name: v.color_name,
+                        image: v.image_url,
+                        hex: v.hex_code,
+                        stock: v.stock_quantity,
+                        price: v.price ? Number(v.price) : undefined
+                    }))
                 }));
 
                 // Apply Sort Order
@@ -458,28 +468,42 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
 
     // Cart Logic
-    const addToCart = (product: Product, size?: string) => {
+    const addToCart = (product: Product, size?: string, color?: string) => {
         const finalSize = size || (product.sizes && product.sizes.length > 0 ? product.sizes[0] : 'One Size');
 
+        // Logic to use the specific variant image if available
+        let finalImages = product.images || [];
+        if (color && product.colors) {
+            const variant = product.colors.find(c => c.name === color);
+            // If the variant has a specific image, make it the first one (thumbnail/preview)
+            if (variant && variant.image) {
+                // We assume variant.image is a full URL. We place it first.
+                // We keep others just in case, filtering out duplicates if necessary.
+                finalImages = [variant.image, ...finalImages.filter(img => img !== variant.image)];
+            }
+        }
+
         setCart(prev => {
-            const existing = prev.find(item => item.id === product.id && item.selectedSize === finalSize);
+            const existing = prev.find(item => item.id === product.id && item.selectedSize === finalSize && item.selectedColor === color);
             if (existing) {
                 return prev.map(item =>
-                    (item.id === product.id && item.selectedSize === finalSize) ? { ...item, quantity: item.quantity + 1 } : item
+                    (item.id === product.id && item.selectedSize === finalSize && item.selectedColor === color)
+                        ? { ...item, quantity: item.quantity + 1, images: finalImages } // Update images in case they changed or were generic before
+                        : item
                 );
             }
-            return [...prev, { ...product, quantity: 1, selectedSize: finalSize }];
+            return [...prev, { ...product, quantity: 1, selectedSize: finalSize, selectedColor: color, images: finalImages }];
         });
         setIsCartOpen(true);
     };
 
-    const removeFromCart = (productId: string, size: string) => {
-        setCart(prev => prev.filter(item => !(item.id === productId && item.selectedSize === size)));
+    const removeFromCart = (productId: string, size: string, color?: string) => {
+        setCart(prev => prev.filter(item => !(item.id === productId && item.selectedSize === size && item.selectedColor === color)));
     };
 
-    const updateQuantity = (productId: string, size: string, delta: number) => {
+    const updateQuantity = (productId: string, size: string, delta: number, color?: string) => {
         setCart(prev => prev.map(item => {
-            if (item.id === productId && item.selectedSize === size) {
+            if (item.id === productId && item.selectedSize === size && item.selectedColor === color) {
                 const newQty = Math.max(0, item.quantity + delta);
                 return { ...item, quantity: newQty };
             }
@@ -487,27 +511,27 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }).filter(item => item.quantity > 0));
     };
 
-    const updateCartItemSize = (productId: string, currentSize: string, newSize: string) => {
+    const updateCartItemSize = (productId: string, currentSize: string, newSize: string, color?: string) => {
         setCart(prev => {
             // 1. Find the item to update
-            const itemToUpdate = prev.find(item => item.id === productId && item.selectedSize === currentSize);
+            const itemToUpdate = prev.find(item => item.id === productId && item.selectedSize === currentSize && item.selectedColor === color);
             if (!itemToUpdate) return prev;
 
-            // 2. Check if an item with the NEW size already exists
-            const targetItem = prev.find(item => item.id === productId && item.selectedSize === newSize);
+            // 2. Check if an item with the NEW size already exists (same color!)
+            const targetItem = prev.find(item => item.id === productId && item.selectedSize === newSize && item.selectedColor === color);
 
             if (targetItem) {
                 // MERGE: Remove the old one, update the target one
                 return prev.map(item => {
-                    if (item.id === productId && item.selectedSize === newSize) {
+                    if (item.id === productId && item.selectedSize === newSize && item.selectedColor === color) {
                         return { ...item, quantity: item.quantity + itemToUpdate.quantity };
                     }
                     return item;
-                }).filter(item => !(item.id === productId && item.selectedSize === currentSize));
+                }).filter(item => !(item.id === productId && item.selectedSize === currentSize && item.selectedColor === color));
             } else {
                 // JUST UPDATE: Change size
                 return prev.map(item =>
-                    (item.id === productId && item.selectedSize === currentSize)
+                    (item.id === productId && item.selectedSize === currentSize && item.selectedColor === color)
                         ? { ...item, selectedSize: newSize }
                         : item
                 );
@@ -524,7 +548,6 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             // Delete old inventory for this product
             await supabase.from('inventory').delete().eq('product_id', productId);
-
             // Insert new inventory
             const inserts = inventory.map(item => ({
                 product_id: productId,
@@ -536,6 +559,41 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) console.error('Error saving inventory:', error);
         } catch (e) {
             console.error('Exception saving inventory:', e);
+        }
+    };
+
+    const saveVariants = async (productId: string, variants: ColorVariant[]) => {
+        try {
+            // Ensure productId is a string (UUID)
+            const pid = String(productId);
+
+            // Delete old variants for this product
+            const { error: deleteError } = await supabase.from('product_variants').delete().eq('product_id', pid);
+            if (deleteError) {
+                console.error('Error deleting old variants:', deleteError);
+                // We continue trying to insert even if delete fails, though it might cause duplicates if using ID generation
+                // But usually we want to clear first.
+            }
+
+            if (!variants || variants.length === 0) return;
+
+            const inserts = variants.map(v => ({
+                product_id: pid,
+                color_name: v.name,
+                image_url: v.image,
+                hex_code: v.hex,
+                stock_quantity: v.stock || 0,
+                price: v.price
+            }));
+
+            const { error } = await supabase.from('product_variants').insert(inserts);
+            if (error) {
+                console.error('Error saving variants:', error);
+                alert(`Error guardando variantes de color: ${error.message}`);
+            }
+        } catch (e) {
+            console.error('Exception saving variants:', e);
+            alert('Excepción al guardar variantes');
         }
     };
 
@@ -585,10 +643,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // Revert optimistic update on error
                 setProducts(prev => prev.filter(p => p.id !== product.id));
             } else if (data) {
-                // Save Inventory
-                if (product.inventory) {
-                    await saveInventory(data.id, product.inventory);
-                }
+                // Save Inventory & Variants
+                if (product.inventory) await saveInventory(data.id, product.inventory);
+                if (product.colors) await saveVariants(data.id, product.colors);
 
                 // Success! Update the local state with the REAL UUID from the DB
                 // This replaces the temporary timestamp ID with the valid UUID
@@ -633,10 +690,15 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) {
                 console.error('Error updating product in Supabase:', error);
             } else {
-                // Update Inventory
+                // Save Inventory & Variants
                 if (updatedProduct.inventory) {
                     await saveInventory(updatedProduct.id, updatedProduct.inventory);
                 }
+                if (updatedProduct.colors) {
+                    await saveVariants(updatedProduct.id, updatedProduct.colors);
+                }
+
+                alert('Producto actualizado correctamente en Supabase');
             }
         } catch (err) {
             console.error(err);
@@ -648,6 +710,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setProducts(prev => prev.filter(p => p.id !== productId));
 
         try {
+            // Manually delete related data (Inventory & Variants)
+            // Even if CASCADE is set, this is safer if constraints are missing
+            await supabase.from('inventory').delete().eq('product_id', productId);
+            await supabase.from('product_variants').delete().eq('product_id', productId);
+
             const { error } = await supabase
                 .from('products')
                 .delete()
@@ -655,6 +722,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error deleting product from Supabase:', error);
+                // Revert optimistic if needed, but for delete usually we just alert
+                alert('Error al eliminar producto de la base de datos.');
             }
         } catch (err) {
             console.error(err);
