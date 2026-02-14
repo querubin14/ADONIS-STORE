@@ -5,6 +5,7 @@ import { useShop } from '../context/ShopContext';
 import { X, Plus, Minus, Trash2, MapPin, Truck, ArrowLeft } from 'lucide-react';
 import LocationPicker from './LocationPicker';
 import { isPointInPolygon } from '../types';
+import CustomAlert from './CustomAlert';
 
 const CartDrawer: React.FC = () => {
     const navigate = useNavigate();
@@ -24,6 +25,11 @@ const CartDrawer: React.FC = () => {
     const [showMap, setShowMap] = React.useState(false);
     const [selectedLocation, setSelectedLocation] = React.useState<{ lat: number, lng: number } | null>(null);
     const [shippingCost, setShippingCost] = React.useState(0);
+    const [alertConfig, setAlertConfig] = React.useState<{ isOpen: boolean; title: string; message: string }>({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
 
     // Lock Body Scroll when Cart is Open
     React.useEffect(() => {
@@ -60,6 +66,14 @@ const CartDrawer: React.FC = () => {
     if (!isCartOpen) return null;
 
     const handleCheckout = () => {
+        if (!selectedLocation) {
+            setAlertConfig({
+                isOpen: true,
+                title: 'Ubicación Requerida',
+                message: 'Por favor, marca tu ubicación de envío para poder calcular el costo y enviar el pedido.'
+            });
+            return;
+        }
         const orderId = crypto.randomUUID();
         const displayId = Math.floor(1000 + Math.random() * 9000); // Simple ID for display
 
@@ -283,6 +297,14 @@ const CartDrawer: React.FC = () => {
                     }}
                 />
             )}
+
+
+            <CustomAlert
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+            />
         </div>
     );
 };

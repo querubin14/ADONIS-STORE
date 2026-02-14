@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import SEO from '../components/SEO';
 import { ShoppingBag, ArrowLeft, Star, Share2 } from 'lucide-react';
 import { ColorVariant } from '../types';
+import CustomAlert from '../components/CustomAlert';
 
 const ProductDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
@@ -24,6 +25,11 @@ const ProductDetail: React.FC = () => {
     const [selectedSize, setSelectedSize] = useState<string>('');
     const [selectedColor, setSelectedColor] = useState<ColorVariant | null>(null);
     const [zoomState, setZoomState] = useState({ show: false, x: 0, y: 0 });
+    const [alertConfig, setAlertConfig] = useState<{ isOpen: boolean; title: string; message: string }>({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
     const thumbnailsRef = React.useRef<HTMLDivElement>(null);
 
     const scrollThumbnails = (direction: 'left' | 'right') => {
@@ -56,7 +62,11 @@ const ProductDetail: React.FC = () => {
     const handleAddToCart = () => {
         if (isTotallyOutOfStock) return;
         if (!selectedSize && product.sizes.length > 0 && !isAccessory) {
-            alert('Por favor selecciona un talle');
+            setAlertConfig({
+                isOpen: true,
+                title: 'Atención',
+                message: 'Por favor, selecciona un talle.'
+            });
             return;
         }
         addToCart(product, selectedSize || (isAccessory ? 'Talle Único' : 'One Size'), selectedColor?.name);
@@ -412,6 +422,13 @@ const ProductDetail: React.FC = () => {
             </main>
 
             <Footer />
+
+            <CustomAlert
+                isOpen={alertConfig.isOpen}
+                onClose={() => setAlertConfig(prev => ({ ...prev, isOpen: false }))}
+                title={alertConfig.title}
+                message={alertConfig.message}
+            />
         </div>
     );
 };
