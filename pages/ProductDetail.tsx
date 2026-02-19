@@ -53,8 +53,52 @@ const ProductDetail: React.FC = () => {
 
     const isAccessory = product.category?.toUpperCase() === 'ACCESORIOS';
 
+    // Active Color Logic (Default to first if not selected)
+    const activeColor = selectedColor || (product.colors && product.colors.length > 0 ? product.colors[0] : null);
+
+    // Filter Images based on Active Color
+    const { displayImages, displayAlts } = React.useMemo(() => {
+        if (!product.colors || product.colors.length === 0 || !activeColor) {
+            return { displayImages: product.images, displayAlts: product.imageAlts };
+        }
+
+        // Map colors to their image indices to determine ranges
+        const colorIndices = product.colors
+            .map(c => ({
+                color: c,
+                index: product.images.findIndex(img => img === c.image)
+            }))
+            .filter(x => x.index !== -1)
+            .sort((a, b) => a.index - b.index);
+
+        if (colorIndices.length === 0) return { displayImages: product.images, displayAlts: product.imageAlts };
+
+        const activeIndex = colorIndices.findIndex(x => x.color.name === activeColor.name);
+
+        // If active color image not found in main list, show full list fallback
+        if (activeIndex === -1) return { displayImages: product.images, displayAlts: product.imageAlts };
+
+        const start = colorIndices[activeIndex].index;
+        const end = activeIndex < colorIndices.length - 1
+            ? colorIndices[activeIndex + 1].index
+            : product.images.length;
+
+        // Ensure we don't return partial arrays if logic fails
+        if (start >= end) return { displayImages: product.images, displayAlts: product.imageAlts };
+
+        return {
+            displayImages: product.images.slice(start, end),
+            displayAlts: product.imageAlts ? product.imageAlts.slice(start, end) : []
+        };
+    }, [product, activeColor]);
+
+    // Reset selected image when active color changes
+    React.useEffect(() => {
+        setSelectedImage(0);
+    }, [activeColor]);
+
     // Stock Logic considering Variant
-    const currentStock = selectedColor?.stock !== undefined ? selectedColor.stock : product.stock;
+    const currentStock = activeColor?.stock !== undefined ? activeColor.stock : product.stock;
     const isTotallyOutOfStock = product.inventory && product.inventory.length > 0
         ? product.inventory.every(i => Number(i.quantity) === 0)
         : currentStock === 0;
@@ -69,7 +113,7 @@ const ProductDetail: React.FC = () => {
             });
             return;
         }
-        addToCart(product, selectedSize || (isAccessory ? 'Talle Único' : 'One Size'), selectedColor?.name);
+        addToCart(product, selectedSize || (isAccessory ? 'Talle Único' : 'One Size'), activeColor?.name);
     };
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -151,9 +195,9 @@ const ProductDetail: React.FC = () => {
                             }}
                         >
                             <img
-                                src={product.images[selectedImage]}
+                                src={displayImages[selectedImage]}
                                 alt={
-                                    product.imageAlts?.[selectedImage] ||
+                                    displayAlts?.[selectedImage] ||
                                     ((product.name.toLowerCase().includes('camiseta') || product.category?.toLowerCase().includes('ropa'))
                                         ? `Camiseta de fútbol ${product.name} - Savage Store Paraguay`
                                         : `${product.name} - Savage Store Paraguay`)
@@ -172,19 +216,19 @@ const ProductDetail: React.FC = () => {
                                 </div>
                             )}
                             {/* Image Navigation (Optional if multiple images) */}
-                            {product.images.length > 1 && !zoomState.show && (
+                            {displayImages.length > 1 && !zoomState.show && (
                                 <div className="absolute inset-0 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                    <button className="bg-black/50 p-2 rounded-full pointer-events-auto hover:bg-black/80" onClick={(e) => { e.stopPropagation(); setSelectedImage(prev => prev > 0 ? prev - 1 : product.images.length - 1); }}>
+                                    <button className="bg-black/50 p-2 rounded-full pointer-events-auto hover:bg-black/80" onClick={(e) => { e.stopPropagation(); setSelectedImage(prev => prev > 0 ? prev - 1 : displayImages.length - 1); }}>
                                         <ArrowLeft size={20} />
                                     </button>
-                                    <button className="bg-black/50 p-2 rounded-full pointer-events-auto hover:bg-black/80" onClick={(e) => { e.stopPropagation(); setSelectedImage(prev => prev < product.images.length - 1 ? prev + 1 : 0); }}>
+                                    <button className="bg-black/50 p-2 rounded-full pointer-events-auto hover:bg-black/80" onClick={(e) => { e.stopPropagation(); setSelectedImage(prev => prev < displayImages.length - 1 ? prev + 1 : 0); }}>
                                         <ArrowLeft size={20} className="rotate-180" />
                                     </button>
                                 </div>
                             )}
                         </div>
 
-                        {product.images.length > 1 && (
+                        {displayImages.length > 1 && (
                             <div className="relative group/thumbs">
                                 <button
                                     onClick={() => scrollThumbnails('left')}
@@ -198,13 +242,13 @@ const ProductDetail: React.FC = () => {
                                     ref={thumbnailsRef}
                                     className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide scroll-smooth px-1"
                                 >
-                                    {product.images.map((img, idx) => (
+                                    {displayImages.map((img, idx) => (
                                         <button
                                             key={idx}
                                             onClick={() => setSelectedImage(idx)}
                                             className={`relative w-24 aspect-square rounded-md overflow-hidden border-2 flex-shrink-0 transition-all ${selectedImage === idx ? 'border-primary' : 'border-transparent hover:border-gray-600'}`}
                                         >
-                                            <img src={img} alt={product.imageAlts?.[idx] || `${product.name} Thumbnail`} className="w-full h-full object-cover" />
+                                            <img src={img} alt={displayAlts?.[idx] || `${product.name} Thumbnail`} className="w-full h-full object-cover" />
                                         </button>
                                     ))}
                                 </div>
@@ -232,8 +276,8 @@ const ProductDetail: React.FC = () => {
                         <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4 leading-none">{product.name}</h1>
 
                         <div className="flex items-end gap-4 mb-8">
-                            <span className="text-4xl font-bold font-mono text-primary">Gs. {(selectedColor?.price || product.price).toLocaleString()}</span>
-                            {product.originalPrice && product.originalPrice > (selectedColor?.price || product.price) && (
+                            <span className="text-4xl font-bold font-mono text-primary">Gs. {(activeColor?.price || product.price).toLocaleString()}</span>
+                            {product.originalPrice && product.originalPrice > (activeColor?.price || product.price) && (
                                 <span className="text-xl text-gray-500 line-through mb-1">Gs. {product.originalPrice.toLocaleString()}</span>
                             )}
                         </div>
@@ -282,23 +326,19 @@ const ProductDetail: React.FC = () => {
                                 <div className="w-full animate-in fade-in slide-in-from-right-4 duration-500">
                                     <div className="flex justify-between items-center mb-4">
                                         <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
-                                            Color: <span className="text-primary ml-1">{selectedColor?.name || (product.colors.find(c => product.images.findIndex(img => img === c.image) === selectedImage)?.name) || 'Seleccionar'}</span>
+                                            Color: <span className="text-primary ml-1">{activeColor?.name || 'Seleccionar'}</span>
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap gap-3">
                                         {product.colors.map((color, idx) => {
-                                            const colorImageIndex = product.images.findIndex(img => img === color.image);
-                                            const isSelected = (selectedColor && selectedColor.name === color.name) || (!selectedColor && colorImageIndex !== -1 && selectedImage === colorImageIndex);
+                                            const isSelected = activeColor && activeColor.name === color.name;
 
                                             return (
                                                 <button
                                                     key={idx}
                                                     onClick={() => {
                                                         setSelectedColor(color);
-                                                        // Update image if this color has a linked image
-                                                        if (colorImageIndex !== -1) {
-                                                            setSelectedImage(colorImageIndex);
-                                                        }
+                                                        // Image reset is handled by useEffect on activeColor change
                                                     }}
                                                     className={`group relative w-16 h-16 rounded mb-2 overflow-hidden border-2 transition-all flex items-center justify-center ${isSelected ? 'border-primary ring-2 ring-primary/50 scale-105 shadow-xl' : 'border-gray-700 hover:border-gray-500 hover:scale-105'}`}
                                                     title={color.name}
