@@ -1,5 +1,7 @@
 /// <reference types="vite/client" />
 
+import { toast } from 'react-toastify';
+
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -74,7 +76,7 @@ const initTokenClient = () => {
 export const openGooglePicker = async (onSelect: (file: Blob, name: string) => void) => {
     // Check Config
     if (!API_KEY || API_KEY === 'YOUR_GOOGLE_API_KEY' || !CLIENT_ID || CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
-        alert('Falta configurar Google API Key y Client ID en .env para usar Google Photos.');
+        toast.warn('Falta configurar Google API Key y Client ID en .env para usar Google Photos.');
         return;
     }
 
@@ -83,7 +85,7 @@ export const openGooglePicker = async (onSelect: (file: Blob, name: string) => v
             await loadGoogleScripts();
         } catch (e) {
             console.error(e);
-            alert('Error al cargar la librería de Google.');
+            toast.error('Error al cargar la librería de Google');
             return;
         }
     }
@@ -93,7 +95,7 @@ export const openGooglePicker = async (onSelect: (file: Blob, name: string) => v
     // Trigger Auth if no token
     if (!accessToken) {
         if (!tokenClient) {
-            alert('Error initializing Google Auth.');
+            toast.error('Error initializing Google Auth');
             return;
         }
         tokenClient.callback = async (tokenResponse: any) => {
@@ -152,7 +154,7 @@ const createPicker = (onSelect: (file: Blob, name: string) => void) => {
                         onSelect(blob, fileName);
                     } catch (err) {
                         console.error('Error fetching file from Google:', err);
-                        alert('Error al descargar la imagen. Asegúrate de que el usuario tenga permisos.');
+                        toast.error('Error al descargar la imagen. Verifica permisos.');
                     }
                 }
             }

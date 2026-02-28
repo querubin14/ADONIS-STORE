@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useShop } from '../context/ShopContext';
 import { supabase } from '../services/supabase';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const Footer: React.FC = () => {
   const { socialConfig, footerColumns } = useShop();
@@ -16,18 +17,18 @@ const Footer: React.FC = () => {
       const { error } = await supabase.from('subscribers').insert([{ email }]);
       if (error) {
         if (error.code === '23505') {
-          alert('Este email ya está suscrito.');
+          toast.warn('Este email ya está suscrito.');
         } else {
           console.error(error);
-          alert('Error al suscribirse. Intenta nuevamente.');
+          toast.error('Error al suscribirse. Intenta nuevamente.');
         }
       } else {
-        alert('¡Suscripción exitosa!');
+        toast.success('¡Suscripción exitosa!');
         setEmail('');
       }
     } catch (err) {
       console.error(err);
-      alert('Error al conectar.');
+      toast.error('Error al conectar.');
     } finally {
       setLoading(false);
     }
@@ -61,7 +62,7 @@ const Footer: React.FC = () => {
               <ul className="flex flex-col gap-3 text-sm text-gray-400">
                 {col.links.map(link => (
                   <li key={link.id}>
-                    <a className="hover:text-primary transition-colors" href={link.url}>{link.label}</a>
+                    <a className="hover:text-white transition-colors" href={link.url}>{link.label}</a>
                   </li>
                 ))}
               </ul>
@@ -81,7 +82,7 @@ const Footer: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <button disabled={loading} className="bg-white text-black font-bold uppercase tracking-widest text-xs py-3 rounded hover:bg-primary hover:text-white transition-all transform active:scale-95 disabled:opacity-50">
+              <button disabled={loading} className="bg-white text-black font-bold uppercase tracking-widest text-xs py-3 rounded hover:bg-gray-200 transition-all transform active:scale-95 disabled:opacity-50">
                 {loading ? '...' : 'Suscribirse'}
               </button>
             </form>

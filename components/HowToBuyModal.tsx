@@ -59,7 +59,7 @@ const HowToBuyModal: React.FC = () => {
 
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="w-full bg-primary text-black font-bold py-3.5 rounded-xl mt-8 hover:bg-primary/90 transition-colors"
+                        className="w-full bg-white text-black font-bold py-3.5 rounded-xl mt-8 hover:bg-gray-200 transition-colors"
                     >
                         Empezar
                     </button>

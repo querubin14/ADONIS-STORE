@@ -183,49 +183,53 @@ const CartDrawer: React.FC = () => {
                                 </div>
                             ) : (
                                 cart.map(item => (
-                                    <div key={`${item.id}-${item.selectedSize}-${item.selectedColor || 'default'}`} className="flex gap-4 p-3 bg-white/5 rounded-lg border border-white/5">
-                                        <img
-                                            src={item.images ? item.images[0] : 'https://via.placeholder.com/150'}
-                                            alt={item.name}
-                                            className="w-20 h-20 object-cover rounded-md"
-                                        />
-                                        <div className="flex-1">
-                                            <div className="flex justify-between items-start">
-                                                <h3 className="font-bold text-sm text-white">{item.name}</h3>
-                                                <button
-                                                    onClick={() => removeFromCart(item.id, item.selectedSize, item.selectedColor)}
-                                                    className="text-gray-500 hover:text-red-500 transition-colors"
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
+                                    <div key={`${item.id}-${item.selectedSize}-${item.selectedColor || 'default'}`} className="flex gap-4 p-4 bg-[#111111] rounded-xl border border-gray-800">
+                                        <div className="w-20 h-20 rounded-lg overflow-hidden bg-[#1a1a1a] shrink-0 border border-gray-800">
+                                            <img
+                                                src={item.images ? item.images[0] : 'https://via.placeholder.com/150'}
+                                                alt={item.name}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <div className="flex-1 flex flex-col justify-between">
+                                            <div>
+                                                <div className="flex justify-between items-start gap-2">
+                                                    <h3 className="font-bold text-[13px] text-white leading-tight pr-6">{item.name}</h3>
+                                                    <button
+                                                        onClick={() => removeFromCart(item.id, item.selectedSize, item.selectedColor)}
+                                                        className="text-gray-500 hover:text-white transition-colors mt-1"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                                <p className="text-gray-500 text-[10px] uppercase tracking-wider mt-1">{item.category}</p>
+                                                {item.selectedColor && <p className="text-gray-400 text-[10px] uppercase mt-0.5">Color: {item.selectedColor}</p>}
                                             </div>
-                                            <p className="text-accent-gray text-xs mb-2">{item.category}</p>
-                                            {item.selectedColor && <p className="text-white text-xs mb-1 font-bold">Color: {item.selectedColor}</p>}
 
-                                            <div className="mb-3">
+                                            <div className="mt-3">
                                                 {item.sizes && item.sizes.length > 0 ? (
                                                     <select
                                                         value={item.selectedSize}
                                                         onChange={(e) => updateCartItemSize(item.id, item.selectedSize, e.target.value, item.selectedColor)}
-                                                        className="w-full bg-black border border-gray-700 text-white text-sm rounded-md px-3 py-2 outline-none focus:border-white appearance-none cursor-pointer hover:bg-white/5 transition-colors"
+                                                        className="w-full bg-[#0a0a0a] border border-gray-800 text-white text-xs rounded-md px-3 py-2 outline-none focus:border-white appearance-none cursor-pointer hover:border-gray-600 transition-colors"
                                                     >
                                                         {item.sizes.map(s => (
                                                             <option key={s} value={s}>{s}</option>
                                                         ))}
                                                     </select>
                                                 ) : (
-                                                    <span className="text-xs text-gray-400">One Size</span>
+                                                    <div className="w-full bg-[#0a0a0a] border border-gray-800 text-white text-xs rounded-md px-3 py-2">Único</div>
                                                 )}
                                             </div>
 
-                                            <div className="flex justify-between items-center">
-                                                <span className="font-mono font-bold text-white">Gs. {item.price.toLocaleString()}</span>
-                                                <div className="flex items-center gap-3 bg-black rounded-lg px-2 py-1 border border-gray-800">
-                                                    <button onClick={() => updateQuantity(item.id, item.selectedSize, -1, item.selectedColor)} className="p-1 text-gray-400 hover:text-primary transition-colors disabled:opacity-50">
+                                            <div className="flex justify-between items-center mt-4">
+                                                <span className="font-mono font-bold text-white text-sm tracking-tight">Gs. {item.price.toLocaleString()}</span>
+                                                <div className="flex items-center gap-3 bg-[#0a0a0a] rounded-md px-2 py-1 border border-gray-800">
+                                                    <button onClick={() => updateQuantity(item.id, item.selectedSize, -1, item.selectedColor)} className="p-1.5 text-gray-500 hover:text-white transition-colors disabled:opacity-50">
                                                         <Minus size={12} />
                                                     </button>
-                                                    <span className="text-sm w-4 text-center text-white">{item.quantity}</span>
-                                                    <button onClick={() => updateQuantity(item.id, item.selectedSize, 1, item.selectedColor)} className="p-1 text-gray-400 hover:text-primary transition-colors">
+                                                    <span className="text-xs w-4 text-center font-bold text-white">{item.quantity}</span>
+                                                    <button onClick={() => updateQuantity(item.id, item.selectedSize, 1, item.selectedColor)} className="p-1.5 text-gray-500 hover:text-white transition-colors">
                                                         <Plus size={12} />
                                                     </button>
                                                 </div>
@@ -345,7 +349,7 @@ const CartDrawer: React.FC = () => {
                                 </div>
                                 <button
                                     onClick={handleInitialCheckoutClick}
-                                    className="w-full bg-primary hover:bg-red-700 text-white font-bold py-4 rounded-sm tracking-widest transition-all uppercase flex items-center justify-center gap-2"
+                                    className="w-full bg-white hover:bg-gray-200 text-black font-bold py-4 rounded-sm tracking-widest transition-all uppercase flex items-center justify-center gap-2"
                                 >
                                     CONTINUAR COMPRA
                                 </button>
@@ -360,7 +364,7 @@ const CartDrawer: React.FC = () => {
                             <>
                                 <button
                                     onClick={handleFinalCheckout}
-                                    className="w-full bg-primary hover:bg-red-700 text-white font-bold py-4 rounded-sm tracking-widest transition-all uppercase flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+                                    className="w-full bg-white hover:bg-gray-200 text-black font-bold py-4 rounded-sm tracking-widest transition-all uppercase flex items-center justify-center gap-2 shadow-lg"
                                 >
                                     CONFIRMAR PEDIDO
                                 </button>

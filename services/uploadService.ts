@@ -1,5 +1,6 @@
 
 import { supabase } from './supabase';
+import { toast } from 'react-toastify';
 
 /**
  * Uploads a file to Supabase Storage and returns the public URL.
@@ -114,7 +115,7 @@ export const uploadProductImage = async (file: File, folder?: string): Promise<s
 
         if (uploadError) {
             console.error('Error uploading image to Supabase:', uploadError);
-            alert(`Error al subir imagen: ${uploadError.message}`);
+            toast.error(`Error al subir imagen: ${uploadError.message}`);
             return null;
         }
 

@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { toast } from 'react-toastify';
 import { useShop } from '../context/ShopContext';
 import {
     Plus,
@@ -20,7 +21,10 @@ import {
     Edit,
     Menu,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    Shield,
+    Eye,
+    EyeOff
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { HeroSlide, BlogPost, Product, Category, NavbarLink, BannerBento, FooterColumn } from '../types';
@@ -49,7 +53,8 @@ const AdminDashboard: React.FC = () => {
         footerColumns, updateFooterColumns,
         saveAllData, drops, addDrop, deleteDrop, loading,
         dropsConfig, updateDropsConfig, updateCategoryOrder,
-        visibilityConfig, updateVisibilityConfig, updateProductOrder
+        visibilityConfig, updateVisibilityConfig, updateProductOrder,
+        trustBadges, updateTrustBadges
     } = useShop();
 
     // Login State
@@ -58,6 +63,7 @@ const AdminDashboard: React.FC = () => {
     });
     const [loginEmail, setLoginEmail] = useState('');
     const [loginPass, setLoginPass] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loginError, setLoginError] = useState('');
 
     const handleLogin = (e: React.FormEvent) => {
@@ -102,15 +108,22 @@ const AdminDashboard: React.FC = () => {
                                 placeholder="admin@adonis.com"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Contraseña</label>
+                        <div className="relative">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Contraseña</label>
                             <input
-                                type="password"
+                                type={showPassword ? "text" : "password"}
                                 value={loginPass}
                                 onChange={e => setLoginPass(e.target.value)}
-                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
+                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white focus:outline-none transition-colors pr-10"
                                 placeholder="••••••••"
                             />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-[34px] text-gray-500 hover:text-white"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
                         </div>
                         {loginError && (
                             <div className="p-3 bg-red-900/20 border border-red-900/50 rounded text-red-500 text-xs font-bold text-center">
@@ -119,7 +132,7 @@ const AdminDashboard: React.FC = () => {
                         )}
                         <button
                             type="submit"
-                            className="w-full bg-primary hover:bg-red-700 text-white font-bold py-4 rounded-lg tracking-widest transition-all uppercase shadow-lg"
+                            className="w-full bg-white hover:bg-gray-200 text-black font-bold py-4 rounded-lg tracking-widest transition-all uppercase shadow-lg"
                         >
                             INGRESAR
                         </button>
@@ -401,7 +414,7 @@ const AdminDashboard: React.FC = () => {
         e.preventDefault();
 
         if (!newProduct.name) {
-            alert('Por favor completa el nombre del producto.');
+            toast.warn('Por favor completa el nombre del producto.');
             return;
         }
 
@@ -491,10 +504,10 @@ const AdminDashboard: React.FC = () => {
 
         if (editingProductId) {
             updateProduct(productData);
-            alert('Producto actualizado correctamente');
+            toast.success('✅ Producto actualizado');
         } else {
             addProduct(productData);
-            alert('Producto añadido correctamente');
+            toast.success('✅ Producto añadido');
         }
 
         resetForm();
@@ -580,7 +593,7 @@ const AdminDashboard: React.FC = () => {
                     }
                 } catch (err: any) {
                     console.error("Optimization/Upload error:", err);
-                    alert(`Error procesando imagen ${file.name}`);
+                    toast.error(`Error procesando imagen ${file.name}`);
                 }
             }
 
@@ -611,7 +624,7 @@ const AdminDashboard: React.FC = () => {
                 }
             } catch (error) {
                 console.error("Error managing Google Photo:", error);
-                alert("Error al procesar la imagen de Google Photos.");
+                toast.error('Error al procesar la imagen de Google Photos');
             } finally {
                 setIsUploading(false);
             }
@@ -641,10 +654,10 @@ const AdminDashboard: React.FC = () => {
             if (updateHeroCarouselConfig) {
                 await updateHeroCarouselConfig({ interval: heroInterval * 1000 });
             }
-            alert('Añadido correctamente a la base de datos');
+            toast.success('✅ Guardado correctamente');
         } catch (error) {
             console.error(error);
-            alert('Hubo un error guardando en la base de datos.');
+            toast.error('Error guardando en la base de datos');
         }
     };
 
@@ -700,10 +713,10 @@ const AdminDashboard: React.FC = () => {
         if (editingPostId) {
             updateBlogPost(postData);
             setEditingPostId(null);
-            alert('Post actualizado!');
+            toast.success('✅ Post actualizado');
         } else {
             addBlogPost(postData);
-            alert('Post/Testimonio agregado!');
+            toast.success('✅ Post/Testimonio agregado');
         }
 
         setBlogForm({ title: '', content: '', image: '', author: 'Admin', rating: 5, tag: 'LIFESTYLE' });
@@ -753,10 +766,10 @@ const AdminDashboard: React.FC = () => {
                 updateSocialConfig(configForm),
                 updateLifestyleConfig(lifestyleForm)
             ]);
-            alert('Añadido correctamente a la base de datos');
+            toast.success('✅ Guardado correctamente');
         } catch (error) {
             console.error(error);
-            alert('Hubo un error guardando en la base de datos.');
+            toast.error('Error guardando en la base de datos');
         }
     };
 
@@ -771,7 +784,7 @@ const AdminDashboard: React.FC = () => {
         addCategory({ id, name: newCategoryName, subcategories });
         setNewCategoryName('');
         setNewCategorySubcats('');
-        alert('Categoría agregada');
+        toast.success('✅ Categoría agregada');
     };
 
     const [editOpacity, setEditOpacity] = useState('');
@@ -813,7 +826,7 @@ const AdminDashboard: React.FC = () => {
 
     const handleColorFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!tempColorName.trim()) {
-            alert('Por favor ingresa un nombre para el color antes de subir la imagen.');
+            toast.warn('Ingresa un nombre para el color antes de subir la imagen');
             if (colorFileInputRef.current) colorFileInputRef.current.value = '';
             return;
         }
@@ -854,7 +867,7 @@ const AdminDashboard: React.FC = () => {
                 }
             } catch (error) {
                 console.error("Error uploading color image:", error);
-                alert("Error al subir la imagen del color.");
+                toast.error('Error al subir la imagen del color');
             } finally {
                 setIsColorUploading(false);
                 if (colorFileInputRef.current) colorFileInputRef.current.value = '';
@@ -882,10 +895,10 @@ const AdminDashboard: React.FC = () => {
     const handleNavSave = async () => {
         try {
             await updateNavbarLinks(navForm);
-            alert('Añadido correctamente a la base de datos');
+            toast.success('✅ Guardado correctamente');
         } catch (error) {
             console.error(error);
-            alert('Hubo un error guardando en la base de datos.');
+            toast.error('Error guardando en la base de datos');
         }
     };
 
@@ -931,10 +944,10 @@ const AdminDashboard: React.FC = () => {
     const handleBentoSave = async () => {
         try {
             await updateBannerBento(bentoForm);
-            alert('Añadido correctamente a la base de datos');
+            toast.success('✅ Guardado correctamente');
         } catch (error) {
             console.error(error);
-            alert('Hubo un error guardando en la base de datos.');
+            toast.error('Error guardando en la base de datos');
         }
     };
 
@@ -944,10 +957,10 @@ const AdminDashboard: React.FC = () => {
     const handleFooterSave = async () => {
         try {
             await updateFooterColumns(footerForm);
-            alert('Añadido correctamente a la base de datos');
+            toast.success('✅ Guardado correctamente');
         } catch (error) {
             console.error(error);
-            alert('Hubo un error guardando en la base de datos.');
+            toast.error('Error guardando en la base de datos');
         }
     };
 
@@ -1078,9 +1091,12 @@ const AdminDashboard: React.FC = () => {
                     <button onClick={() => setActiveTab('config')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'config' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
                         <Settings size={20} /> <span className="font-bold text-sm">Configuración</span>
                     </button>
+                    <button onClick={() => setActiveTab('trustBadges')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === 'trustBadges' ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+                        <Shield size={20} /> <span className="font-bold text-sm">Trust Badges</span>
+                    </button>
 
                     <button
-                        onClick={() => { saveAllData(); alert('Todos los cambios han sido guardados correctamente.'); }}
+                        onClick={() => { saveAllData(); toast.success('Todos los cambios han sido guardados correctamente.'); }}
                         className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all text-green-500 hover:bg-green-500/10 hover:text-green-400 mt-4 border border-green-900/50"
                     >
                         <Save size={20} /> <span className="font-bold text-sm">GUARDAR TODO</span>
@@ -1211,7 +1227,7 @@ const AdminDashboard: React.FC = () => {
                                 {!showProductForm && !editingProductId && (
                                     <button
                                         onClick={() => setShowProductForm(true)}
-                                        className="bg-primary text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 hover:bg-red-700 transition-all uppercase text-sm tracking-widest shadow-lg transform hover:translate-y-[-2px]"
+                                        className="bg-white text-black font-bold py-3 px-6 rounded-lg flex items-center gap-2 hover:bg-gray-200 transition-all uppercase text-sm tracking-widest shadow-lg transform hover:translate-y-[-2px]"
                                     >
                                         <Plus size={20} /> AGREGAR PRODUCTO
                                     </button>
@@ -1643,7 +1659,7 @@ const AdminDashboard: React.FC = () => {
                                                 <label className="text-xs font-bold text-gray-500 uppercase">Etiquetas</label>
                                                 <div className="flex flex-wrap gap-2">
                                                     {availableTags.map(tag => (
-                                                        <button key={tag} type="button" onClick={() => toggleTag(tag)} className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${newProduct.tags.includes(tag) ? 'bg-primary text-white border-primary' : 'bg-transparent text-gray-500 border-gray-800 hover:border-gray-500'}`}>
+                                                        <button key={tag} type="button" onClick={() => toggleTag(tag)} className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${newProduct.tags.includes(tag) ? 'bg-white text-black border-white' : 'bg-transparent text-gray-500 border-gray-800 hover:border-gray-500'}`}>
                                                             {tag}
                                                         </button>
                                                     ))}
@@ -2240,7 +2256,7 @@ const AdminDashboard: React.FC = () => {
                                     <label className="text-xs font-bold text-gray-500 uppercase">Texto de Devoluciones (Info Producto)</label>
                                     <input type="text" value={configForm.extraShippingInfo || ''} onChange={e => setConfigForm({ ...configForm, extraShippingInfo: e.target.value })} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors" placeholder="Ej. Devoluciones gratis hasta 30 días" />
                                 </div>
-                                <button onClick={handleConfigSave} className="w-full bg-primary text-white font-black py-4 rounded-lg hover:bg-red-700 transition-all uppercase text-sm tracking-widest shadow-lg mt-4">
+                                <button onClick={handleConfigSave} className="w-full bg-white text-black font-black py-4 rounded-lg hover:bg-gray-200 transition-all uppercase text-sm tracking-widest shadow-lg mt-4">
                                     Guardar Configuración
                                 </button>
                             </div>
@@ -2426,7 +2442,7 @@ const AdminDashboard: React.FC = () => {
                                             min="1"
                                         />
                                     </div>
-                                    <button onClick={handleHeroSave} className="bg-primary hover:bg-red-700 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-colors">
+                                    <button onClick={handleHeroSave} className="bg-white hover:bg-gray-200 text-black px-6 py-3 rounded-lg font-bold flex items-center gap-2 transition-colors">
                                         <Save size={18} /> GUARDAR CAMBIOS
                                     </button>
                                 </div>
@@ -2566,7 +2582,7 @@ const AdminDashboard: React.FC = () => {
                                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                         <Layers size={20} /> BARRA DE NAVEGACIÓN (Navbar)
                                     </h3>
-                                    <button onClick={handleNavSave} className="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
+                                    <button onClick={handleNavSave} className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
                                         <Save size={16} /> Guardar Menú
                                     </button>
                                 </div>
@@ -2624,7 +2640,7 @@ const AdminDashboard: React.FC = () => {
                                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                         <ImageIcon size={20} /> BANNERS DE CATEGORÍA
                                     </h3>
-                                    <button onClick={handleBentoSave} className="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
+                                    <button onClick={handleBentoSave} className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
                                         <Save size={16} /> Guardar Banners
                                     </button>
                                 </div>
@@ -2722,7 +2738,7 @@ const AdminDashboard: React.FC = () => {
                                     <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                         <Layout size={20} /> FOOTER (Enlaces)
                                     </h3>
-                                    <button onClick={handleFooterSave} className="bg-primary hover:bg-red-700 text-white px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
+                                    <button onClick={handleFooterSave} className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
                                         <Save size={16} /> Guardar Footer
                                     </button>
                                 </div>
@@ -2780,6 +2796,108 @@ const AdminDashboard: React.FC = () => {
                         </div>
                     )
                 }
+
+                {/* TRUST BADGES TAB */}
+                {activeTab === 'trustBadges' && (
+                    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Shield size={20} /> TRUST BADGES (Iconos de Confianza)
+                            </h3>
+                            <button
+                                onClick={async () => {
+                                    const defaultBadges = [
+                                        { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
+                                        { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
+                                        { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
+                                        { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
+                                    ];
+                                    const badges = trustBadges.length > 0 ? trustBadges : defaultBadges;
+                                    try {
+                                        await updateTrustBadges(badges);
+                                        toast.success('Trust Badges guardados correctamente');
+                                    } catch (e) {
+                                        toast.error('Error al guardar');
+                                    }
+                                }}
+                                className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2"
+                            >
+                                <Save size={16} /> Guardar Badges
+                            </button>
+                        </div>
+                        <p className="text-gray-500 text-sm">Estos iconos aparecen debajo del Hero y transmiten confianza al cliente.</p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {(trustBadges.length > 0 ? trustBadges : [
+                                { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
+                                { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
+                                { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
+                                { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
+                            ]).map((badge, idx) => (
+                                <div key={badge.id} className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-white text-lg font-bold">#{idx + 1}</span>
+                                        <select
+                                            value={badge.icon}
+                                            onChange={e => {
+                                                const updated = [...(trustBadges.length > 0 ? trustBadges : [
+                                                    { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
+                                                    { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
+                                                    { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
+                                                    { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
+                                                ])];
+                                                updated[idx] = { ...updated[idx], icon: e.target.value };
+                                                updateTrustBadges(updated);
+                                            }}
+                                            className="bg-black border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                                        >
+                                            <option value="truck">🚚 Envío</option>
+                                            <option value="shield">🛡️ Protección</option>
+                                            <option value="star">⭐ Estrella</option>
+                                            <option value="credit">💳 Pago</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Título</label>
+                                        <input
+                                            type="text"
+                                            value={badge.title}
+                                            onChange={e => {
+                                                const updated = [...(trustBadges.length > 0 ? trustBadges : [
+                                                    { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
+                                                    { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
+                                                    { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
+                                                    { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
+                                                ])];
+                                                updated[idx] = { ...updated[idx], title: e.target.value };
+                                                updateTrustBadges(updated);
+                                            }}
+                                            className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-white focus:outline-none transition-colors mt-1"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-500 uppercase">Descripción</label>
+                                        <input
+                                            type="text"
+                                            value={badge.description}
+                                            onChange={e => {
+                                                const updated = [...(trustBadges.length > 0 ? trustBadges : [
+                                                    { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
+                                                    { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
+                                                    { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
+                                                    { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
+                                                ])];
+                                                updated[idx] = { ...updated[idx], description: e.target.value };
+                                                updateTrustBadges(updated);
+                                            }}
+                                            className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-white focus:outline-none transition-colors mt-1"
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </main >
         </div >
     );

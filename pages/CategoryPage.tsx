@@ -67,23 +67,23 @@ const CategoryPage: React.FC = () => {
         <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white">
             <Navbar cartCount={cartCount} />
 
-            <main className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10">
-                <div className="flex items-center gap-4 mb-8">
+            <main className="max-w-[1400px] mx-auto px-4 lg:px-12 py-6">
+                <div className="flex items-center gap-3 mb-6">
                     <Link to="/" className="text-gray-400 hover:text-white transition-colors">
-                        <ArrowLeft size={24} />
+                        <ArrowLeft size={20} />
                     </Link>
                     <div>
-                        <h1 className="text-4xl font-black uppercase tracking-tight">{seoInfo.title}</h1>
-                        <p className="text-accent-gray text-sm mt-1">{seoInfo.desc}</p>
+                        <h1 className="text-2xl font-black uppercase tracking-tight">{seoInfo.title}</h1>
+                        <p className="text-accent-gray text-xs mt-1">{seoInfo.desc}</p>
                     </div>
                 </div>
 
                 {/* Subcategories Filter */}
                 {currentCategoryInfo?.subcategories && currentCategoryInfo.subcategories.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-8 animate-in fade-in slide-in-from-left-4 duration-500">
+                    <div className="flex flex-wrap gap-2 mb-6 animate-in fade-in slide-in-from-left-4 duration-500">
                         <button
                             onClick={() => navigate(`/category/${category}`)}
-                            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${activeSubcategory === 'ALL' ? 'bg-primary border-primary text-white' : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'}`}
+                            className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-all ${activeSubcategory === 'ALL' ? 'bg-white border-white text-black' : 'bg-transparent border-gray-800 text-gray-400 hover:border-gray-500 hover:text-white'}`}
                         >
                             VER TODO
                         </button>
@@ -100,7 +100,7 @@ const CategoryPage: React.FC = () => {
                 )}
 
                 {categoryProducts.length > 0 ? (
-                    <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
                         {categoryProducts.map(product => (
                             <ProductCard
                                 key={product.id}

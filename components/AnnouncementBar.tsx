@@ -7,7 +7,7 @@ const AnnouncementBar: React.FC = () => {
     if (!socialConfig.topHeaderText) return null;
 
     return (
-        <div className="bg-white text-black text-[9px] font-bold text-center py-1 px-4 uppercase tracking-widest leading-none">
+        <div className="bg-white text-black text-xs font-black text-center py-2 px-4 uppercase tracking-[0.2em] leading-tight">
             {socialConfig.topHeaderText}
         </div>
     );

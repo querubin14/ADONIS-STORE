@@ -15,6 +15,7 @@ import UpcomingDrops from '../components/UpcomingDrops';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 import HorizontalProductList from '../components/HorizontalProductList';
 import HowToBuyModal from '../components/HowToBuyModal';
+import TrustBadges from '../components/TrustBadges';
 
 const Home: React.FC = () => {
     const { products, addToCart, cart, categories, visibilityConfig } = useShop();
@@ -29,12 +30,13 @@ const Home: React.FC = () => {
     });
 
     return (
-        <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white">
+        <div className="min-h-screen bg-background-dark text-white selection:bg-white/20 selection:text-white">
             <Navbar cartCount={cartCount} />
             <HowToBuyModal />
 
             <main>
                 {visibilityConfig.hero && <Hero />}
+                <TrustBadges />
                 {visibilityConfig.drops && <UpcomingDrops />}
 
                 {/* Featured Products Section (Max 8) */}
@@ -75,23 +77,23 @@ const Home: React.FC = () => {
                             <section
                                 key={category}
                                 id={category}
-                                className="py-10 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
+                                className="py-6 px-4 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
                                 style={{ opacity: categoryObj.opacity !== undefined ? categoryObj.opacity : 1 }}
                             >
-                                <div className="flex items-end justify-between mb-6 pb-4 border-b border-gray-800">
+                                <div className="flex items-end justify-between mb-4 pb-2 border-b border-gray-800">
                                     <div>
-                                        <h2 className="text-3xl font-bold uppercase tracking-tight">{categoryObj.name}</h2>
-                                        <p className="text-accent-gray mt-1 text-sm">Explora nuestra colección de {category}</p>
+                                        <h2 className="text-2xl font-bold uppercase tracking-tight">{categoryObj.name}</h2>
+                                        <p className="text-accent-gray mt-1 text-xs">Explora nuestra colección de {category}</p>
                                     </div>
                                     <Link
                                         to={`/category/${category}`}
-                                        className="hidden md:flex items-center text-sm font-bold text-primary hover:text-white transition-colors gap-1"
+                                        className="hidden md:flex items-center text-xs font-bold text-white hover:text-gray-300 transition-colors gap-1"
                                     >
-                                        VER TODO <ArrowRight size={16} />
+                                        VER TODO <ArrowRight size={14} />
                                     </Link>
                                 </div>
 
-                                <div className="space-y-10">
+                                <div className="space-y-6">
                                     {subcats.map(subcat => {
                                         const subProducts = joyasProducts
                                             .filter(p => p.subcategory && p.subcategory.toLowerCase().includes(subcat.toLowerCase()))
@@ -111,13 +113,13 @@ const Home: React.FC = () => {
                                     })}
                                 </div>
 
-                                <div className="mt-8 text-center md:hidden">
+                                <div className="mt-4 text-center md:hidden">
                                     {/* Mobile catch-all link if needed, but HorizontalProductList has its own view all card */}
                                     <Link
                                         to={`/category/${category}`}
-                                        className="inline-flex items-center text-sm font-bold text-primary hover:text-white transition-colors gap-1 border border-primary/50 px-6 py-3 rounded"
+                                        className="inline-flex items-center text-xs font-bold text-white hover:text-gray-300 transition-colors gap-1 border border-white/50 px-4 py-2 rounded"
                                     >
-                                        VER TODO {category} <ArrowRight size={16} />
+                                        VER TODO {category} <ArrowRight size={14} />
                                     </Link>
                                 </div>
                             </section>
@@ -142,25 +144,25 @@ const Home: React.FC = () => {
                         <section
                             key={category}
                             id={category}
-                            className="py-10 px-6 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
+                            className="py-6 px-4 lg:px-12 max-w-[1400px] mx-auto border-t border-gray-900"
                             style={{ opacity: categoryObj.opacity !== undefined ? categoryObj.opacity : 1 }}
                         >
-                            <div className="flex items-end justify-between mb-6 pb-4 border-b border-gray-800">
+                            <div className="flex items-end justify-between mb-4 pb-2 border-b border-gray-800">
                                 <div>
-                                    <h2 className="text-3xl font-bold uppercase tracking-tight">{categoryObj.name}</h2>
-                                    <p className="text-accent-gray mt-1 text-sm">Explora nuestra colección de {category}</p>
+                                    <h2 className="text-2xl font-bold uppercase tracking-tight">{categoryObj.name}</h2>
+                                    <p className="text-accent-gray mt-1 text-xs">Explora nuestra colección de {category}</p>
                                 </div>
                                 {hasMore && (
                                     <Link
                                         to={`/category/${category}`}
-                                        className="hidden md:flex items-center text-sm font-bold text-primary hover:text-white transition-colors gap-1"
+                                        className="hidden md:flex items-center text-xs font-bold text-white hover:text-gray-300 transition-colors gap-1"
                                     >
-                                        VER TODO <ArrowRight size={16} />
+                                        VER TODO <ArrowRight size={14} />
                                     </Link>
                                 )}
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                                 {displayProducts.map(product => (
                                     <ProductCard
                                         key={product.id}
@@ -171,12 +173,12 @@ const Home: React.FC = () => {
                             </div>
 
                             {hasMore && (
-                                <div className="mt-8 text-center md:hidden">
+                                <div className="mt-4 text-center md:hidden">
                                     <Link
                                         to={`/category/${category}`}
-                                        className="inline-flex items-center text-sm font-bold text-primary hover:text-white transition-colors gap-1 border border-primary/50 px-6 py-3 rounded"
+                                        className="inline-flex items-center text-xs font-bold text-white hover:text-gray-300 transition-colors gap-1 border border-white/50 px-4 py-2 rounded"
                                     >
-                                        VER TODO {category} <ArrowRight size={16} />
+                                        VER TODO {category} <ArrowRight size={14} />
                                     </Link>
                                 </div>
                             )}

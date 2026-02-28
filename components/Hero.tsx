@@ -94,7 +94,7 @@ const Hero: React.FC = () => {
 
   return (
     <header
-      className="relative w-full h-[40vh] min-h-[300px] flex items-center justify-center overflow-hidden bg-black"
+      className="relative w-full h-[65vh] md:h-[65vh] flex items-center justify-center overflow-hidden bg-[#050505] group"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -127,7 +127,7 @@ const Hero: React.FC = () => {
         <div className="flex flex-wrap justify-center gap-4">
           <Link
             to={current.buttonLink || '/'}
-            className="bg-primary hover:opacity-90 text-white h-10 md:h-12 px-6 md:px-8 rounded font-bold text-xs md:text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-yellow-900/20 flex items-center justify-center"
+            className="bg-white hover:bg-gray-200 text-black h-10 md:h-12 px-6 md:px-8 rounded font-bold text-xs md:text-sm tracking-[0.1em] uppercase transition-all transform hover:scale-105 active:scale-95 shadow-xl flex items-center justify-center"
           >
             {current.buttonText || 'EXPLORAR AHORA'}
           </Link>

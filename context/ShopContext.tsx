@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { toast } from 'react-toastify';
 import { Product, HeroSlide, Order, SocialConfig, BlogPost, Category, DeliveryZone, NavbarLink, BannerBento, LifestyleConfig, FooterColumn, HeroCarouselConfig, Drop, DropsConfig, VisibilityConfig, ColorVariant } from '../types';
 import { PRODUCTS as INITIAL_PRODUCTS } from '../constants';
 import { supabase } from '../services/supabase';
@@ -66,6 +67,8 @@ interface ShopContextType {
     saveAllData: () => void;
     visibilityConfig: VisibilityConfig;
     updateVisibilityConfig: (config: VisibilityConfig) => void;
+    trustBadges: { id: string; icon: string; title: string; description: string }[];
+    updateTrustBadges: (badges: { id: string; icon: string; title: string; description: string }[]) => void;
     loading: boolean;
 }
 
@@ -158,7 +161,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         } catch (error) {
             console.error('Error adding drop:', error);
-            alert('Error al guardar drop');
+            toast.error('Error al guardar drop');
         }
     };
 
@@ -169,7 +172,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setDrops(prev => prev.filter(d => d.id !== id));
         } catch (error) {
             console.error('Error deleting drop:', error);
-            alert('Error eliminando drop');
+            toast.error('Error eliminando drop');
         }
     };
 
@@ -256,6 +259,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
 
     const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([]);
+    const [trustBadges, setTrustBadges] = useState<{ id: string; icon: string; title: string; description: string }[]>([]);
 
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -312,6 +316,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     if (conf.key === 'hero_carousel_config') setHeroCarouselConfig(conf.value);
                     if (conf.key === 'drops_config') setDropsConfig(conf.value);
                     if (conf.key === 'visibility_config') setVisibilityConfig(conf.value);
+                    if (conf.key === 'trust_badges') setTrustBadges(conf.value);
                     if (conf.key === 'category_sort_order') categorySortOrder = conf.value as string[];
                     if (conf.key === 'product_sort_order') productSortOrder = conf.value as string[];
                 });
@@ -494,7 +499,8 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
             return [...prev, { ...product, quantity: 1, selectedSize: finalSize, selectedColor: color, images: finalImages }];
         });
-        setIsCartOpen(true);
+        toast.success("Producto añadido correctamente");
+        // We removed setIsCartOpen(true) so the cart drawer doesn't auto-open
     };
 
     const removeFromCart = (productId: string, size: string, color?: string) => {
@@ -589,11 +595,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             const { error } = await supabase.from('product_variants').insert(inserts);
             if (error) {
                 console.error('Error saving variants:', error);
-                alert(`Error guardando variantes de color: ${error.message}`);
+                toast.error(`Error guardando variantes de color: ${error.message}`);
             }
         } catch (e) {
             console.error('Exception saving variants:', e);
-            alert('Excepción al guardar variantes');
+            toast.error('Excepción al guardar variantes');
         }
     };
 
@@ -635,9 +641,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
                 // Security policy error check
                 if (error.code === '42501') {
-                    alert('ERROR: Permisos denegados (RLS). Revisa las políticas en Supabase.');
+                    toast.error('ERROR: Permisos denegados (RLS). Revisa las políticas en Supabase.');
                 } else {
-                    alert(`Hubo un error guardando en la base de datos: ${error.message}`);
+                    toast.error(`Hubo un error guardando en la base de datos: ${error.message}`);
                 }
 
                 // Revert optimistic update on error
@@ -698,7 +704,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     await saveVariants(updatedProduct.id, updatedProduct.colors);
                 }
 
-                alert('Producto actualizado correctamente en Supabase');
+                toast.success('✅ Producto actualizado correctamente');
             }
         } catch (err) {
             console.error(err);
@@ -723,7 +729,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) {
                 console.error('Error deleting product from Supabase:', error);
                 // Revert optimistic if needed, but for delete usually we just alert
-                alert('Error al eliminar producto de la base de datos.');
+                toast.error('Error al eliminar producto de la base de datos');
             }
         } catch (err) {
             console.error(err);
@@ -774,7 +780,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error creating order in Supabase:', error);
-                alert('Hubo un error guardando tu pedido en el sistema, pero el enlace de WhatsApp se generó correctamente.');
+                toast.warn('Hubo un error guardando tu pedido, pero el enlace de WhatsApp se generó correctamente.');
                 // Don't revert optimistic UI here to avoid confusing user, 
                 // but admins won't see it until fixed or manually added.
             }
@@ -825,7 +831,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) {
                 // If all attempts failed
                 console.error('Error updating order status in Supabase (All Spanish formats failed):', error);
-                alert(`Error CRÍTICO al actualizar estado en Supabase:\n\nMensaje: ${error.message}\nCodigo: ${error.code}\n\nProbamos: ${status}, ${status.toUpperCase()}, ${status.toLowerCase()}.\nNinguno fue aceptado por el Enum. Revise que la columna status acepte 'Entregado'.`);
+                toast.error(`Error CRÍTICO: ${error.message} (${error.code}). Revise que el Enum acepte '${status}'.`);
                 return;
             }
 
@@ -948,11 +954,11 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         updatedCount++;
                     } else {
                         console.error(`CRITICO: No se encontró producto para descontar stock: ${item.name} (${item.id})`);
-                        alert(`ATENCIÓN: No se pudo descontar el stock de "${item.name}". No se encontró en la base de datos de productos.`);
+                        toast.warn(`No se pudo descontar el stock de "${item.name}". Producto no encontrado.`);
                     }
                 }
                 if (updatedCount > 0) {
-                    alert(`ÉXITO TOTAL: Estado actualizado a "${confirmedStatus}" y stock descontado de ${updatedCount} productos.`);
+                    toast.success(`Estado actualizado a "${confirmedStatus}" y stock descontado de ${updatedCount} productos.`);
                 }
             } else if (newStatusNormalized === 'pendiente' && currentOrder) {
                 // Restoration Logic (Re-opening order)
@@ -996,7 +1002,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                             }
                         }
                     }
-                    alert('Stock restaurado porque se reabrió el pedido (Volvió a Pendiente).');
+                    toast.info('Stock restaurado — el pedido volvió a Pendiente.');
                 }
             }
 
@@ -1249,6 +1255,21 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             throw e;
         }
     };
+    // Trust Badges - SUPABASE SYNCED
+    const updateTrustBadges = async (badges: { id: string; icon: string; title: string; description: string }[]) => {
+        setTrustBadges(badges);
+        try {
+            const { error } = await supabase.from('store_config').upsert({
+                key: 'trust_badges',
+                value: badges,
+                updated_at: new Date().toISOString()
+            });
+            if (error) throw error;
+        } catch (e) {
+            console.error(e);
+            throw e;
+        }
+    };
     // Category Logic - SUPABASE SYNCED
     const addCategory = async (category: Category) => {
         // Optimistic: Append to end
@@ -1266,7 +1287,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error adding category to DB:', error);
-                alert('Error al guardar categoría en la nube.');
+                toast.error('Error al guardar categoría en la nube');
                 // Revert
                 setCategories(prev => prev.filter(c => c.id !== category.id));
                 return;
@@ -1325,9 +1346,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 console.error('Error deleting category from DB:', deleteError);
                 // If violation of FK, alert specific message
                 if (deleteError.code === '23503') { // foreign_key_violation
-                    alert('No se pudo eliminar la categoría porque aún tiene productos vinculados. Intenta recargar la página.');
+                    toast.error('No se pudo eliminar la categoría — aún tiene productos vinculados.');
                 } else {
-                    alert(`Error al eliminar categoría: ${deleteError.message}`);
+                    toast.error(`Error al eliminar categoría: ${deleteError.message}`);
                 }
                 // Rollback optimistic update
                 const { data: catData } = await supabase.from('categories').select('*');
@@ -1383,7 +1404,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             if (error) throw error;
         } catch (e) {
             console.error('Error updating category order:', e);
-            alert('Error al guardar el orden de categorías');
+            toast.error('Error al guardar el orden de categorías');
         }
     };
 
@@ -1408,7 +1429,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error adding zone:', error);
-                alert(`Error guardando zona en la nube: ${error.message} (${error.details || ''})`);
+                toast.error(`Error guardando zona: ${error.message}`);
                 setDeliveryZones(prev => prev.filter(z => z.id !== zone.id)); // Revert
             } else if (data) {
                 console.log('Zone saved, DB ID:', data.id);
@@ -1417,7 +1438,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             }
         } catch (e) {
             console.error('Exception adding zone:', e);
-            alert('Error inesperado al guardar zona.');
+            toast.error('Error inesperado al guardar zona');
         }
     };
 
@@ -1433,7 +1454,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error deleting zone:', error);
-                alert('No se pudo eliminar la zona de la base de datos.');
+                toast.error('No se pudo eliminar la zona de la base de datos');
             }
         } catch (e) {
             console.error(e);
@@ -1457,7 +1478,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             if (error) {
                 console.error('Error updating zone:', error);
-                alert(`Error actualizando zona: ${error.message}`);
+                toast.error(`Error actualizando zona: ${error.message}`);
                 // Revert logic could be complex here, assuming simple success usually.
             }
         } catch (e) {
@@ -1530,7 +1551,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             productSortOrder,
             updateProductOrder,
             heroCarouselConfig,
-            updateHeroCarouselConfig
+            updateHeroCarouselConfig,
+            trustBadges,
+            updateTrustBadges
 
         }}>
             {children}

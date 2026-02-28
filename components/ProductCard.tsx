@@ -24,8 +24,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
   return (
     <div className="group flex flex-col gap-3">
       <div
-        className="relative w-full overflow-hidden rounded bg-surface-dark group cursor-pointer"
-        style={{ paddingBottom: '100%' }}
+        className="relative w-full overflow-hidden rounded bg-[#0a0a0a] group cursor-pointer aspect-square md:aspect-[4/5]"
         onClick={() => navigate(`/product/${product.slug || product.id}`)}
       >
         <div className="absolute inset-0 w-full h-full transition-transform duration-700 group-hover:scale-110">
@@ -69,7 +68,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
 
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {product.isNew && (
-            <div className="bg-primary text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-sm">
+            <div className="bg-white text-black text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-sm">
               Nuevo
             </div>
           )}
@@ -97,14 +96,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
                 navigate(`/?category=${product.category}`); // Fallback if regular nav
               }
             }}
-            className="absolute bottom-2 left-2 bg-white/90 backdrop-blur text-black text-[8px] md:text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors z-20 flex items-center gap-1"
+            className="absolute bottom-2 left-2 bg-white/90 backdrop-blur text-black text-[8px] md:text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-full shadow-lg hover:bg-black hover:text-white transition-colors z-20 flex items-center gap-1"
           >
             {product.category} <span className="material-symbols-outlined text-[8px] md:text-[10px]">arrow_outward</span>
           </button>
         )}
 
         {product.originalPrice && product.originalPrice > product.price && (
-          <div className="absolute top-2 right-2 bg-primary text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-sm">
+          <div className="absolute top-2 right-2 bg-white text-black text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 uppercase tracking-wider rounded-sm">
             -{Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
           </div>
         )}
@@ -113,7 +112,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mt-2">
         <div className="flex-1">
           <h3
-            className="text-white text-sm sm:text-base lg:text-lg font-bold leading-tight group-hover:text-primary transition-colors cursor-pointer line-clamp-2"
+            className="text-white text-sm sm:text-base lg:text-lg font-bold leading-tight group-hover:text-gray-300 transition-colors cursor-pointer line-clamp-2"
             onClick={() => navigate(`/product/${product.slug || product.id}`)}
           >
             {product.name}
@@ -152,7 +151,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
           )}
         </div>
         <div className="text-left sm:text-right flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-0">
-          <p className={`font-bold text-sm md:text-base ${product.originalPrice && product.originalPrice > product.price ? 'text-primary' : 'text-white'}`}>
+          <p className={`font-bold text-sm md:text-base ${product.originalPrice && product.originalPrice > product.price ? 'text-white' : 'text-white'}`}>
             Gs. {product.price.toLocaleString()}
           </p>
           {product.originalPrice && product.originalPrice > product.price && (

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { toast } from 'react-toastify';
 import { supabase } from '../services/supabase';
 import { MapContainer, TileLayer, Polygon, Marker, useMapEvents, useMap, Polyline } from 'react-leaflet';
 import { useShop } from '../context/ShopContext';
@@ -496,14 +497,14 @@ const DeliveryZoneMap: React.FC = () => {
                     setCurrentPoints(simplified);
                     setZoneName(result.display_name.split(',')[0]);
                 } else {
-                    alert('No se pudo obtener el límite.');
+                    toast.error('No se pudo obtener el límite');
                 }
             } else {
-                alert('Ciudad no encontrada.');
+                toast.warn('Ciudad no encontrada');
             }
         } catch (e) {
             console.error(e);
-            alert('Error de conexión.');
+            toast.error('Error de conexión');
         } finally {
             setIsSearching(false);
         }
@@ -513,7 +514,7 @@ const DeliveryZoneMap: React.FC = () => {
     const handleSave = async () => {
         // 1. Validaciones básicas
         if (!zoneName || !zonePrice || currentPoints.length < 3) {
-            alert('⚠️ Completa el nombre, el precio y dibuja una zona válida (mínimo 3 puntos).');
+            toast.warn('Completa el nombre, el precio y dibuja una zona válida (mínimo 3 puntos)');
             return;
         }
 
@@ -539,12 +540,12 @@ const DeliveryZoneMap: React.FC = () => {
             }
 
             // 4. Éxito
-            alert("✅ ¡Zona guardada correctamente!");
+            toast.success('✅ Zona guardada correctamente');
             reset();
 
         } catch (error: any) {
             console.error("Error crítico al guardar:", error);
-            alert("❌ Error al guardar: " + (error.message || error));
+            toast.error(`Error al guardar: ${(error as any).message || error}`);
         }
     };
 

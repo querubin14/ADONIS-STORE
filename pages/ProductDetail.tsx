@@ -268,15 +268,15 @@ const ProductDetail: React.FC = () => {
                     <div className="flex flex-col">
                         <div className="mb-2 flex gap-2">
                             {product.tags.filter(t => !['SIN CATEGORIA', 'SIN CATEGORÍA', 'NUEVO', 'NEW'].includes(t.toUpperCase())).map(tag => (
-                                <span key={tag} className="px-2 py-1 bg-white/10 text-xs font-bold uppercase rounded text-primary border border-primary/20">{tag}</span>
+                                <span key={tag} className="px-2 py-1 bg-white/10 text-xs font-bold uppercase rounded text-white border border-white/20">{tag}</span>
                             ))}
-                            {product.isNew && <span className="px-2 py-1 bg-primary text-xs font-bold uppercase rounded text-white">NUEVO</span>}
+                            {product.isNew && <span className="px-2 py-1 bg-white text-xs font-bold uppercase rounded text-black">NUEVO</span>}
                         </div>
 
                         <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight mb-4 leading-none">{product.name}</h1>
 
                         <div className="flex items-end gap-4 mb-8">
-                            <span className="text-4xl font-bold font-mono text-primary">Gs. {(activeColor?.price || product.price).toLocaleString()}</span>
+                            <span className="text-4xl font-bold font-mono text-white">Gs. {(activeColor?.price || product.price).toLocaleString()}</span>
                             {product.originalPrice && product.originalPrice > (activeColor?.price || product.price) && (
                                 <span className="text-xl text-gray-500 line-through mb-1">Gs. {product.originalPrice.toLocaleString()}</span>
                             )}
@@ -326,7 +326,7 @@ const ProductDetail: React.FC = () => {
                                 <div className="w-full animate-in fade-in slide-in-from-right-4 duration-500">
                                     <div className="flex justify-between items-center mb-4">
                                         <span className="text-sm font-bold uppercase tracking-widest text-gray-300">
-                                            Color: <span className="text-primary ml-1">{activeColor?.name || 'Seleccionar'}</span>
+                                            Color: <span className="text-white ml-1">{activeColor?.name || 'Seleccionar'}</span>
                                         </span>
                                     </div>
                                     <div className="flex flex-wrap gap-3">
@@ -364,7 +364,7 @@ const ProductDetail: React.FC = () => {
                                 <button
                                     onClick={handleAddToCart}
                                     disabled={isTotallyOutOfStock}
-                                    className={`w-full md:w-auto h-14 px-10 font-black tracking-widest uppercase rounded transition-all flex items-center justify-center gap-3 text-base ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:bg-red-700 text-white shadow-lg hover:shadow-red-900/20 hover:-translate-y-1'}`}
+                                    className={`w-full md:w-auto h-14 px-10 font-black tracking-widest uppercase rounded transition-all flex items-center justify-center gap-3 text-base ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-white hover:bg-gray-200 text-black shadow-lg hover:-translate-y-1'}`}
                                 >
                                     {isTotallyOutOfStock ? 'AGOTADO' : (
                                         <>
@@ -390,7 +390,7 @@ const ProductDetail: React.FC = () => {
                                 <button
                                     onClick={handleAddToCart}
                                     disabled={isTotallyOutOfStock}
-                                    className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-primary hover:opacity-90 text-white'}`}
+                                    className={`w-full py-5 font-bold tracking-[0.15em] uppercase rounded transition-all flex items-center justify-center gap-3 text-lg ${isTotallyOutOfStock ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 'bg-white hover:bg-gray-200 text-black'}`}
                                 >
                                     {isTotallyOutOfStock ? 'AGOTADO' : (
                                         <>
@@ -414,7 +414,7 @@ const ProductDetail: React.FC = () => {
                         {relatedProducts.length > 0 && (
                             <div className="mt-8 border-t border-gray-800 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
                                 <h3 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-4 flex items-center gap-2">
-                                    <Star size={12} className="text-primary" /> Recomendaciones
+                                    <Star size={12} className="text-white" /> Recomendaciones
                                 </h3>
                                 <div className="grid grid-cols-3 gap-3 mb-4 max-w-[380px]">
                                     {relatedProducts.map(rp => (
@@ -433,7 +433,7 @@ const ProductDetail: React.FC = () => {
                                                 )}
                                             </div>
                                             <p className="text-[9px] font-bold text-gray-400 uppercase truncate group-hover:text-white transition-colors">{rp.name}</p>
-                                            <p className="text-[9px] text-primary font-bold">Gs. {rp.price.toLocaleString()}</p>
+                                            <p className="text-[9px] text-white font-bold">Gs. {rp.price.toLocaleString()}</p>
                                         </button>
                                     ))}
                                 </div>
