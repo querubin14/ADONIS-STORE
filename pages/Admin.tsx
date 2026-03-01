@@ -997,6 +997,17 @@ const AdminDashboard: React.FC = () => {
         }));
     };
 
+    const addFooterColumn = () => {
+        setFooterForm(prev => [
+            ...prev,
+            { id: 'col-' + Date.now(), title: 'NUEVA COLUMNA', links: [] }
+        ]);
+    };
+
+    const removeFooterColumn = (colId: string) => {
+        setFooterForm(prev => prev.filter(col => col.id !== colId));
+    };
+
     // --- Drop Handlers ---
     const handleAddDrop = async (imageUrl: string) => {
         if (!imageUrl) return;
@@ -2745,8 +2756,15 @@ const AdminDashboard: React.FC = () => {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                                     {footerForm.map((col) => (
-                                        <div key={col.id} className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6">
-                                            <div className="mb-6">
+                                        <div key={col.id} className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6 relative">
+                                            <button
+                                                onClick={() => removeFooterColumn(col.id)}
+                                                className="absolute top-4 right-4 text-gray-600 hover:text-red-500 transition-colors"
+                                                title="Eliminar Columna"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                            <div className="mb-6 pr-8">
                                                 <label className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Título de Columna</label>
                                                 <input
                                                     type="text"
@@ -2792,6 +2810,9 @@ const AdminDashboard: React.FC = () => {
                                         </div>
                                     ))}
                                 </div>
+                                <button onClick={addFooterColumn} className="mt-6 w-full py-4 border border-dashed border-gray-800 text-gray-500 hover:text-white hover:border-gray-600 rounded-lg text-sm font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                                    <Plus size={16} /> Agregar Nueva Columna
+                                </button>
                             </div>
                         </div>
                     )

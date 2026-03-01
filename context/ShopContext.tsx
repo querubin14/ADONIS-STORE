@@ -505,6 +505,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const removeFromCart = (productId: string, size: string, color?: string) => {
         setCart(prev => prev.filter(item => !(item.id === productId && item.selectedSize === size && item.selectedColor === color)));
+        toast.info("Producto eliminado del carrito", { icon: false });
     };
 
     const updateQuantity = (productId: string, size: string, delta: number, color?: string) => {

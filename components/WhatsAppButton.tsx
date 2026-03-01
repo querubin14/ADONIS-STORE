@@ -1,10 +1,12 @@
 import React from 'react';
 import { useShop } from '../context/ShopContext';
+import { useLocation } from 'react-router-dom';
 
 const WhatsAppButton: React.FC = () => {
     const { socialConfig } = useShop();
+    const location = useLocation();
 
-    if (!socialConfig.whatsapp) return null;
+    if (!socialConfig.whatsapp || location.pathname.startsWith('/admin')) return null;
 
     const handleClick = () => {
         let url = socialConfig.whatsapp;

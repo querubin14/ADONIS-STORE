@@ -19,15 +19,15 @@ root.render(
       <HelmetProvider>
         <App />
         <ToastContainer
-          position="bottom-right"
+          position="top-center"
           autoClose={3000}
-          hideProgressBar={false}
+          hideProgressBar={true}
           newestOnTop
           closeOnClick
           rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
+          pauseOnFocusLoss={false}
+          draggable={false}
+          pauseOnHover={false}
           theme="dark"
           aria-label="Notificaciones"
           toastStyle={{

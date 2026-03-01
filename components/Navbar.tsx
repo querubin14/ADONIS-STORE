@@ -275,76 +275,76 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             </div>
           </div>
         )}
-
-        {/* Lateral Side Menu (Both Mobile & Desktop) */}
-        <div
-          id="lateral-menu-overlay"
-          className="fixed inset-0 bg-black/50 z-[990] hidden transition-opacity backdrop-blur-sm"
-          onClick={() => {
-            document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-            document.getElementById('lateral-menu')?.classList.remove('translate-x-0');
-            document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-          }}
-        />
-        <div
-          id="lateral-menu"
-          className="fixed top-0 right-0 h-[100dvh] w-[85%] max-w-[400px] bg-[#0a0a0a] border-l border-gray-800 p-6 flex flex-col shadow-2xl z-[999] transition-transform duration-300 ease-in-out translate-x-full"
-        >
-          <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-800">
-            <div className="h-8 w-auto flex items-center justify-center">
-              <img src="/logo-final.png" alt="Adonis Logo" className="h-[35px] w-auto object-contain filter brightness-110" />
-            </div>
-            <button
-              className="text-gray-400 hover:text-white transition-colors"
-              onClick={() => {
-                document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-                document.getElementById('lateral-menu')?.classList.remove('translate-x-0');
-                document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-              }}
-            >
-              <X size={28} />
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-6 overflow-y-auto">
-            {navbarLinks.map(link => (
-              <div key={link.id} className="flex flex-col gap-3 pb-4 border-b border-gray-800/50">
-                <Link
-                  className="text-lg font-bold uppercase tracking-widest text-white hover:text-gray-300 transition-colors"
-                  to={link.path}
-                  onClick={() => {
-                    document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-                    document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-                  }}
-                >
-                  {link.label}
-                </Link>
-                {link.subcategories && link.subcategories.length > 0 && (
-                  <div className="flex flex-col gap-3 pl-4 border-l-2 border-gray-800 mt-2">
-                    {link.subcategories.map(sub => (
-                      <Link
-                        key={sub}
-                        to={`${link.path.replace(/\/$/, '')}/${sub.trim()}`}
-                        className="text-gray-400 font-bold uppercase tracking-wider text-sm hover:text-white transition-colors"
-                        onClick={() => {
-                          document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-                          document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-                        }}
-                      >
-                        {sub}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-auto pt-8 flex items-center gap-4 text-gray-500">
-            <p className="text-xs font-bold uppercase tracking-widest">© ADONIS STORE 2026</p>
-          </div>
-        </div>
       </nav>
+
+      {/* Lateral Side Menu (Both Mobile & Desktop) */}
+      <div
+        id="lateral-menu-overlay"
+        className="fixed inset-0 bg-black/50 z-[990] hidden transition-opacity backdrop-blur-sm"
+        onClick={() => {
+          document.getElementById('lateral-menu')?.classList.add('translate-x-full');
+          document.getElementById('lateral-menu')?.classList.remove('translate-x-0');
+          document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
+        }}
+      />
+      <div
+        id="lateral-menu"
+        className="fixed top-0 right-0 h-[100dvh] w-[85%] max-w-[400px] bg-[#0a0a0a] border-l border-gray-800 p-6 flex flex-col shadow-2xl z-[999] transition-transform duration-300 ease-in-out translate-x-full"
+      >
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-800">
+          <div className="h-8 w-auto flex items-center justify-center">
+            <img src="/logo-final.png" alt="Adonis Logo" className="h-[35px] w-auto object-contain filter brightness-110" />
+          </div>
+          <button
+            className="text-gray-400 hover:text-white transition-colors"
+            onClick={() => {
+              document.getElementById('lateral-menu')?.classList.add('translate-x-full');
+              document.getElementById('lateral-menu')?.classList.remove('translate-x-0');
+              document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
+            }}
+          >
+            <X size={28} />
+          </button>
+        </div>
+
+        <div className="flex flex-col gap-6 overflow-y-auto">
+          {navbarLinks.map(link => (
+            <div key={link.id} className="flex flex-col gap-3 pb-4 border-b border-gray-800/50">
+              <Link
+                className="text-lg font-bold uppercase tracking-widest text-white hover:text-gray-300 transition-colors"
+                to={link.path}
+                onClick={() => {
+                  document.getElementById('lateral-menu')?.classList.add('translate-x-full');
+                  document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
+                }}
+              >
+                {link.label}
+              </Link>
+              {link.subcategories && link.subcategories.length > 0 && (
+                <div className="flex flex-col gap-3 pl-4 border-l-2 border-gray-800 mt-2">
+                  {link.subcategories.map(sub => (
+                    <Link
+                      key={sub}
+                      to={`${link.path.replace(/\/$/, '')}/${sub.trim()}`}
+                      className="text-gray-400 font-bold uppercase tracking-wider text-sm hover:text-white transition-colors"
+                      onClick={() => {
+                        document.getElementById('lateral-menu')?.classList.add('translate-x-full');
+                        document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
+                      }}
+                    >
+                      {sub}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-auto pt-8 flex items-center gap-4 text-gray-500">
+          <p className="text-xs font-bold uppercase tracking-widest">© ADONIS STORE 2026</p>
+        </div>
+      </div>
     </>
   );
 };
