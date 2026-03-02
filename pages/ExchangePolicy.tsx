@@ -1,102 +1,78 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 import { useShop } from '../context/ShopContext';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
+import { Clock, ShieldAlert, BadgeInfo } from 'lucide-react';
 
 const ExchangePolicy: React.FC = () => {
     const { cart } = useShop();
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     return (
-        <div className="min-h-screen bg-background-dark text-white selection:bg-primary selection:text-white flex flex-col">
+        <div className="min-h-screen bg-[#000000] text-white selection:bg-white selection:text-black flex flex-col font-sans relative overflow-hidden">
+            {/* Cinematic Background Glows */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-[400px] bg-white/[0.03] blur-[120px] rounded-full pointer-events-none" />
+
             <Navbar cartCount={cartCount} />
 
-            <main className="flex-grow pt-32 pb-20 px-6 lg:px-12 max-w-4xl mx-auto w-full">
-                <article className="prose prose-invert prose-lg max-w-none">
-                    <div className="flex items-center gap-4 mb-8">
-                        <Link to="/" className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 group">
-                            <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
-                            <span className="text-xs font-bold uppercase tracking-widest">Volver al Inicio</span>
-                        </Link>
-                    </div>
-                    <h1 className="text-4xl font-black uppercase tracking-tight mb-8 text-white border-b border-gray-800 pb-6">
-                        POLÍTICA DE CAMBIOS
+            <main className="flex-grow flex flex-col items-center pt-32 pb-24 px-6 lg:px-12 w-full relative z-10">
+
+                {/* Header Section */}
+                <div className="text-center max-w-3xl mx-auto mb-16 md:mb-24">
+                    <h1 className="text-4xl md:text-5xl font-black uppercase tracking-[0.25em] text-white mb-6 leading-tight">
+                        Política de Cambios
                     </h1>
+                    <p className="text-[#a1a1aa] text-sm md:text-base tracking-[0.05em] leading-relaxed max-w-2xl mx-auto font-light">
+                        PARA GARANTIZAR LA AUTENTICIDAD Y EXCELENCIA DE CADA PIEZA, NUESTRAS CONDICIONES DE CAMBIO SON ESTRICTAS Y NO NEGOCIABLES.
+                    </p>
+                </div>
 
-                    <div className="space-y-8 text-gray-300 leading-relaxed text-sm md:text-base">
-                        <p>
-                            En <span className="text-white font-bold">SAVAGE</span>, nuestro objetivo es que quedes totalmente satisfecho con tu compra. Si necesitas realizar un cambio, te detallamos nuestras condiciones y el proceso a seguir:
-                        </p>
+                {/* Grid Section */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 w-full max-w-5xl mx-auto">
 
-                        <section>
-                            <h2 className="text-xl font-bold text-white uppercase mb-4 flex items-center gap-2">
-                                <span className="bg-primary text-white text-xs px-2 py-1 rounded">1</span> Plazos y Condiciones del Producto
-                            </h2>
-                            <ul className="list-disc pl-5 space-y-2 marker:text-gray-600">
-                                <li>
-                                    <strong className="text-white">Plazo:</strong> Dispones de hasta 48 horas corridas después de haber recibido el producto para solicitar un cambio.
-                                </li>
-                                <li>
-                                    <strong className="text-white">Requisitos de la prenda:</strong> El producto debe estar en perfectas condiciones:
-                                    <ul className="list-circle pl-5 mt-2 space-y-1 text-gray-400">
-                                        <li>Con etiqueta original intacta.</li>
-                                        <li>Sin señales de uso, lavado o manchas.</li>
-                                        <li>Libre de olores (perfumes, desodorantes, tabaco, etc.).</li>
-                                        <li>Sin daños físicos o alteraciones.</li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </section>
+                    {/* Time limit */}
+                    <div className="group relative flex flex-col items-center justify-center p-10 bg-[#050505]/40 backdrop-blur-xl border border-white/10 hover:border-white/40 transition-all duration-500 rounded-2xl overflow-hidden text-center h-full">
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
-                        <section>
-                            <h2 className="text-xl font-bold text-white uppercase mb-4 flex items-center gap-2">
-                                <span className="bg-primary text-white text-xs px-2 py-1 rounded">2</span> Cambios vía Delivery (Zonas de Cobertura)
-                            </h2>
-                            <ul className="list-disc pl-5 space-y-2 marker:text-gray-600">
-                                <li>
-                                    El cliente podrá solicitar el cambio dentro del plazo de 48 hs.
-                                </li>
-                                <li>
-                                    <strong className="text-white">Costos de logística:</strong> El costo del nuevo envío por delivery corre exclusivamente a cargo del cliente y deberá abonarse nuevamente para concretar el cambio.
-                                </li>
-                            </ul>
-                        </section>
-
-                        <section>
-                            <h2 className="text-xl font-bold text-white uppercase mb-4 flex items-center gap-2">
-                                <span className="bg-primary text-white text-xs px-2 py-1 rounded">3</span> Cambios al Interior (Vía Transportadora)
-                            </h2>
-                            <p className="mb-4">Para cambios con envíos de larga distancia, el proceso se divide en dos etapas:</p>
-                            <ul className="list-disc pl-5 space-y-2 marker:text-gray-600">
-                                <li>
-                                    <strong className="text-white">Recepción y Verificación:</strong> El cliente debe enviar el producto a nuestras instalaciones. Primero debemos recibir y verificar que la prenda se encuentre en el estado óptimo mencionado anteriormente.
-                                </li>
-                                <li>
-                                    <strong className="text-white">Envío del nuevo producto:</strong> Una vez aprobado el estado de la prenda recibida, procederemos a despachar el nuevo artículo.
-                                </li>
-                                <li>
-                                    <strong className="text-white">Gastos de Envío:</strong> Todos los costos de transporte (tanto el de retorno a SAVAGE como el envío de la nueva prenda hacia el cliente) son responsabilidad total del cliente.
-                                </li>
-                            </ul>
-                        </section>
-
-                        <div className="bg-yellow-900/20 border border-yellow-900/50 p-6 rounded-lg mt-8">
-                            <h3 className="text-yellow-500 font-bold uppercase tracking-widest text-sm flex items-center gap-2 mb-4">
-                                <span className="material-symbols-outlined">warning</span> Aclaraciones Importantes
-                            </h3>
-                            <ul className="space-y-4">
-                                <li>
-                                    <strong className="text-white">No se realizan devoluciones de dinero:</strong> Una vez concretada la compra, SAVAGE no realiza reembolsos ni devoluciones de dinero en efectivo o transferencia. Bajo nuestra política, el cliente tiene derecho exclusivamente al cambio por otro artículo de la tienda (sujeto a disponibilidad de stock).
-                                </li>
-                                <li>
-                                    <strong className="text-white">Disponibilidad:</strong> Si el producto por el cual deseas realizar el cambio no se encuentra en stock, podrás elegir cualquier otro artículo de igual o mayor valor (abonando la diferencia).
-                                </li>
-                            </ul>
+                        <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-500 bg-black">
+                            <Clock strokeWidth={1.5} size={28} className="text-white" />
                         </div>
+                        <h2 className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2 font-bold group-hover:text-gray-300 transition-colors">Plazo Máximo</h2>
+                        <p className="text-xl font-medium tracking-wider text-white">72 Horas</p>
+                        <p className="text-[11px] uppercase tracking-widest text-[#a1a1aa] mt-4 leading-relaxed group-hover:text-gray-300 transition-colors">
+                            Una vez superado este límite de tiempo post-compra, no se aceptará ninguna solicitud de cambio.
+                        </p>
                     </div>
-                </article>
+
+                    {/* Condition */}
+                    <div className="group relative flex flex-col items-center justify-center p-10 bg-[#050505]/40 backdrop-blur-xl border border-white/10 hover:border-white/40 transition-all duration-500 rounded-2xl overflow-hidden text-center h-full">
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+                        <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-500 bg-black">
+                            <ShieldAlert strokeWidth={1.5} size={28} className="text-white" />
+                        </div>
+                        <h2 className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2 font-bold group-hover:text-gray-300 transition-colors">Estado y Ética</h2>
+                        <p className="text-xl font-medium tracking-wider text-white">Perfectas Condiciones</p>
+                        <p className="text-[11px] uppercase tracking-widest text-[#a1a1aa] mt-4 leading-relaxed group-hover:text-gray-300 transition-colors">
+                            El producto debe devolverse impecable, sin marcas de uso, olores o deterioros de ningún tipo.
+                        </p>
+                    </div>
+
+                    {/* Logistics */}
+                    <div className="group relative flex flex-col items-center justify-center p-10 bg-[#050505]/40 backdrop-blur-xl border border-white/10 hover:border-white/40 transition-all duration-500 rounded-2xl overflow-hidden text-center h-full">
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/0 via-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+
+                        <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-500 bg-black">
+                            <BadgeInfo strokeWidth={1.5} size={28} className="text-white" />
+                        </div>
+                        <h2 className="text-xs uppercase tracking-[0.3em] text-gray-500 mb-2 font-bold group-hover:text-gray-300 transition-colors">Costos Logísticos</h2>
+                        <p className="text-xl font-medium tracking-wider text-white">A cargo del Cliente</p>
+                        <p className="text-[11px] uppercase tracking-widest text-[#a1a1aa] mt-4 leading-relaxed group-hover:text-gray-300 transition-colors">
+                            Cualquier gasto de envío generado por la devolución e ida del nuevo producto es responsabilidad total del comprador.
+                        </p>
+                    </div>
+
+                </div>
             </main>
 
             <Footer />

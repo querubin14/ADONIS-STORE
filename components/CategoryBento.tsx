@@ -1,102 +1,93 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Link } from 'react-router-dom';
 
 const CategoryBento: React.FC = () => {
   const { bannerBento } = useShop();
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Fallback defaults or use array indices
-  const large = bannerBento[0];
-  const topRight = bannerBento[1];
-  const bottomRight = bannerBento[2];
+  // Resize listener to detect mobile
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    // Setting initial value in case of SSR (not likely here but good practice)
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Determine if carousel should slide
+  const shouldSlide = isMobile ? bannerBento.length > 1 : bannerBento.length > 3;
+
+  // Auto-slide effect every 3 seconds
+  useEffect(() => {
+    if (shouldSlide) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % bannerBento.length);
+      }, 3000); // 3 seconds as requested
+      return () => clearInterval(interval);
+    } else {
+      // Reset if resizing makes it not slide anymore
+      setCurrentIndex(0);
+    }
+  }, [shouldSlide, bannerBento.length]);
+
+  if (!bannerBento || bannerBento.length === 0) return null;
 
   return (
-    <section className="py-6 px-4 md:px-12 max-w-[1400px] mx-auto">
+    <section className="py-6 px-4 md:px-12 max-w-[1400px] mx-auto overflow-hidden">
       <h2 className="text-2xl md:text-3xl font-bold uppercase tracking-tight mb-4">Categorías</h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 md:grid-rows-2 gap-2 md:gap-4 h-[400px] md:h-[600px]">
-        {/* JOYAS - Large Block */}
-        {large && (
-          <Link to={large.link} className="relative group col-span-1 row-span-2 md:col-span-2 md:row-span-2 rounded overflow-hidden cursor-pointer block">
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-              style={{ backgroundImage: `url('${large.image}')` }}
-            />
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors" />
-            <div className="absolute bottom-0 left-0 p-4 md:p-8">
-              <h3 className="text-2xl md:text-4xl font-black text-white uppercase tracking-tighter mb-2">{large.title}</h3>
-              {large.subtitle && <p className="text-gray-200 text-xs md:text-sm max-w-xs mb-4 hidden md:block">{large.subtitle}</p>}
-              <span className="inline-flex items-center text-xs md:text-sm font-bold uppercase tracking-widest border-b border-white pb-1 group-hover:text-primary group-hover:border-primary transition-colors">
-                {large.buttonText}
-              </span>
-            </div>
-          </Link>
-        )}
 
-        {/* ROPA - Medium Block */}
-        {topRight && (
-          <Link to={topRight.link} className="relative group col-span-1 row-span-1 rounded overflow-hidden cursor-pointer block">
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-              style={{ backgroundImage: `url('${topRight.image}')` }}
-            />
-            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
-            <div className="absolute bottom-0 left-0 p-3 md:p-6">
-              <h3 className="text-lg md:text-2xl font-black text-white uppercase tracking-tighter mb-1">{topRight.title}</h3>
-              <span className="inline-flex items-center text-[10px] md:text-xs font-bold uppercase tracking-widest group-hover:text-primary transition-colors">
-                {topRight.buttonText}
-              </span>
-            </div>
-          </Link>
-        )}
-
-        {/* NUEVOS INGRESOS - Medium Block */}
-        {bottomRight && (
-          <Link to={bottomRight.link} className="relative group col-span-1 row-span-1 rounded overflow-hidden cursor-pointer block">
-            <div
-              className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-              style={{ backgroundImage: `url('${bottomRight.image}')` }}
-            />
-            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
-            <div className="absolute bottom-0 left-0 p-3 md:p-6">
-              <h3 className="text-lg md:text-2xl font-black text-white uppercase tracking-tighter mb-1">{bottomRight.title}</h3>
-              <span className="inline-flex items-center text-[10px] md:text-xs font-bold uppercase tracking-widest group-hover:text-primary transition-colors">
-                {bottomRight.buttonText || bottomRight.subtitle}
-              </span>
-            </div>
-          </Link>
-        )}
-      </div>
-
-      {/* Extra Banners (if any) */}
-      {bannerBento.length > 3 && (
-        <div className={`grid grid-cols-1 ${bannerBento.length === 4 ? '' : bannerBento.length === 5 ? 'md:grid-cols-2' : 'md:grid-cols-3'} gap-4 mt-4`}>
-          {bannerBento.slice(3).map((banner) => (
+      <div className="relative">
+        {/* Carousel Container */}
+        <div
+          className="flex transition-transform duration-700 ease-in-out gap-4"
+          style={{
+            transform: shouldSlide ? `translateX(calc(-${currentIndex * 100}% - ${currentIndex * 16}px))` : 'translateX(0)',
+          }}
+        >
+          {bannerBento.map((banner, index) => (
             <Link
-              key={banner.id}
+              key={banner.id || index}
               to={banner.link}
-              className={`group relative overflow-hidden block rounded-xl ${bannerBento.length === 4 ? 'h-[300px] md:h-[450px]' : 'h-64'}`}
+              className={`
+                relative group rounded overflow-hidden cursor-pointer block flex-shrink-0
+                w-full md:w-[calc(50%-8px)] lg:w-[calc(33.333%-11px)]
+                h-[250px] md:h-[300px]
+                ${!shouldSlide && !isMobile ? 'md:flex-1' : ''}
+              `}
             >
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors z-10" />
-              <img
-                src={banner.image}
-                alt={banner.title}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              <div
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                style={{ backgroundImage: `url('${banner.image}')` }}
               />
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-20 text-center p-4">
-                <h3 className={`font-black text-white italic tracking-tighter uppercase mb-2 drop-shadow-lg ${bannerBento.length === 4 ? 'text-4xl md:text-5xl' : 'text-2xl'}`}>
-                  {banner.title}
-                </h3>
-                {banner.buttonText && (
-                  <span className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-6 py-3 text-sm font-bold uppercase tracking-widest hover:bg-white hover:text-black transition-all rounded-full">
-                    {banner.buttonText}
-                  </span>
-                )}
+              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors z-10" />
+              <div className="absolute bottom-0 left-0 p-4 md:p-6 w-full z-20 bg-gradient-to-t from-black/80 to-transparent">
+                <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter mb-1">{banner.title}</h3>
+                {banner.subtitle && <p className="text-gray-200 text-xs md:text-sm max-w-xs mb-2 line-clamp-2">{banner.subtitle}</p>}
+                <span className="inline-flex items-center text-[10px] md:text-xs font-bold uppercase tracking-widest text-white group-hover:text-primary transition-colors">
+                  {banner.buttonText || 'Ver Colección'}
+                </span>
               </div>
             </Link>
           ))}
         </div>
-      )}
+
+        {/* Carousel Indicators (Only show if sliding) */}
+        {shouldSlide && (
+          <div className="flex justify-center mt-6 gap-2">
+            {bannerBento.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentIndex(idx)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${currentIndex === idx ? 'bg-primary w-6' : 'bg-gray-600 hover:bg-gray-400'
+                  }`}
+                aria-label={`Go to slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 };

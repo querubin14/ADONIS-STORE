@@ -6,48 +6,50 @@ const Footer: React.FC = () => {
   const { socialConfig, footerColumns } = useShop();
 
   return (
-    <footer className="bg-[#050505] border-t border-gray-900 mt-auto pt-16 pb-8">
+    <footer className="bg-[#050505] border-t border-gray-900 mt-auto pt-20 pb-8">
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-        <div className="flex flex-col md:flex-row flex-wrap justify-between gap-12 mb-16">
-          {/* Brand */}
-          <div className="flex flex-col gap-6 md:w-1/3">
-            <div className="flex items-center gap-2 text-white">
-              <div className="h-8 w-auto flex items-center justify-center text-primary">
-                <img src="/logo-final.png" alt="Adonis Logo" className="h-full w-auto object-contain filter brightness-110" />
-              </div>
-            </div>
-            <p className="text-gray-500 text-sm leading-relaxed max-w-sm">
+        <div className="flex flex-col lg:flex-row justify-center items-center lg:items-start gap-16 lg:gap-32 mb-20 text-center">
+
+          {/* Brand & Info */}
+          <div className="flex flex-col items-center gap-6 max-w-sm">
+            <Link to="/" onClick={() => window.scrollTo(0, 0)} className="h-10 md:h-12 w-auto flex items-center justify-center transition-transform hover:scale-105">
+              <img src="/logo-final.png" alt="Adonis Logo" className="h-full w-auto object-contain filter brightness-110" />
+            </Link>
+            <p className="text-gray-500 text-sm leading-relaxed mt-2">
               {socialConfig.address || 'Joyería urbana y accesorios premium de máximo nivel. Piezas diseñadas para quienes imponen estilo y no siguen tendencias.'}
             </p>
-            <div className="flex gap-4">
-              <a className="text-gray-400 hover:text-white transition-colors text-xs font-bold tracking-widest" href={socialConfig.instagram || '#'} target="_blank" rel="noreferrer">INSTAGRAM</a>
-              <a className="text-gray-400 hover:text-white transition-colors text-xs font-bold tracking-widest" href={socialConfig.tiktok || '#'} target="_blank" rel="noreferrer">TIKTOK</a>
+            <div className="flex items-center justify-center gap-8 mt-4">
+              <a className="text-gray-400 hover:text-white transition-colors text-[11px] font-black uppercase tracking-[0.2em]" href={socialConfig.instagram || '#'} target="_blank" rel="noreferrer">INSTAGRAM</a>
+              <a className="text-gray-400 hover:text-white transition-colors text-[11px] font-black uppercase tracking-[0.2em]" href={socialConfig.tiktok || '#'} target="_blank" rel="noreferrer">TIKTOK</a>
             </div>
           </div>
 
           {/* Dynamic Links Columns */}
-          <div className="flex flex-col sm:flex-row gap-12 md:gap-24">
-            {footerColumns && footerColumns.map(col => (
-              <div key={col.id}>
-                <h3 className="text-white font-bold uppercase tracking-widest mb-6 text-sm">{col.title}</h3>
-                <ul className="flex flex-col gap-3 text-sm text-gray-400">
-                  {col.links.map(link => (
-                    <li key={link.id}>
-                      <a className="hover:text-white transition-colors" href={link.url}>{link.label}</a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          {footerColumns && footerColumns.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-16 md:gap-32 w-full max-w-2xl">
+              {footerColumns.map(col => (
+                <div key={col.id} className="min-w-[140px] flex-1 flex flex-col items-center">
+                  <h3 className="text-white font-black uppercase tracking-[0.15em] mb-6 text-base md:text-lg flex items-center justify-center w-full text-center">{col.title}</h3>
+                  <ul className="flex flex-col items-center gap-5 text-base md:text-[17px] text-gray-400 w-full">
+                    {col.links.map(link => (
+                      <li key={link.id} className="w-full flex justify-center">
+                        <a className="hover:text-white transition-colors text-center inline-block" href={link.url}>{link.label}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="border-t border-gray-900 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-600 text-xs">© 2026 ADONIS STORE. Todos los derechos reservados.</p>
-          <div className="flex gap-6 text-xs text-gray-600">
-            <Link className="hover:text-gray-400" to="/privacy-policy">Política de Privacidad</Link>
-            <Link className="hover:text-gray-400" to="/terms-of-use">Términos de Uso</Link>
-            <Link className="hover:text-gray-400" to="/care-guide">Cuidados de las Joyas</Link>
+        {/* Bottom Bar */}
+        <div className="border-t border-gray-900/80 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-center">
+          <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-[0.1em]">© 2026 ADONIS STORE. Todos los derechos reservados.</p>
+          <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8 text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em]">
+            <Link className="hover:text-white transition-colors" to="/privacy-policy">Privacidad</Link>
+            <Link className="hover:text-white transition-colors" to="/terms-of-use">Términos</Link>
+            <Link className="hover:text-white transition-colors" to="/care-guide">Cuidados de Joyas</Link>
           </div>
         </div>
       </div>

@@ -18,12 +18,13 @@ import HowToBuyModal from '../components/HowToBuyModal';
 import TrustBadges from '../components/TrustBadges';
 
 const Home: React.FC = () => {
-    const { products, addToCart, cart, categories, visibilityConfig } = useShop();
+    const { products, addToCart, cart, categories, visibilityConfig, getChildCategories } = useShop();
 
     const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
     // Categories are now directly from context (objects)
-    const sortedCategories = [...categories].sort((a, b) => {
+    // Only show root categories (parent_id is null)
+    const sortedCategories = categories.filter(c => !c.parent_id).sort((a, b) => {
         if (a.id === 'billeteras') return 1;
         if (b.id === 'billeteras') return -1;
         return 0;
@@ -62,7 +63,7 @@ const Home: React.FC = () => {
                 {visibilityConfig.categories && sortedCategories.map(categoryObj => {
                     const category = categoryObj.id;
 
-                    // Special layout for 'joyas'
+                    // Layout with child categories shown as horizontal lists
                     if (category === 'joyas') {
                         const joyasProducts = products.filter(p =>
                             p.category.toLowerCase() === 'joyas' ||
@@ -71,7 +72,7 @@ const Home: React.FC = () => {
 
                         if (joyasProducts.length === 0) return null;
 
-                        const subcats = ['Pulseras', 'Parejas', 'Cadenas'];
+                        const childCats = getChildCategories(categoryObj.id);
 
                         return (
                             <section
@@ -94,19 +95,19 @@ const Home: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-6">
-                                    {subcats.map(subcat => {
+                                    {childCats.map(childCat => {
                                         const subProducts = joyasProducts
-                                            .filter(p => p.subcategory && p.subcategory.toLowerCase().includes(subcat.toLowerCase()))
-                                            .slice(0, 10); // Limit to 10 for scroll
+                                            .filter(p => p.subcategory && p.subcategory.toLowerCase().includes(childCat.name.toLowerCase()))
+                                            .slice(0, 10);
 
                                         if (subProducts.length === 0) return null;
 
                                         return (
                                             <HorizontalProductList
-                                                key={subcat}
+                                                key={childCat.id}
                                                 products={subProducts}
-                                                title={subcat}
-                                                viewAllLink={`/category/joyas/${subcat}`}
+                                                title={childCat.name}
+                                                viewAllLink={`/category/${childCat.id}`}
                                                 onAddToCart={addToCart}
                                             />
                                         );

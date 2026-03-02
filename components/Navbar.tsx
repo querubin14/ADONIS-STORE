@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, X, ArrowLeft } from 'lucide-react';
+import { Search, X, ArrowLeft, ChevronDown } from 'lucide-react';
 import AnnouncementBar from './AnnouncementBar';
 
 interface NavbarProps {
@@ -9,8 +9,19 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
-  const { toggleCart, navbarLinks, products } = useShop();
+  const { toggleCart, products, categories } = useShop();
   const [animateCart, setAnimateCart] = useState(false);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
+  // Dinamic Categories
+  const rootCategories = categories
+    .filter(c => !c.parent_id && c.name.toUpperCase() !== 'HUÉRFANOS' && c.name.toUpperCase() !== 'HUERFANOS')
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+
+  const toggleExpand = (e: React.MouseEvent, categoryId: string) => {
+    e.preventDefault();
+    setExpandedCategory(prev => prev === categoryId ? null : categoryId);
+  };
 
   // Search State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -308,37 +319,90 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
         </div>
 
         <div className="flex flex-col gap-6 overflow-y-auto">
-          {navbarLinks.map(link => (
-            <div key={link.id} className="flex flex-col gap-3 pb-4 border-b border-gray-800/50">
-              <Link
-                className="text-lg font-bold uppercase tracking-widest text-white hover:text-gray-300 transition-colors"
-                to={link.path}
-                onClick={() => {
-                  document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-                  document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-                }}
-              >
-                {link.label}
-              </Link>
-              {link.subcategories && link.subcategories.length > 0 && (
-                <div className="flex flex-col gap-3 pl-4 border-l-2 border-gray-800 mt-2">
-                  {link.subcategories.map(sub => (
-                    <Link
-                      key={sub}
-                      to={`${link.path.replace(/\/$/, '')}/${sub.trim()}`}
-                      className="text-gray-400 font-bold uppercase tracking-wider text-sm hover:text-white transition-colors"
-                      onClick={() => {
-                        document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-                        document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-                      }}
+          {/* Static INICIO link */}
+          <div className="flex flex-col gap-3 pb-4 border-b border-gray-800/50">
+            <Link
+              className="text-lg font-bold uppercase tracking-widest text-white hover:text-gray-300 transition-colors"
+              to="/"
+              onClick={() => {
+                document.getElementById('lateral-menu')?.classList.add('translate-x-full');
+                document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
+              }}
+            >
+              INICIO
+            </Link>
+          </div>
+
+          {/* Dynamic Categories */}
+          {rootCategories.map(cat => {
+            const hasChildren = categories.some(c => c.parent_id === cat.id);
+            const isExpanded = expandedCategory === cat.id;
+
+            return (
+              <div key={cat.id} className="flex flex-col gap-3 pb-4 border-b border-gray-800/50">
+                <div className="flex items-center justify-between">
+                  <Link
+                    className="text-lg font-bold uppercase tracking-widest text-white hover:text-gray-300 transition-colors"
+                    to={`/category/${cat.name.toUpperCase()}`}
+                    onClick={() => {
+                      document.getElementById('lateral-menu')?.classList.add('translate-x-full');
+                      document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
+                    }}
+                  >
+                    {cat.name}
+                  </Link>
+                  {hasChildren && (
+                    <button
+                      onClick={(e) => toggleExpand(e, cat.id)}
+                      className="p-1 text-gray-400 hover:text-white transition-colors"
                     >
-                      {sub}
-                    </Link>
-                  ))}
+                      <ChevronDown
+                        size={24}
+                        className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}
+                      />
+                    </button>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+
+                {hasChildren && (
+                  <div
+                    className={`flex flex-col gap-3 pl-4 border-l-2 border-gray-800 transition-all duration-300 overflow-hidden ${isExpanded ? 'max-h-[500px] mt-2 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+                      }`}
+                  >
+                    {categories.filter(c => c.parent_id === cat.id)
+                      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                      .map(sub => (
+                        <Link
+                          key={sub.id}
+                          to={`/category/${cat.name.toUpperCase()}/${sub.name.toUpperCase()}`}
+                          className="text-gray-400 font-bold uppercase tracking-wider text-sm hover:text-white transition-colors"
+                          onClick={() => {
+                            document.getElementById('lateral-menu')?.classList.add('translate-x-full');
+                            document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
+                          }}
+                        >
+                          {sub.name}
+                        </Link>
+                      ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Static CONTACTO link */}
+          <div className="flex flex-col gap-3 pb-4 border-b border-gray-800/50">
+            <Link
+              className="text-lg font-bold uppercase tracking-widest text-white hover:text-gray-300 transition-colors"
+              to="/contact"
+              onClick={() => {
+                document.getElementById('lateral-menu')?.classList.add('translate-x-full');
+                document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
+              }}
+            >
+              CONTACTO
+            </Link>
+          </div>
         </div>
 
         <div className="mt-auto pt-8 flex items-center gap-4 text-gray-500">

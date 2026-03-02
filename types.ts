@@ -42,8 +42,11 @@ export interface Category {
   id: string;
   name: string;
   image?: string;
-  subcategories?: string[];
+  parent_id?: string | null;
   opacity?: number;
+  sort_order?: number;
+  /** @deprecated Use parent_id hierarchy. Kept for migration compatibility. */
+  subcategories?: string[];
 }
 
 export interface HeroSlide {

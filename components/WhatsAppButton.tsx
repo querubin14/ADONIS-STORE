@@ -11,15 +11,14 @@ const WhatsAppButton: React.FC = () => {
     const handleClick = () => {
         let url = socialConfig.whatsapp;
         // If it looks like a number (digits only, maybe some spaces or dashes), format it as a wa.me link
-        // Otherwise, assume it's a full link
+        // Add predefined message
+        const message = "¡Hola! 👋 Vi un producto en su página web y me interesa.";
+        const encodedMessage = encodeURIComponent(message);
+
         const cleanNumber = url.replace(/[\s-]/g, '');
         if (/^\d+$/.test(cleanNumber)) {
-            url = `https://wa.me/${cleanNumber}`;
+            url = `https://wa.me/${cleanNumber}?text=${encodedMessage}`;
         } else if (!url.startsWith('http')) {
-            // If it's not a number but doesn't start with http, maybe user forgot https://
-            // But if it contains letters, it might be a short link?
-            // safest is to just prepend https:// if it looks like a domain, or wa.me if not?
-            // Let's stick to: digits -> wa.me, otherwise -> raw link
             url = `https://${url}`;
         }
 

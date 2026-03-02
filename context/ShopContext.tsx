@@ -47,6 +47,9 @@ interface ShopContextType {
     addCategory: (category: Category) => void;
     updateCategory: (category: Category) => void;
     deleteCategory: (categoryId: string) => void;
+    getChildCategories: (parentId: string | null) => Category[];
+    getRootCategories: () => Category[];
+    getCategoryPath: (categoryId: string) => Category[];
     deliveryZones: DeliveryZone[];
     addDeliveryZone: (zone: DeliveryZone) => void;
     deleteDeliveryZone: (id: string) => void;
@@ -105,13 +108,13 @@ const DEFAULT_SOCIAL_CONFIG: SocialConfig = {
 };
 
 const DEFAULT_CATEGORIES: Category[] = [
-    { id: 'ropa', name: 'Ropa', image: '', subcategories: ['Remeras', 'Hoodies', 'Pantalones', 'Shorts'] },
-    { id: 'deportivo', name: 'Deportivo', image: '', subcategories: ['Player', 'Fan', 'Retro'] },
-    { id: 'calzados', name: 'Calzados', image: '', subcategories: ['Nike', 'Adidas', 'Puma', 'New Balance'] },
-    { id: 'joyas', name: 'Joyas', image: '' },
-    { id: 'accesorios', name: 'Accesorios', image: '' },
-    { id: 'billeteras', name: 'Billeteras', image: '' },
-    { id: 'huerfanos', name: 'Huérfanos', image: '' }
+    { id: 'ropa', name: 'Ropa', image: '', parent_id: null },
+    { id: 'deportivo', name: 'Deportivo', image: '', parent_id: null },
+    { id: 'calzados', name: 'Calzados', image: '', parent_id: null },
+    { id: 'joyas', name: 'Joyas', image: '', parent_id: null },
+    { id: 'accesorios', name: 'Accesorios', image: '', parent_id: null },
+    { id: 'billeteras', name: 'Billeteras', image: '', parent_id: null },
+    { id: 'huerfanos', name: 'Huérfanos', image: '', parent_id: null }
 ];
 
 export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -1409,6 +1412,26 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    // --- Parent-Child Category Helpers ---
+    const getChildCategories = (parentId: string | null): Category[] => {
+        return categories.filter(c => (c.parent_id || null) === parentId);
+    };
+
+    const getRootCategories = (): Category[] => {
+        return categories.filter(c => !c.parent_id);
+    };
+
+    const getCategoryPath = (categoryId: string): Category[] => {
+        const path: Category[] = [];
+        let current = categories.find(c => c.id === categoryId);
+        while (current) {
+            path.unshift(current);
+            if (!current.parent_id) break;
+            current = categories.find(c => c.id === current!.parent_id);
+        }
+        return path;
+    };
+
     // Delivery Zone Logic
     // Delivery Zone Logic - SUPABASE SYNCED
     const addDeliveryZone = async (zone: DeliveryZone) => {
@@ -1532,6 +1555,9 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             addCategory,
             updateCategory,
             deleteCategory,
+            getChildCategories,
+            getRootCategories,
+            getCategoryPath,
             updateCategoryOrder,
             deliveryZones,
             addDeliveryZone,

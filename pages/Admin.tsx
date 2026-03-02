@@ -11,6 +11,7 @@ import {
     Save,
     LogOut,
     ChevronDown,
+    ChevronRight,
     ChevronUp,
     X,
     FileText,
@@ -86,7 +87,7 @@ const AdminDashboard: React.FC = () => {
 
     // Updated type union
     const [activeTab, setActiveTab] = useState<'products' | 'productSort' | 'hero' | 'orders' | 'blog' | 'config' | 'categories' | 'delivery' | 'webDesign' | 'drops'>('products');
-    const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS' | 'CALZADOS'>('ESTÁNDAR');
+    const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS'>('ESTÁNDAR');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     if (!isAuthenticated) {
@@ -176,14 +177,8 @@ const AdminDashboard: React.FC = () => {
             return;
         }
 
-        // Initialize matrix based on tab
-        if (activeFormTab === 'ESTÁNDAR') {
-            setStockMatrix(['P', 'M', 'G', 'XL', 'XXL'].map(s => ({ size: s, quantity: 0 })));
-        } else if (activeFormTab === 'INFANTIL') {
-            setStockMatrix(['4', '6', '8', '10', '12', '14', '16'].map(s => ({ size: s, quantity: 0 })));
-        } else if (activeFormTab === 'CALZADOS') {
-            setStockMatrix(['37', '38', '39', '40', '41', '42', '43', '44'].map(s => ({ size: s, quantity: 0 })));
-        } else if (activeFormTab === 'ACCESORIOS') {
+        // Initialize matrix based on tab - accessories use single stock
+        if (activeFormTab === 'ACCESORIOS' || activeFormTab === 'ESTÁNDAR' || activeFormTab === 'INFANTIL') {
             setStockMatrix([{ size: 'Único', quantity: 0 }]);
         }
     }, [activeFormTab]);
@@ -358,11 +353,12 @@ const AdminDashboard: React.FC = () => {
         if (product.inventory && product.inventory.length > 0) {
             initialMatrix = product.inventory.map(inv => ({ size: inv.size, quantity: inv.quantity }));
         } else if (product.sizes && product.sizes.length > 0) {
-            // Fallback for old products (sizes only)
-            initialMatrix = product.sizes.map(s => ({ size: s, quantity: Math.floor((product.stock || 0) / product.sizes.length) }));
-            // Distribute stock or just 0? User asked for 0 default but for editing we should show something.
-            // Let's just set 0 if no inventory record.
-            initialMatrix = product.sizes.map(s => ({ size: s, quantity: 0 }));
+            // Fallback for old products (sizes only) - distribute stock across sizes
+            const perSize = product.sizes.length > 0 ? Math.floor((product.stock || 0) / product.sizes.length) : 0;
+            initialMatrix = product.sizes.map(s => ({ size: s, quantity: perSize }));
+        } else {
+            // No inventory, no sizes - use single stock entry with the product's total stock
+            initialMatrix = [{ size: 'Único', quantity: product.stock || 0 }];
         }
 
         // Set active tab based on category/type to load correct defaults if needed
@@ -370,14 +366,26 @@ const AdminDashboard: React.FC = () => {
         setStockMatrix(initialMatrix);
         isLoadingProductRef.current = true; // Signal to useEffect to ignore the next tab change
 
+        // Normalize category/subcategory to match dropdown values (uppercase names)
+        const matchedCat = categories.find(c =>
+            c.name.toUpperCase() === product.category?.toUpperCase() ||
+            c.id.toLowerCase() === product.category?.toLowerCase()
+        );
+        const categoryValue = matchedCat ? matchedCat.name.toUpperCase() : product.category || '';
+
+        const matchedSub = categories.find(c =>
+            c.name.toUpperCase() === product.subcategory?.toUpperCase() ||
+            c.id.toLowerCase() === product.subcategory?.toLowerCase()
+        );
+        const subcategoryValue = matchedSub ? matchedSub.name.toUpperCase() : product.subcategory || '';
+
         setNewProduct({
             name: product.name,
-            // Logic Fix 2.0: Correct mapping to inputs 
             price: (product.originalPrice && product.originalPrice > product.price) ? product.price.toString() : '',
             originalPrice: (product.originalPrice && product.originalPrice > product.price) ? product.originalPrice.toString() : product.price.toString(),
             costPrice: product.costPrice ? product.costPrice.toString() : '',
-            category: product.category,
-            subcategory: product.subcategory || '',
+            category: categoryValue,
+            subcategory: subcategoryValue,
             type: product.type || 'clothing',
             images: product.images,
             sizes: product.sizes,
@@ -386,15 +394,13 @@ const AdminDashboard: React.FC = () => {
             description: product.description || '',
             isFeatured: product.isFeatured || false,
             isCategoryFeatured: product.isCategoryFeatured || false,
-            slug: product.slug, // Preserve existing slug if any
-            imageAlts: product.imageAlts || product.images.map(() => ''), // Initialize alts or defaults
+            slug: product.slug,
+            imageAlts: product.imageAlts || product.images.map(() => ''),
             colors: product.colors || []
         });
 
-        // Infer Form Tab from Category for correct visuals if user switches tabs
+        // Infer Form Tab from Category
         if (product.category === 'INFANTIL') setActiveFormTab('INFANTIL');
-        else if (product.category === 'CALZADOS' || product.type === 'footwear') setActiveFormTab('CALZADOS');
-        else if (['ACCESORIOS', 'RELOJES', 'HUÉRFANOS'].includes(product.category)) setActiveFormTab('ACCESORIOS');
         else setActiveFormTab('ESTÁNDAR');
 
         setEditingProductId(product.id);
@@ -403,7 +409,7 @@ const AdminDashboard: React.FC = () => {
         // Scroll main content to top
         const mainContent = document.getElementById('admin-main-content');
         if (mainContent) {
-            mainContent.scrollTo({ top: 0, behavior: 'instant' }); // Use instant for better mobile responsiveness
+            mainContent.scrollTo({ top: 0, behavior: 'instant' });
             mainContent.scrollTop = 0;
         }
         window.scrollTo({ top: 0, behavior: 'instant' });
@@ -478,14 +484,18 @@ const AdminDashboard: React.FC = () => {
             ? newProduct.slug
             : generateSlug(newProduct.name);
 
+        // Ensure category is stored as UPPERCASE NAME (not ID)
+        const finalCategory = newProduct.category?.trim().toUpperCase() || '';
+        const finalSubcategory = newProduct.subcategory?.trim().toUpperCase() || '';
+
         const productData: Product = {
             id: editingProductId || Date.now().toString(),
             name: newProduct.name,
             price: price,
             originalPrice: originalPrice > price ? originalPrice : undefined,
             costPrice: Number(newProduct.costPrice) || 0,
-            category: newProduct.category || categories[0]?.id || 'Uncategorized',
-            subcategory: newProduct.subcategory,
+            category: finalCategory,
+            subcategory: finalSubcategory,
             type: newProduct.type,
             images: validImages.length > 0 ? validImages : ['https://via.placeholder.com/300'],
             sizes: matrixSizes,
@@ -498,16 +508,14 @@ const AdminDashboard: React.FC = () => {
             isCategoryFeatured: newProduct.isCategoryFeatured,
             description: newProduct.description,
             slug: productSlug,
-            imageAlts: newProduct.imageAlts || validImages.map(() => newProduct.name), // Default to Product Name if empty
+            imageAlts: newProduct.imageAlts || validImages.map(() => newProduct.name),
             colors: newProduct.colors || []
         };
 
         if (editingProductId) {
             updateProduct(productData);
-            toast.success('✅ Producto actualizado');
         } else {
             addProduct(productData);
-            toast.success('✅ Producto añadido');
         }
 
         resetForm();
@@ -773,39 +781,47 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
-    // --- Category Handlers ---
+    // --- Category Handlers (Parent-Child) ---
+    const [newCategoryParent, setNewCategoryParent] = useState<string | null>(null);
+    const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+    const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+
+    const toggleCategoryExpand = (catId: string) => {
+        setExpandedCategories(prev => {
+            const next = new Set(prev);
+            if (next.has(catId)) next.delete(catId);
+            else next.add(catId);
+            return next;
+        });
+    };
+
     const handleAddCategory = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newCategoryName.trim()) return;
 
-        const id = newCategoryName.toLowerCase().replace(/\s+/g, '-');
-        const subcategories = newCategorySubcats.split(',').map(s => s.trim()).filter(s => s !== '');
+        const id = newCategoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 
-        addCategory({ id, name: newCategoryName, subcategories });
+        addCategory({ id, name: newCategoryName, parent_id: newCategoryParent || null });
         setNewCategoryName('');
         setNewCategorySubcats('');
+        setNewCategoryParent(null);
         toast.success('✅ Categoría agregada');
     };
 
-    const [editOpacity, setEditOpacity] = useState('');
+    const [editCategoryName, setEditCategoryName] = useState('');
 
     const handleUpdateCategory = (catId: string) => {
-        const subcategories = editSubcats.split(',').map(s => s.trim()).filter(s => s !== '');
-        const opacity = editOpacity ? parseFloat(editOpacity) : undefined;
-
         const cat = categories.find(c => c.id === catId);
         if (!cat) return;
-
-        if (updateCategory) {
-            updateCategory({ ...cat, subcategories, opacity });
-        } else {
-            deleteCategory(catId);
-            addCategory({ ...cat, subcategories, opacity });
+        if (!editCategoryName.trim()) {
+            toast.error('El nombre no puede estar vacío');
+            return;
         }
 
+        updateCategory({ ...cat, name: editCategoryName.trim() });
         setCategoryToEdit(null);
-        setEditSubcats('');
-        setEditOpacity('');
+        setEditCategoryName('');
+        toast.success('Categoría actualizada');
     };
 
     const handleBlogFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1254,18 +1270,7 @@ const AdminDashboard: React.FC = () => {
                                     </h3>
                                     <form onSubmit={handleAddProduct} className="space-y-8">
                                         {/* Form Tabs (Stock App Style) */}
-                                        <div className="flex gap-1 bg-black p-1 rounded-xl border border-gray-800 w-fit mb-4 overflow-x-auto max-w-full">
-                                            {['ESTÁNDAR', 'INFANTIL', 'CALZADOS', 'ACCESORIOS'].map(tab => (
-                                                <button
-                                                    key={tab}
-                                                    type="button"
-                                                    onClick={() => setActiveFormTab(tab as any)}
-                                                    className={`px-6 py-2 rounded-lg text-xs font-bold transition-all uppercase tracking-widest whitespace-nowrap ${activeFormTab === tab ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}`}
-                                                >
-                                                    {tab}
-                                                </button>
-                                            ))}
-                                        </div>
+
 
                                         <div className="space-y-8">
                                             {/* Name Line */}
@@ -1280,56 +1285,80 @@ const AdminDashboard: React.FC = () => {
                                                 />
                                             </div>
 
-                                            {/* Categories Grid */}
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Categoría</label>
-                                                    <input
-                                                        type="text"
-                                                        list="categories-list"
-                                                        value={newProduct.category}
-                                                        onChange={e => setNewProduct({ ...newProduct, category: e.target.value.toUpperCase() })}
-                                                        className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase placeholder-gray-600 font-bold"
-                                                        placeholder="Seleccionar..."
-                                                    />
-                                                    <datalist id="categories-list">
-                                                        {categories.map(cat => (
-                                                            <option key={cat.id} value={cat.name.toUpperCase()} />
-                                                        ))}
-                                                    </datalist>
-                                                </div>
+                                            {/* Categories from DB Hierarchy */}
+                                            {(() => {
+                                                // Helper: find category by name OR id
+                                                const findCat = (val: string | undefined, filterFn?: (c: Category) => boolean) => {
+                                                    if (!val) return undefined;
+                                                    const v = val.trim().toUpperCase();
+                                                    return categories.find(c =>
+                                                        (c.name.trim().toUpperCase() === v || c.id.toUpperCase() === v) &&
+                                                        (!filterFn || filterFn(c))
+                                                    );
+                                                };
 
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Subcategoría</label>
-                                                    <input
-                                                        type="text"
-                                                        list="subcategories-list"
-                                                        value={newProduct.subcategory}
-                                                        onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value.toUpperCase() })}
-                                                        className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase placeholder-gray-600 font-bold"
-                                                        placeholder="Seleccionar..."
-                                                    />
-                                                    <datalist id="subcategories-list">
-                                                        {categories.find(c => c.name.toUpperCase() === newProduct.category)?.subcategories?.map(sub => (
-                                                            <option key={sub} value={sub.toUpperCase()} />
-                                                        ))}
-                                                    </datalist>
-                                                </div>
-                                            </div>
+                                                const rootCategories = categories.filter(c => !c.parent_id);
+                                                const parentCat = findCat(newProduct.category, c => !c.parent_id);
+                                                const childCats = parentCat ? categories.filter(c => c.parent_id === parentCat.id) : [];
+                                                const subCat = newProduct.subcategory ? findCat(newProduct.subcategory, c => c.parent_id === parentCat?.id) : undefined;
+                                                const ramaCats = subCat ? categories.filter(c => c.parent_id === subCat.id) : [];
+
+                                                return (
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                        {/* Category (Root) */}
+                                                        <div className="space-y-2">
+                                                            <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Categoría</label>
+                                                            <select
+                                                                value={newProduct.category}
+                                                                onChange={e => setNewProduct({ ...newProduct, category: e.target.value, subcategory: '' })}
+                                                                className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase font-bold appearance-none cursor-pointer"
+                                                            >
+                                                                <option value="">Seleccionar...</option>
+                                                                {rootCategories.map(cat => (
+                                                                    <option key={cat.id} value={cat.name.toUpperCase()}>{cat.name.toUpperCase()}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+
+                                                        {/* Subcategory (Children of selected category) */}
+                                                        {childCats.length > 0 && (
+                                                            <div className="space-y-2">
+                                                                <label className="text-[10px] font-bold text-gray-600 uppercase tracking-wider">Subcategoría</label>
+                                                                <select
+                                                                    value={newProduct.subcategory}
+                                                                    onChange={e => setNewProduct({ ...newProduct, subcategory: e.target.value })}
+                                                                    className="w-full bg-[#0F0F0F] border border-gray-800 rounded-lg p-4 text-sm focus:border-white focus:outline-none transition-colors text-white uppercase font-bold appearance-none cursor-pointer"
+                                                                >
+                                                                    <option value="">Seleccionar...</option>
+                                                                    {childCats.map(sub => (
+                                                                        <option key={sub.id} value={sub.name.toUpperCase()}>{sub.name.toUpperCase()}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Rama (Third level - children of selected subcategory) */}
+                                                        {ramaCats.length > 0 && (
+                                                            <div className="space-y-2">
+                                                                <label className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Rama</label>
+                                                                <select
+                                                                    value={(newProduct as any).rama || ''}
+                                                                    onChange={e => setNewProduct({ ...newProduct, rama: e.target.value } as any)}
+                                                                    className="w-full bg-[#0F0F0F] border border-purple-900/30 rounded-lg p-4 text-sm focus:border-purple-500 focus:outline-none transition-colors text-white uppercase font-bold appearance-none cursor-pointer"
+                                                                >
+                                                                    <option value="">Seleccionar...</option>
+                                                                    {ramaCats.map(r => (
+                                                                        <option key={r.id} value={r.name.toUpperCase()}>{r.name.toUpperCase()}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
 
                                             {/* Pricing Section */}
                                             <div className="space-y-6 pt-4 border-t border-gray-900">
-                                                <div className="space-y-2">
-                                                    <label className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Costo Proveedor (Gs.)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={newProduct.costPrice || ''}
-                                                        onChange={e => setNewProduct({ ...newProduct, costPrice: e.target.value })}
-                                                        className="w-full bg-[#050510] border border-blue-900/30 rounded-lg p-4 text-sm focus:border-blue-500 focus:outline-none transition-colors text-blue-200 font-mono"
-                                                        placeholder="Costo de adquisición"
-                                                    />
-                                                    <p className="text-[9px] text-gray-600">* Solo visible para administración.</p>
-                                                </div>
 
                                                 <div className="grid grid-cols-2 gap-8">
                                                     <div className="space-y-2">
@@ -1419,75 +1448,31 @@ const AdminDashboard: React.FC = () => {
                                                 </div>
                                             )}
 
-                                            {/* Keep Type (Clothing/Footwear) but hidden if possible or discreet? 
-                                            Image 2 didn't show it but it affects logic. 
-                                            Let's keep it very minimal or infer it. 
-                                            Actually, let's infer it! 
-                                            If Category is 'CALZADOS', set type='footwear'. Else 'clothing'.
-                                            I'll add a useEffect for this in a separate step or leave the visual toggle for now but cleaner.
-                                        */}
-                                            <div className="flex justify-center pt-2">
-                                                <div className="inline-flex bg-gray-900 rounded-lg p-1">
-                                                    <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'clothing' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'clothing' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Ropa (Talles)</button>
-                                                    <button type="button" onClick={() => setNewProduct({ ...newProduct, type: 'footwear' })} className={`px-4 py-1 rounded text-[10px] font-bold uppercase ${newProduct.type === 'footwear' ? 'bg-gray-700 text-white' : 'text-gray-500'}`}>Calzado (Num)</button>
-                                                </div>
-                                            </div>
+
 
                                         </div>
                                         <div className="space-y-6">
                                             {/* Stock and Colors Grid */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                {/* Left Col: Stock Matrix */}
+                                                {/* Left Col: Stock */}
                                                 <div className="space-y-4">
-                                                    <div className="flex justify-between items-center">
-                                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Matriz de Stock (Talles)</label>
-                                                        <button type="button" onClick={() => {
-                                                            const newSize = prompt("Ingrese el nuevo talle:");
-                                                            if (newSize) setStockMatrix([...stockMatrix, { size: newSize.toUpperCase(), quantity: 0 }]);
-                                                        }} className="text-xs font-bold text-white hover:text-gray-300 transition-colors">
-                                                            + Añadir Talle
-                                                        </button>
-                                                    </div>
-
+                                                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Stock Disponible</label>
                                                     <div className="bg-black rounded-xl border border-gray-800 overflow-hidden">
-                                                        {stockMatrix.map((item, index) => (
-                                                            <div key={index} className="flex items-center justify-between p-4 border-b border-gray-900 last:border-0 hover:bg-white/5 transition-colors group">
-                                                                <span className="font-bold text-lg text-white w-16">{item.size}</span>
-
-                                                                <div className="flex items-center gap-4">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <input
-                                                                            type="number"
-                                                                            value={item.quantity}
-                                                                            onChange={(e) => {
-                                                                                const val = parseInt(e.target.value) || 0;
-                                                                                const newMatrix = [...stockMatrix];
-                                                                                newMatrix[index].quantity = val;
-                                                                                setStockMatrix(newMatrix);
-                                                                            }}
-                                                                            className="w-16 bg-transparent text-right font-mono text-white text-lg font-bold focus:outline-none"
-                                                                        />
-                                                                        <span className="text-xs text-gray-600 font-bold uppercase">unid.</span>
-                                                                    </div>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            const newMatrix = [...stockMatrix];
-                                                                            newMatrix.splice(index, 1);
-                                                                            setStockMatrix(newMatrix);
-                                                                        }}
-                                                                        className="p-2 text-gray-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                                                                    >
-                                                                        <Trash2 size={16} />
-                                                                    </button>
-                                                                </div>
+                                                        <div className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors">
+                                                            <span className="font-bold text-sm text-gray-400 uppercase">Cantidad</span>
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="number"
+                                                                    value={stockMatrix[0]?.quantity || 0}
+                                                                    onChange={(e) => {
+                                                                        const val = parseInt(e.target.value) || 0;
+                                                                        setStockMatrix([{ size: 'Único', quantity: val }]);
+                                                                    }}
+                                                                    className="w-20 bg-transparent text-right font-mono text-white text-lg font-bold focus:outline-none"
+                                                                />
+                                                                <span className="text-xs text-gray-600 font-bold uppercase">unid.</span>
                                                             </div>
-                                                        ))}
-                                                        {stockMatrix.length === 0 && (
-                                                            <div className="p-8 text-center text-gray-600 text-xs">
-                                                                No hay talles configurados.
-                                                            </div>
-                                                        )}
+                                                        </div>
                                                     </div>
                                                 </div>
 
@@ -1747,7 +1732,8 @@ const AdminDashboard: React.FC = () => {
                                         </div>
                                     </form>
                                 </div>
-                            )}
+                            )
+                            }
 
                             {/* Inventory List */}
                             <div className="space-y-6">
@@ -1819,11 +1805,8 @@ const AdminDashboard: React.FC = () => {
                                         // We want 'OTROS' last usually, but simple keys is fine for now.
                                         const subcatKeys = Object.keys(subcats).sort();
 
-                                        // Determine Matrix Columns based on Category
-                                        const isFootwear = category === 'CALZADOS';
-                                        const matrixColumns = isFootwear
-                                            ? ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45']
-                                            : ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL'];
+                                        // Determine display columns - simplified for accessories
+                                        const matrixColumns = ['Único'];
 
                                         return (
                                             <div key={category} className="border border-gray-800 rounded-xl overflow-hidden bg-[#0a0a0a] shadow-sm">
@@ -1931,7 +1914,7 @@ const AdminDashboard: React.FC = () => {
                                     })}
                                 </div>
                             </div>
-                        </div>
+                        </div >
                     )
                 }
 
@@ -2282,7 +2265,7 @@ const AdminDashboard: React.FC = () => {
                             <header className="border-b border-gray-800 pb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
                                 <div>
                                     <h2 className="text-3xl font-bold mb-2">Gestión de Categorías</h2>
-                                    <p className="text-gray-400">Crea y elimina categorías para organizar tu tienda.</p>
+                                    <p className="text-gray-400">Crea categorías y agrega subcategorías con el botón <span className="text-white font-bold">+</span> en cada una.</p>
                                 </div>
                                 <SectionVisibilityToggle
                                     isEnabled={visibilityConfig.categories}
@@ -2291,124 +2274,254 @@ const AdminDashboard: React.FC = () => {
                                 />
                             </header>
 
-                            <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl">
-                                <h3 className="text-xl font-bold mb-6 flex items-center gap-2 text-primary">
-                                    <Plus size={24} /> NUEVA CATEGORÍA
+                            {/* Add ROOT Category Form */}
+                            <div className="bg-[#0a0a0a] border border-gray-800 rounded-xl p-6 shadow-2xl">
+                                <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-primary">
+                                    <Plus size={20} /> NUEVA CATEGORÍA PRINCIPAL
                                 </h3>
-                                <form onSubmit={handleAddCategory} className="flex flex-col md:flex-row gap-4 items-end">
-                                    <div className="space-y-2 flex-1 w-full">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Nombre de Categoría</label>
+                                <form onSubmit={(e) => {
+                                    e.preventDefault();
+                                    if (!newCategoryName.trim()) return;
+                                    const id = newCategoryName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                                    addCategory({ id, name: newCategoryName, parent_id: null });
+                                    setNewCategoryName('');
+                                    toast.success('✅ Categoría creada');
+                                }} className="flex gap-3 items-end">
+                                    <div className="flex-1">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase mb-1 block">Nombre</label>
                                         <input
                                             type="text"
                                             value={newCategoryName}
                                             onChange={e => setNewCategoryName(e.target.value)}
                                             className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors"
-                                            placeholder="Ej. Camperas"
+                                            placeholder="Ej. Relojes, Joyas, Accesorios..."
                                         />
                                     </div>
-                                    <div className="space-y-2 flex-1 w-full">
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Subcategorías (Separadas por comas)</label>
-                                        <input
-                                            type="text"
-                                            value={newCategorySubcats}
-                                            onChange={e => setNewCategorySubcats(e.target.value)}
-                                            className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-primary focus:outline-none transition-colors"
-                                            placeholder="Ej. Nike, Adidas, Puma..."
-                                        />
-                                    </div>
-                                    <button type="submit" className="bg-white text-black font-black px-8 py-3 rounded-lg hover:bg-gray-200 transition-all uppercase text-sm tracking-widest shadow-lg h-[46px] w-full md:w-auto">
-                                        AGREGAR
+                                    <button type="submit" className="bg-white text-black font-black px-6 py-3 rounded-lg hover:bg-gray-200 transition-all uppercase text-sm tracking-widest shadow-lg whitespace-nowrap">
+                                        CREAR
                                     </button>
                                 </form>
                             </div>
 
-                            <div className="space-y-4">
-                                <h3 className="text-xl font-bold border-b border-gray-800 pb-2">Categorías Existentes</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {categories.map((cat, index) => (
-                                        <div key={cat.id} className="bg-[#0a0a0a] border border-gray-800 rounded-lg p-4 flex flex-col gap-4 group">
-                                            <div className="flex justify-between items-center">
-                                                <div className="flex items-center gap-3">
-                                                    {/* Sort Controls */}
-                                                    <div className="flex flex-col gap-1">
-                                                        <button
-                                                            onClick={() => handleMoveCategory(index, 'up')}
-                                                            disabled={index === 0}
-                                                            className="text-gray-600 hover:text-white disabled:opacity-30 disabled:hover:text-gray-600 transition-colors"
-                                                        >
-                                                            <ArrowUp size={14} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleMoveCategory(index, 'down')}
-                                                            disabled={index === categories.length - 1}
-                                                            className="text-gray-600 hover:text-white disabled:opacity-30 disabled:hover:text-gray-600 transition-colors"
-                                                        >
-                                                            <ArrowDown size={14} />
-                                                        </button>
+                            {/* Category Tree */}
+                            <div className="space-y-3">
+                                <h3 className="text-xl font-bold border-b border-gray-800 pb-2">Árbol de Categorías</h3>
+                                <div className="space-y-2">
+                                    {(() => {
+                                        const renderCategoryTree = (parentId: string | null, depth: number = 0): React.ReactNode[] => {
+                                            const children = categories.filter(c => (c.parent_id || null) === parentId);
+                                            if (children.length === 0 && depth > 0) return [];
+
+                                            return children.map((cat) => {
+                                                const grandchildren = categories.filter(c => c.parent_id === cat.id);
+                                                const isEditing = categoryToEdit === cat.id;
+                                                const isAddingChild = newCategoryParent === cat.id;
+
+                                                // Depth labels
+                                                const depthLabel = depth === 0 ? 'CATEGORÍA' : depth === 1 ? 'SUBCATEGORÍA' : 'RAMA';
+                                                const childLabel = depth === 0 ? 'Subcategoría' : 'Rama';
+                                                const borderColor = depth === 0 ? 'border-gray-600' : depth === 1 ? 'border-gray-700' : 'border-gray-800';
+                                                const bgColor = depth === 0 ? 'bg-[#0c0c0c]' : depth === 1 ? 'bg-[#080808]' : 'bg-[#050505]';
+
+                                                return (
+                                                    <div key={cat.id} style={{ marginLeft: depth * 20 }}>
+                                                        <div className={`${bgColor} border ${borderColor} rounded-lg p-4 mb-2 transition-all hover:border-gray-500`}>
+                                                            {/* Header Row */}
+                                                            <div className="flex justify-between items-center">
+                                                                <div className="flex items-center gap-3">
+                                                                    {/* Expand/Collapse Arrow */}
+                                                                    {grandchildren.length > 0 ? (
+                                                                        <button
+                                                                            onClick={() => toggleCategoryExpand(cat.id)}
+                                                                            className="p-1 text-gray-500 hover:text-white transition-colors"
+                                                                        >
+                                                                            {expandedCategories.has(cat.id) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                                                                        </button>
+                                                                    ) : depth > 0 ? (
+                                                                        <span className="text-gray-700 text-sm font-mono pl-1">{'└'}</span>
+                                                                    ) : null}
+                                                                    <div>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <h4 className={`font-bold text-white ${depth === 0 ? 'text-lg' : 'text-sm'}`}>{cat.name}</h4>
+                                                                            <span className={`text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full ${depth === 0 ? 'bg-white/10 text-white' : depth === 1 ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'}`}>
+                                                                                {depthLabel}
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                                            <span className="text-[10px] text-gray-600 font-mono">ID: {cat.id}</span>
+                                                                            {grandchildren.length > 0 && (
+                                                                                <span className="text-[10px] text-emerald-400">
+                                                                                    {grandchildren.length} {grandchildren.length === 1 ? 'hijo' : 'hijos'}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+
+                                                                {/* Action Buttons */}
+                                                                <div className="flex gap-1 items-center">
+                                                                    {/* Add Child button */}
+                                                                    {cat.id !== 'huerfanos' && (
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                if (isAddingChild) {
+                                                                                    setNewCategoryParent(null);
+                                                                                } else {
+                                                                                    setNewCategoryParent(cat.id);
+                                                                                    setNewCategorySubcats('');
+                                                                                }
+                                                                            }}
+                                                                            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-bold transition-all ${isAddingChild ? 'bg-primary text-black' : 'text-gray-500 hover:text-white hover:bg-white/10'}`}
+                                                                            title={`Agregar ${childLabel}`}
+                                                                        >
+                                                                            <Plus size={14} />
+                                                                            <span className="hidden md:inline">{childLabel}</span>
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setCategoryToEdit(isEditing ? null : cat.id);
+                                                                            setEditCategoryName(cat.name);
+                                                                        }}
+                                                                        className="p-1.5 text-gray-600 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                                                                        title="Editar"
+                                                                    >
+                                                                        <Edit size={14} />
+                                                                    </button>
+                                                                    {cat.id !== 'huerfanos' && (
+                                                                        <button
+                                                                            onClick={() => setCategoryToDelete(cat.id)}
+                                                                            className="p-1.5 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                                                            title="Eliminar"
+                                                                        >
+                                                                            <Trash2 size={14} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Edit Name Form */}
+                                                            {isEditing && (
+                                                                <div className="flex gap-2 items-center mt-3 pt-3 border-t border-gray-800 animate-in fade-in">
+                                                                    <span className="text-[10px] text-gray-500 font-bold uppercase whitespace-nowrap">Nombre:</span>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={editCategoryName}
+                                                                        onChange={e => setEditCategoryName(e.target.value)}
+                                                                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleUpdateCategory(cat.id); } }}
+                                                                        className="flex-1 bg-black border border-gray-700 rounded-lg p-2 text-sm text-white focus:border-primary focus:outline-none transition-colors"
+                                                                        placeholder="Nuevo nombre..."
+                                                                        autoFocus
+                                                                    />
+                                                                    <button onClick={() => handleUpdateCategory(cat.id)} className="bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-green-500 transition-colors">Guardar</button>
+                                                                    <button onClick={() => setCategoryToEdit(null)} className="bg-gray-700 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-gray-600 transition-colors">Cancelar</button>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Inline Add Child Form */}
+                                                            {isAddingChild && (
+                                                                <div className="flex gap-2 items-center mt-3 pt-3 border-t border-gray-800 animate-in fade-in slide-in-from-top-2">
+                                                                    <span className="text-[10px] text-gray-500 font-bold uppercase whitespace-nowrap">+ {childLabel}:</span>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={newCategorySubcats}
+                                                                        onChange={e => setNewCategorySubcats(e.target.value)}
+                                                                        onKeyDown={e => {
+                                                                            if (e.key === 'Enter') {
+                                                                                e.preventDefault();
+                                                                                if (!newCategorySubcats.trim()) return;
+                                                                                const id = newCategorySubcats.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                                                                                addCategory({ id, name: newCategorySubcats, parent_id: cat.id });
+                                                                                setNewCategorySubcats('');
+                                                                                toast.success(`✅ ${childLabel} "${newCategorySubcats}" agregada a ${cat.name}`);
+                                                                            }
+                                                                        }}
+                                                                        className="flex-1 bg-black border border-gray-700 rounded-lg p-2 text-sm text-white focus:border-primary focus:outline-none transition-colors"
+                                                                        placeholder={`Nombre de ${childLabel.toLowerCase()}...`}
+                                                                        autoFocus
+                                                                    />
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            if (!newCategorySubcats.trim()) return;
+                                                                            const id = newCategorySubcats.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                                                                            addCategory({ id, name: newCategorySubcats, parent_id: cat.id });
+                                                                            setNewCategorySubcats('');
+                                                                            toast.success(`✅ ${childLabel} "${newCategorySubcats}" agregada a ${cat.name}`);
+                                                                        }}
+                                                                        className="bg-white text-black font-bold px-4 py-2 rounded-lg text-xs hover:bg-gray-200 transition-all"
+                                                                    >
+                                                                        AÑADIR
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setNewCategoryParent(null)}
+                                                                        className="text-gray-500 hover:text-white p-1"
+                                                                    >
+                                                                        ✕
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Render children recursively - only if expanded */}
+                                                        {grandchildren.length > 0 && expandedCategories.has(cat.id) && (
+                                                            <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                                                                {renderCategoryTree(cat.id, depth + 1)}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-white text-lg">{cat.name}</h4>
-                                                        <span className="text-xs text-gray-500 font-mono">ID: {cat.id}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => {
-                                                            setCategoryToEdit(cat.id);
-                                                            setEditSubcats(cat.subcategories ? cat.subcategories.join(', ') : '');
-                                                        }}
-                                                        className="p-2 text-gray-600 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-                                                        title="Editar Subcategorías"
-                                                    >
-                                                        <Edit size={18} />
-                                                    </button>
-                                                    {cat.id !== 'huerfanos' && (
-                                                        <button
-                                                            onClick={() => deleteCategory(cat.id)}
-                                                            className="p-2 text-gray-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
-                                                            title="Eliminar Categoría"
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            {/* Subcategories Display/Edit */}
-                                            {categoryToEdit === cat.id ? (
-                                                <div className="flex flex-col gap-2 animate-in fade-in">
-                                                    <input
-                                                        type="text"
-                                                        value={editSubcats}
-                                                        onChange={e => setEditSubcats(e.target.value)}
-                                                        className="w-full bg-black border border-gray-700 rounded p-2 text-xs text-white"
-                                                        placeholder="Subcategorías (Nike, Adidas...)"
-                                                    />
-                                                    <div className="flex gap-2">
-                                                        <input
-                                                            type="number"
-                                                            value={editOpacity}
-                                                            onChange={e => setEditOpacity(e.target.value)}
-                                                            className="w-24 bg-black border border-gray-700 rounded p-2 text-xs text-white"
-                                                            placeholder="Opacidad (0.5)"
-                                                            step="0.1"
-                                                        />
-                                                        <button onClick={() => handleUpdateCategory(cat.id)} className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold">OK</button>
-                                                        <button onClick={() => setCategoryToEdit(null)} className="bg-gray-700 text-white px-3 py-1 rounded text-xs">Cancelar</button>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="flex flex-wrap gap-1">
-                                                    {cat.subcategories?.map(sub => (
-                                                        <span key={sub} className="px-2 py-1 bg-gray-900 text-gray-400 text-[10px] rounded uppercase border border-gray-800">{sub}</span>
-                                                    ))}
-                                                    {(!cat.subcategories || cat.subcategories.length === 0) && <span className="text-[10px] text-gray-700 italic">Sin subcategorías</span>}
-                                                    {cat.opacity !== undefined && <span className="text-[10px] text-yellow-500 ml-2">Opacidad: {cat.opacity}</span>}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                                );
+                                            });
+                                        };
+
+                                        const rootCats = renderCategoryTree(null);
+                                        if (rootCats.length === 0) {
+                                            return <p className="text-gray-600 text-sm italic py-8 text-center">No hay categorías aún. Crea una arriba para comenzar.</p>;
+                                        }
+                                        return rootCats;
+                                    })()}
                                 </div>
                             </div>
+
+                            {/* Delete Confirmation Modal */}
+                            {categoryToDelete && (
+                                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in">
+                                    <div className="bg-[#111] border border-gray-700 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl animate-in zoom-in-95">
+                                        <div className="text-center">
+                                            <div className="w-16 h-16 mx-auto mb-4 bg-red-500/10 rounded-full flex items-center justify-center">
+                                                <Trash2 size={28} className="text-red-500" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-white mb-2">¿Eliminar categoría?</h3>
+                                            <p className="text-gray-400 text-sm mb-1">
+                                                Estás a punto de eliminar <span className="text-white font-bold">"{categories.find(c => c.id === categoryToDelete)?.name}"</span>
+                                            </p>
+                                            {categories.filter(c => c.parent_id === categoryToDelete).length > 0 && (
+                                                <p className="text-yellow-500 text-xs mt-2">
+                                                    ⚠️ Esta categoría tiene {categories.filter(c => c.parent_id === categoryToDelete).length} subcategoría(s). Los productos se moverán a Huérfanos.
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-3 mt-6">
+                                            <button
+                                                onClick={() => setCategoryToDelete(null)}
+                                                className="flex-1 bg-gray-800 text-white font-bold py-3 rounded-xl hover:bg-gray-700 transition-all text-sm"
+                                            >
+                                                Cancelar
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    deleteCategory(categoryToDelete);
+                                                    setCategoryToDelete(null);
+                                                    toast.success('Categoría eliminada');
+                                                }}
+                                                className="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-500 transition-all text-sm"
+                                            >
+                                                Sí, eliminar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )
                 }
@@ -2819,106 +2932,131 @@ const AdminDashboard: React.FC = () => {
                 }
 
                 {/* TRUST BADGES TAB */}
-                {activeTab === 'trustBadges' && (
-                    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                <Shield size={20} /> TRUST BADGES (Iconos de Confianza)
-                            </h3>
-                            <button
-                                onClick={async () => {
-                                    const defaultBadges = [
-                                        { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
-                                        { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
-                                        { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
-                                        { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
-                                    ];
-                                    const badges = trustBadges.length > 0 ? trustBadges : defaultBadges;
-                                    try {
-                                        await updateTrustBadges(badges);
-                                        toast.success('Trust Badges guardados correctamente');
-                                    } catch (e) {
-                                        toast.error('Error al guardar');
-                                    }
-                                }}
-                                className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2"
-                            >
-                                <Save size={16} /> Guardar Badges
-                            </button>
-                        </div>
-                        <p className="text-gray-500 text-sm">Estos iconos aparecen debajo del Hero y transmiten confianza al cliente.</p>
+                {
+                    activeTab === 'trustBadges' && (() => {
+                        const defaultBadges = [
+                            { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
+                            { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
+                            { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
+                            { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
+                        ];
+                        const currentBadges = trustBadges.length > 0 ? trustBadges : defaultBadges;
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {(trustBadges.length > 0 ? trustBadges : [
-                                { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
-                                { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
-                                { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
-                                { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
-                            ]).map((badge, idx) => (
-                                <div key={badge.id} className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-white text-lg font-bold">#{idx + 1}</span>
-                                        <select
-                                            value={badge.icon}
-                                            onChange={e => {
-                                                const updated = [...(trustBadges.length > 0 ? trustBadges : [
-                                                    { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
-                                                    { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
-                                                    { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
-                                                    { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
-                                                ])];
-                                                updated[idx] = { ...updated[idx], icon: e.target.value };
-                                                updateTrustBadges(updated);
-                                            }}
-                                            className="bg-black border border-gray-700 rounded px-3 py-2 text-sm text-white"
-                                        >
-                                            <option value="truck">🚚 Envío</option>
-                                            <option value="shield">🛡️ Protección</option>
-                                            <option value="star">⭐ Estrella</option>
-                                            <option value="credit">💳 Pago</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Título</label>
-                                        <input
-                                            type="text"
-                                            value={badge.title}
-                                            onChange={e => {
-                                                const updated = [...(trustBadges.length > 0 ? trustBadges : [
-                                                    { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
-                                                    { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
-                                                    { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
-                                                    { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
-                                                ])];
-                                                updated[idx] = { ...updated[idx], title: e.target.value };
-                                                updateTrustBadges(updated);
-                                            }}
-                                            className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-white focus:outline-none transition-colors mt-1"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-500 uppercase">Descripción</label>
-                                        <input
-                                            type="text"
-                                            value={badge.description}
-                                            onChange={e => {
-                                                const updated = [...(trustBadges.length > 0 ? trustBadges : [
-                                                    { id: 'b1', icon: 'truck', title: 'Envío Seguro', description: 'Envíos a todo el país, rápidos y asegurados.' },
-                                                    { id: 'b2', icon: 'shield', title: 'Compra Protegida', description: 'Tu compra 100% segura y garantizada.' },
-                                                    { id: 'b3', icon: 'star', title: 'Reseñas 5 Estrellas', description: 'Cientos de clientes satisfechos nos respaldan.' },
-                                                    { id: 'b4', icon: 'credit', title: 'Opciones de Pago', description: 'Múltiples métodos de pago disponibles.' },
-                                                ])];
-                                                updated[idx] = { ...updated[idx], description: e.target.value };
-                                                updateTrustBadges(updated);
-                                            }}
-                                            className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-white focus:outline-none transition-colors mt-1"
-                                        />
-                                    </div>
+                        const handleBadgeChange = (idx: number, field: string, value: string) => {
+                            const updated = [...currentBadges];
+                            updated[idx] = { ...updated[idx], [field]: value };
+                            updateTrustBadges(updated);
+                        };
+
+                        const handleDeleteBadge = (idx: number) => {
+                            const updated = [...currentBadges];
+                            updated.splice(idx, 1);
+                            updateTrustBadges(updated);
+                            toast.success('Badge eliminado');
+                        };
+
+                        const handleAddBadge = () => {
+                            const newId = 'b' + Date.now();
+                            const updated = [...currentBadges, { id: newId, icon: 'truck', title: '', description: '' }];
+                            updateTrustBadges(updated);
+                            toast.success('Nuevo badge añadido');
+                        };
+
+                        return (
+                            <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                        <Shield size={20} /> TRUST BADGES (Iconos de Confianza)
+                                    </h3>
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                await updateTrustBadges(currentBadges);
+                                                toast.success('Trust Badges guardados correctamente');
+                                            } catch (e) {
+                                                toast.error('Error al guardar');
+                                            }
+                                        }}
+                                        className="bg-white hover:bg-gray-200 text-black px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors flex items-center gap-2"
+                                    >
+                                        <Save size={16} /> Guardar Badges
+                                    </button>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                                <p className="text-gray-500 text-sm">Estos iconos aparecen debajo del Hero y transmiten confianza al cliente.</p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {currentBadges.map((badge, idx) => (
+                                        <div key={badge.id} className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 space-y-4 relative group">
+                                            {/* Delete Button */}
+                                            <button
+                                                onClick={() => {
+                                                    if (currentBadges.length <= 1) {
+                                                        toast.error('Debe haber al menos 1 badge');
+                                                        return;
+                                                    }
+                                                    handleDeleteBadge(idx);
+                                                }}
+                                                className="absolute top-3 right-3 p-1.5 text-gray-700 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                                                title="Eliminar badge"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-white text-lg font-bold">#{idx + 1}</span>
+                                                <select
+                                                    value={badge.icon}
+                                                    onChange={e => handleBadgeChange(idx, 'icon', e.target.value)}
+                                                    className="bg-black border border-gray-700 rounded px-3 py-2 text-sm text-white"
+                                                >
+                                                    <option value="truck">🚚 Envío</option>
+                                                    <option value="shield">🛡️ Protección</option>
+                                                    <option value="star">⭐ Estrella</option>
+                                                    <option value="credit">💳 Pago</option>
+                                                    <option value="heart">❤️ Favorito</option>
+                                                    <option value="check">✅ Verificado</option>
+                                                    <option value="clock">🕐 Tiempo</option>
+                                                    <option value="gift">🎁 Regalo</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-500 uppercase">Título</label>
+                                                <input
+                                                    type="text"
+                                                    value={badge.title}
+                                                    onChange={e => handleBadgeChange(idx, 'title', e.target.value)}
+                                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-white focus:outline-none transition-colors mt-1"
+                                                    placeholder="Ej. Envío Gratis"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-gray-500 uppercase">Descripción</label>
+                                                <input
+                                                    type="text"
+                                                    value={badge.description}
+                                                    onChange={e => handleBadgeChange(idx, 'description', e.target.value)}
+                                                    className="w-full bg-black border border-gray-800 rounded-lg p-3 text-sm focus:border-white focus:outline-none transition-colors mt-1"
+                                                    placeholder="Breve descripción del beneficio..."
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Add New Badge Card */}
+                                    <button
+                                        onClick={handleAddBadge}
+                                        className="border-2 border-dashed border-gray-800 rounded-lg p-6 flex flex-col items-center justify-center gap-3 hover:border-gray-600 hover:bg-white/5 transition-all min-h-[200px] group"
+                                    >
+                                        <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center group-hover:bg-gray-800 transition-colors">
+                                            <Plus size={24} className="text-gray-600 group-hover:text-white transition-colors" />
+                                        </div>
+                                        <span className="text-gray-600 group-hover:text-gray-400 text-sm font-bold uppercase tracking-wider transition-colors">Añadir Badge</span>
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })()
+                }
             </main >
         </div >
     );
