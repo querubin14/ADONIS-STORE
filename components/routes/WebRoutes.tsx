@@ -18,11 +18,13 @@ import AdminDashboard from '../../pages/Admin';
 
 import Login from '../../pages/Login';
 import ProtectedRoute from '../ProtectedRoute';
+import SearchPage from '../../pages/SearchPage';
 
 const WebRoutes: React.FC = () => {
     return (
         <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/search" element={<SearchPage />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/category/:category" element={<CategoryPage />} />
             <Route path="/category/:category/:subcategory" element={<CategoryPage />} />

@@ -14,7 +14,7 @@ import { ArrowRight } from 'lucide-react';
 import UpcomingDrops from '../components/UpcomingDrops';
 import FeaturedCarousel from '../components/FeaturedCarousel';
 import HorizontalProductList from '../components/HorizontalProductList';
-import HowToBuyModal from '../components/HowToBuyModal';
+
 import TrustBadges from '../components/TrustBadges';
 
 const Home: React.FC = () => {
@@ -33,7 +33,7 @@ const Home: React.FC = () => {
     return (
         <div className="min-h-screen bg-background-dark text-white selection:bg-white/20 selection:text-white">
             <Navbar cartCount={cartCount} />
-            <HowToBuyModal />
+
 
             <main>
                 {visibilityConfig.hero && <Hero />}

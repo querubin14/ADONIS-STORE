@@ -1,67 +1,77 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
-import SEO from '../components/SEO';
+import { ArrowLeft, Scale, BadgeAlert, ScrollText } from 'lucide-react';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import { useShop } from '../context/ShopContext';
 
 const TermsOfUse: React.FC = () => {
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
+    const { cart } = useShop();
+    const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+
     return (
-        <>
-            <SEO title="Términos de Uso | SAVAGE" description="Términos y condiciones de uso para comprar en Savage." />
-            <div className="pt-24 pb-16 px-6 lg:px-12 max-w-4xl mx-auto text-white">
-                <div className="flex items-center gap-4 mb-8">
-                    <Link to="/" className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 group">
-                        <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" />
-                        <span className="text-xs font-bold uppercase tracking-widest">Volver al Inicio</span>
+        <div className="min-h-screen bg-[#000000] text-white selection:bg-white selection:text-black flex flex-col font-sans">
+            <Navbar cartCount={cartCount} />
+
+            <main className="flex-grow pt-32 pb-20 px-6 lg:px-12 max-w-[1000px] mx-auto w-full">
+                {/* Header */}
+                <div className="mb-16">
+                    <Link to="/" className="inline-flex items-center gap-2 text-[#a1a1aa] hover:text-white transition-colors mb-8 group">
+                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                        <span className="text-xs font-bold uppercase tracking-[0.2em]">Volver al inicio</span>
                     </Link>
+                    <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-6">
+                        TÉRMINOS Y<br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">
+                            CONDICIONES
+                        </span>
+                    </h1>
+                    <p className="text-[#a1a1aa] text-sm md:text-base font-light max-w-2xl leading-relaxed">
+                        Normativas y acuerdos rectores al navegar o adquirir piezas de joyería en ADONIS STORE. El uso de nuestro sitio implica la aceptación incondicional de estos términos.
+                    </p>
                 </div>
-                <h1 className="text-3xl md:text-5xl font-black mb-8 text-primary uppercase tracking-tighter">Términos de Uso</h1>
 
-                <div className="space-y-8 text-gray-300 leading-relaxed font-light text-sm md:text-base">
-                    <section>
-                        <h2 className="text-xl font-bold text-white mb-2 uppercase tracking-wide">SAVAGE - TÉRMINOS Y CONDICIONES</h2>
-                        <p>
-                            Al navegar y comprar en nuestro sitio web, aceptas los siguientes términos:
-                        </p>
-                    </section>
-
-                    <section>
-                        <h3 className="text-lg font-bold text-white mb-2 uppercase tracking-wide">Precios y Pagos</h3>
-                        <p>
-                            Todos los precios están expresados en Guaraníes (Gs.) e incluyen los impuestos correspondientes. Nos reservamos el derecho de modificar los precios sin previo aviso.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h3 className="text-lg font-bold text-white mb-2 uppercase tracking-wide">Disponibilidad de Stock</h3>
-                        <p>
-                            Debido a la alta rotación de nuestras prendas, el stock mostrado en la web es referencial. En caso de falta de stock tras la compra, nos pondremos en contacto para ofrecerte un cambio o reembolso.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h3 className="text-lg font-bold text-white mb-2 uppercase tracking-wide">Envíos y Entregas</h3>
-                        <p>
-                            Los plazos de entrega son estimativos y dependen de la logística de la transportadora. No nos hacemos responsables por retrasos ajenos a nuestra gestión una vez entregado el paquete a la empresa de envío.
-                        </p>
-                    </section>
-
-                    <section>
-                        <h3 className="text-lg font-bold text-white mb-2 uppercase tracking-wide">Políticas de Cambio</h3>
-                        <ul className="list-disc pl-5 space-y-1 marker:text-primary">
-                            <li>Las prendas deben estar en perfecto estado, con etiquetas originales y sin signos de uso.</li>
-                            <li>El plazo máximo para solicitar un cambio es de 48 horas tras recibir el producto.</li>
+                {/* Content */}
+                <div className="space-y-12">
+                    {/* Section 1 */}
+                    <div className="bg-[#050505] border border-white/10 rounded-2xl p-8 md:p-10 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -translate-y-10 translate-x-10"></div>
+                        <Scale size={32} className="text-white mb-6" />
+                        <h2 className="text-xl md:text-2xl font-bold uppercase tracking-widest text-white mb-4">ACERCA DE LAS COMPRAS Y STOCK</h2>
+                        <ul className="list-disc pl-5 space-y-3 text-[#a1a1aa] font-light text-sm md:text-base marker:text-white">
+                            <li><strong className="text-white font-medium">Disponibilidad Dinámica:</strong> Manejamos piezas exclusivas. Debido a la alta demanda, el stock es dinámico. En el inusual caso de rotura de stock tras una compra confirmada, nos comunicaremos inmediatamente.</li>
+                            <li><strong className="text-white font-medium">Precios Ajustados:</strong> Todos los valores mostrados en el catálogo web están fijados en Guaraníes (Gs.). Nos reservamos el derecho de modificar tarifas de acuerdo a fluctuaciones del mercado, sin efecto retroactivo sobre órdenes ya ingresadas.</li>
                         </ul>
-                    </section>
+                    </div>
 
-                    <section>
-                        <h3 className="text-lg font-bold text-white mb-2 uppercase tracking-wide">Propiedad Intelectual</h3>
-                        <p>
-                            Todas las imágenes, logotipos y diseños presentados en este sitio son propiedad de SAVAGE. Queda prohibida su reproducción sin autorización previa.
+                    {/* Section 2 */}
+                    <div className="bg-[#050505] border border-white/10 rounded-2xl p-8 md:p-10 relative overflow-hidden">
+                        <div className="absolute left-0 bottom-0 w-32 h-32 bg-white/5 rounded-full blur-3xl translate-y-10 -translate-x-10"></div>
+                        <BadgeAlert size={32} className="text-white mb-6" />
+                        <h2 className="text-xl md:text-2xl font-bold uppercase tracking-widest text-white mb-4">GARANTÍAS Y RESPONSABILIDAD</h2>
+                        <ul className="list-disc pl-5 space-y-3 text-[#a1a1aa] font-light text-sm md:text-base marker:text-white">
+                            <li><strong className="text-white font-medium">Proceso de Envío:</strong> ADONIS STORE garantiza el despacho en óptimas condiciones, pero dependemos de empresas de logística aliadas para los tiempos exactos de arribo.</li>
+                            <li><strong className="text-white font-medium">Desgaste Natural:</strong> Nuestra joyería utiliza materiales premium de larga durabilidad. Sin embargo, no nos hacemos cargo por el deterioro provocado por un cuidado irresponsable, contacto con agentes químicos severos (perfumes directos, sudor ácido extremo) ni por accidentes por parte del usuario final.</li>
+                        </ul>
+                    </div>
+
+                    {/* Section 3 */}
+                    <div className="bg-[#050505] border border-white/10 rounded-2xl p-8 md:p-10 relative overflow-hidden">
+                        <ScrollText size={32} className="text-white mb-6" />
+                        <h2 className="text-xl md:text-2xl font-bold uppercase tracking-widest text-white mb-4">PROPIEDAD INTELECTUAL Y USO</h2>
+                        <p className="text-[#a1a1aa] leading-relaxed font-light text-sm md:text-base">
+                            El diseño integral del sitio, identidades visuales, logotipos y material fotográfico son propiedad exclusiva y material intelectual de ADONIS STORE. Queda rotundamente prohibida la copia, reproducción, o uso comercial no autorizado de los recursos visuales propiciados en este e-commerce. Todo acto de piratería será derivado a medidas legales.
                         </p>
-                    </section>
+                    </div>
                 </div>
-            </div>
-        </>
+            </main>
+
+            <Footer />
+        </div>
     );
 };
 

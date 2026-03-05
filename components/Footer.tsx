@@ -45,11 +45,15 @@ const Footer: React.FC = () => {
 
         {/* Bottom Bar */}
         <div className="border-t border-gray-900/80 pt-8 flex flex-col md:flex-row justify-between items-center gap-6 text-center">
-          <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-[0.1em]">© 2026 ADONIS STORE. Todos los derechos reservados.</p>
+          <div className="flex flex-col md:flex-row items-center md:gap-4 gap-2">
+            <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-[0.1em]">© 2026 ADONIS STORE. Todos los derechos reservados.</p>
+            <p className="text-gray-600 text-[10px] font-semibold uppercase tracking-[0.1em] md:border-l md:border-gray-800 md:pl-4">
+              Desarrollado por <span className="text-white font-black tracking-widest">HoriZon</span>
+            </p>
+          </div>
           <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8 text-[10px] font-bold text-gray-500 uppercase tracking-[0.15em]">
             <Link className="hover:text-white transition-colors" to="/privacy-policy">Privacidad</Link>
             <Link className="hover:text-white transition-colors" to="/terms-of-use">Términos</Link>
-            <Link className="hover:text-white transition-colors" to="/care-guide">Cuidados de Joyas</Link>
           </div>
         </div>
       </div>

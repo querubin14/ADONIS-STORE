@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useShop } from '../context/ShopContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, X, ArrowLeft, ChevronDown } from 'lucide-react';
+import { Search, X, ArrowLeft, ChevronDown, ShoppingBag } from 'lucide-react';
 import AnnouncementBar from './AnnouncementBar';
 
 interface NavbarProps {
@@ -9,7 +9,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
-  const { toggleCart, products, categories } = useShop();
+  const { toggleCart, products, categories, addToCart } = useShop();
   const [animateCart, setAnimateCart] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
@@ -23,9 +23,11 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
     setExpandedCategory(prev => prev === categoryId ? null : categoryId);
   };
 
-  // Search State
+  // Search & Menu State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [isLateralMenuOpen, setIsLateralMenuOpen] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<typeof products>([]);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -73,7 +75,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
   return (
     <>
       <AnnouncementBar />
-      <nav className="sticky top-0 z-50 w-full border-b border-[#333] bg-[#0a0a0a]/80 backdrop-blur-md">
+      <nav className="sticky top-0 z-[60] w-full border-b border-[#333] bg-[#0a0a0a]/80 backdrop-blur-md">
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-3 flex items-center justify-between gap-4">
 
           {/* LEFT: Mobile Menu + PC Logo */}
@@ -81,14 +83,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             {/* Mobile Menu Toggle (Left on Mobile) */}
             <button
               className="flex lg:hidden p-2 text-white -ml-2"
-              onClick={() => {
-                const mobileMenu = document.getElementById('lateral-menu');
-                if (mobileMenu) {
-                  mobileMenu.classList.remove('translate-x-full');
-                  mobileMenu.classList.add('translate-x-0');
-                  document.getElementById('lateral-menu-overlay')?.classList.remove('hidden');
-                }
-              }}
+              onClick={() => setIsLateralMenuOpen(true)}
             >
               <span className="material-symbols-outlined">menu</span>
             </button>
@@ -128,15 +123,23 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onFocus={() => setIsSearchOpen(true)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchQuery.trim().length > 0) {
+                    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+                    setIsSearchOpen(false);
+                  }
+                }}
                 className="w-full bg-transparent text-white px-5 py-2.5 outline-none text-sm placeholder-gray-500 font-sans"
               />
               <button
                 className="px-4 text-gray-400 hover:text-white transition-colors"
                 onClick={() => {
-                  if (searchQuery) {
-                    setSearchQuery('');
+                  if (searchQuery.trim().length > 0) {
+                    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+                    setIsSearchOpen(false);
+                  } else {
+                    document.getElementById('navbar-search')?.focus();
                   }
-                  document.getElementById('navbar-search')?.focus();
                 }}
               >
                 {searchQuery ? <X size={20} /> : <Search size={20} />}
@@ -160,9 +163,18 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                         <div className="w-10 h-12 overflow-hidden rounded bg-gray-900 flex-shrink-0">
                           <img src={product.images[0]} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0 pr-2">
                           <div className="font-bold text-xs text-white uppercase tracking-wide group-hover:text-gray-300 transition-colors line-clamp-1">{product.name}</div>
                           <div className="text-[10px] text-gray-400 font-mono">Gs. {product.price.toLocaleString()}</div>
+                        </div>
+                        <div
+                          className="bg-white/10 text-white hover:bg-white hover:text-black p-2 rounded-full transition-colors ml-auto z-10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(product);
+                          }}
+                        >
+                          <ShoppingBag size={14} />
                         </div>
                       </button>
                     ))}
@@ -176,7 +188,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             )}
           </div>
 
-          {/* RIGHT: Search Toggle (Mobile) + Cart */}
+          {/* RIGHT: Search Toggle (Mobile) + Desktop Menu Toggle + Cart */}
           <div className="flex-1 flex items-center gap-2 lg:gap-4 justify-end">
             {/* Mobile Search Button */}
             <button
@@ -205,14 +217,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             {/* Desktop Menu Toggle */}
             <button
               className="hidden lg:flex p-2 text-white hover:bg-white/10 rounded transition-colors"
-              onClick={() => {
-                const lateralMenu = document.getElementById('lateral-menu');
-                if (lateralMenu) {
-                  lateralMenu.classList.remove('translate-x-full');
-                  lateralMenu.classList.add('translate-x-0');
-                  document.getElementById('lateral-menu-overlay')?.classList.remove('hidden');
-                }
-              }}
+              onClick={() => setIsLateralMenuOpen(true)}
             >
               <span className="material-symbols-outlined text-[28px]">menu</span>
             </button>
@@ -237,6 +242,12 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                   placeholder="Buscar productos..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && searchQuery.trim().length > 0) {
+                      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+                      setIsMobileSearchOpen(false);
+                    }
+                  }}
                 />
                 {searchQuery && (
                   <button onClick={() => setSearchQuery('')} className="text-gray-400 p-1">
@@ -264,9 +275,18 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                           <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-800 shrink-0">
                             <img src={product.images[0]} alt="" className="w-full h-full object-cover" />
                           </div>
-                          <div>
+                          <div className="flex-1 min-w-0 pr-2">
                             <div className="font-bold text-sm text-white line-clamp-2 leading-snug">{product.name}</div>
                             <div className="text-sm text-primary font-black mt-1">Gs. {product.price.toLocaleString()}</div>
+                          </div>
+                          <div
+                            className="bg-white/10 text-white p-3 rounded-full transition-colors ml-auto z-10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addToCart(product);
+                            }}
+                          >
+                            <ShoppingBag size={18} />
                           </div>
                         </button>
                       ))}
@@ -290,17 +310,14 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
 
       {/* Lateral Side Menu (Both Mobile & Desktop) */}
       <div
-        id="lateral-menu-overlay"
-        className="fixed inset-0 bg-black/50 z-[990] hidden transition-opacity backdrop-blur-sm"
-        onClick={() => {
-          document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-          document.getElementById('lateral-menu')?.classList.remove('translate-x-0');
-          document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-        }}
+        className={`fixed inset-0 bg-black/50 z-[990] transition-opacity duration-300 backdrop-blur-sm ${isLateralMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsLateralMenuOpen(false)}
       />
       <div
-        id="lateral-menu"
-        className="fixed top-0 right-0 h-[100dvh] w-[85%] max-w-[400px] bg-[#0a0a0a] border-l border-gray-800 p-6 flex flex-col shadow-2xl z-[999] transition-transform duration-300 ease-in-out translate-x-full"
+        className={`fixed top-0 h-[100dvh] w-[85%] max-w-[400px] bg-[#0a0a0a] border-gray-800 p-6 flex flex-col shadow-2xl z-[999] transition-transform duration-300 ease-in-out
+          left-0 border-r ${isLateralMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:left-auto lg:right-0 lg:border-r-0 lg:border-l lg:${isLateralMenuOpen ? 'translate-x-0' : 'translate-x-full'}
+        `}
       >
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-800">
           <div className="h-8 w-auto flex items-center justify-center">
@@ -308,11 +325,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
           </div>
           <button
             className="text-gray-400 hover:text-white transition-colors"
-            onClick={() => {
-              document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-              document.getElementById('lateral-menu')?.classList.remove('translate-x-0');
-              document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-            }}
+            onClick={() => setIsLateralMenuOpen(false)}
           >
             <X size={28} />
           </button>
@@ -324,10 +337,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             <Link
               className="text-lg font-bold uppercase tracking-widest text-white hover:text-gray-300 transition-colors"
               to="/"
-              onClick={() => {
-                document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-                document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-              }}
+              onClick={() => setIsLateralMenuOpen(false)}
             >
               INICIO
             </Link>
@@ -344,10 +354,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                   <Link
                     className="text-lg font-bold uppercase tracking-widest text-white hover:text-gray-300 transition-colors"
                     to={`/category/${cat.name.toUpperCase()}`}
-                    onClick={() => {
-                      document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-                      document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-                    }}
+                    onClick={() => setIsLateralMenuOpen(false)}
                   >
                     {cat.name}
                   </Link>
@@ -376,10 +383,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
                           key={sub.id}
                           to={`/category/${cat.name.toUpperCase()}/${sub.name.toUpperCase()}`}
                           className="text-gray-400 font-bold uppercase tracking-wider text-sm hover:text-white transition-colors"
-                          onClick={() => {
-                            document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-                            document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-                          }}
+                          onClick={() => setIsLateralMenuOpen(false)}
                         >
                           {sub.name}
                         </Link>
@@ -395,10 +399,7 @@ const Navbar: React.FC<NavbarProps> = ({ cartCount }) => {
             <Link
               className="text-lg font-bold uppercase tracking-widest text-white hover:text-gray-300 transition-colors"
               to="/contact"
-              onClick={() => {
-                document.getElementById('lateral-menu')?.classList.add('translate-x-full');
-                document.getElementById('lateral-menu-overlay')?.classList.add('hidden');
-              }}
+              onClick={() => setIsLateralMenuOpen(false)}
             >
               CONTACTO
             </Link>
