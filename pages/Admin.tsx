@@ -25,7 +25,8 @@ import {
     ArrowDown,
     Shield,
     Eye,
-    EyeOff
+    EyeOff,
+    ArrowRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { HeroSlide, BlogPost, Product, Category, NavbarLink, BannerBento, FooterColumn } from '../types';
@@ -37,6 +38,7 @@ import { useImageOptimizer } from '../hooks/useImageOptimizer';
 import SectionVisibilityToggle from '../components/admin/SectionVisibilityToggle';
 import ProductSorter from '../components/admin/ProductSorter';
 import SortableSubcategoryGrid from '../components/admin/SortableSubcategoryGrid';
+import { useAuth } from '../context/AuthContext';
 
 const AdminDashboard: React.FC = () => {
     const {
@@ -58,29 +60,29 @@ const AdminDashboard: React.FC = () => {
         trustBadges, updateTrustBadges
     } = useShop();
 
-    // Login State
-    const [isAuthenticated, setIsAuthenticated] = useState(() => {
-        return localStorage.getItem('savage_admin_auth') === 'true';
-    });
+    const { user, signInWithEmail, signOut } = useAuth();
+
     const [loginEmail, setLoginEmail] = useState('');
     const [loginPass, setLoginPass] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loginError, setLoginError] = useState('');
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (loginEmail === 'querubin2414@gmail.com' && loginPass === 'CHEREMBO') {
-            setIsAuthenticated(true);
-            localStorage.setItem('savage_admin_auth', 'true');
-            setLoginError('');
-        } else {
-            setLoginError('Credenciales incorrectas');
+        setIsLoggingIn(true);
+        setLoginError('');
+
+        const { error } = await signInWithEmail(loginEmail, loginPass);
+
+        if (error) {
+            setLoginError('Credenciales incorrectas o error de conexión.');
         }
+        setIsLoggingIn(false);
     };
 
-    const handleLogout = () => {
-        setIsAuthenticated(false);
-        localStorage.removeItem('savage_admin_auth');
+    const handleLogout = async () => {
+        await signOut();
     };
 
     const { optimizeImage, isProcessing: isOptimizing } = useImageOptimizer();
@@ -90,7 +92,7 @@ const AdminDashboard: React.FC = () => {
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS'>('ESTÁNDAR');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    if (!isAuthenticated) {
+    if (!user) {
         return (
             <div className="min-h-screen bg-black flex items-center justify-center p-4">
                 <div className="max-w-md w-full bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl">
@@ -133,9 +135,12 @@ const AdminDashboard: React.FC = () => {
                         )}
                         <button
                             type="submit"
-                            className="w-full bg-white hover:bg-gray-200 text-black font-bold py-4 rounded-lg tracking-widest transition-all uppercase shadow-lg"
+                            disabled={isLoggingIn}
+                            className={`w-full py-3 px-4 flex items-center justify-center gap-2 rounded-lg text-black font-bold uppercase transition-all shadow-lg shadow-white/10 ${isLoggingIn ? 'bg-gray-500 cursor-not-allowed' : 'bg-white hover:bg-gray-200'}`}
                         >
-                            INGRESAR
+                            {isLoggingIn ? 'CARGANDO...' : (
+                                <>Entrar al Sistema <ArrowRight size={20} /></>
+                            )}
                         </button>
                         <Link to="/" className="block text-center text-xs text-gray-600 hover:text-white mt-4">
                             Volver a la tienda

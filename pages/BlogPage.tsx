@@ -36,10 +36,10 @@ const BlogPage: React.FC = () => {
                             <span className="text-sm font-bold uppercase tracking-widest">Volver al Inicio</span>
                         </Link>
                         <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none">
-                            Savage <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-600">Community</span>
+                            Adonis <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-600">Community</span>
                         </h1>
                         <p className="text-gray-400 text-lg max-w-2xl leading-relaxed">
-                            Historias reales de quienes visten sin límites. Descubre por qué eligen la calidad y el estilo Savage.
+                            Historias reales de quienes visten sin límites. Descubre por qué eligen la calidad y el estilo de Adonis Store.
                         </p>
                     </div>
                 </div>
@@ -131,7 +131,7 @@ const BlogPage: React.FC = () => {
                             <Quote size={32} />
                         </div>
                         <h3 className="text-xl font-bold text-white mb-2">Aún no hay historias</h3>
-                        <p className="text-gray-400">Sé el primero en compartir tu experiencia Savage.</p>
+                        <p className="text-gray-400">Sé el primero en compartir tu experiencia con Adonis Store.</p>
                     </div>
                 )}
 

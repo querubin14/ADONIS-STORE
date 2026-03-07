@@ -31,9 +31,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
           <img
             src={activeImage}
             alt={
-              (product.name.toLowerCase().includes('camiseta') || product.category.toLowerCase().includes('ropa'))
-                ? `Camiseta de fútbol ${product.name} - Savage Store Paraguay`
-                : `${product.name} - Savage Store Paraguay`
+              (product.category.toLowerCase().includes('accesorios') || product.category.toLowerCase().includes('joyería'))
+                ? `Joyería y Accesorios ${product.name} - Adonis Store Paraguay`
+                : `${product.name} - Adonis Store Paraguay`
             }
             className={`w-full h-full ${product.type === 'footwear' ? 'object-contain' : 'object-cover'} ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''}`}
           />
@@ -116,8 +116,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, showCat
             onClick={() => navigate(`/product/${product.slug || product.id}`)}
           >
             {product.name}
-            {(product.name.length < 25 && (product.category.toLowerCase().includes('camiseta') || product.name.toLowerCase().includes('camiseta'))) && (
-              <span className="hidden opacity-0 w-0 h-0"> - Camiseta de Fútbol Premium</span>
+            {(product.name.length < 25 && (product.category.toLowerCase().includes('accesorio') || product.name.toLowerCase().includes('pulsera'))) && (
+              <span className="hidden opacity-0 w-0 h-0"> - Joyería Premium para Hombre</span>
             )}
           </h3>
           <p className="text-accent-gray text-[10px] md:text-xs uppercase tracking-wide mt-1">

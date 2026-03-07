@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { error } = await supabase.auth.signInWithOtp({
             email,
             options: {
-                emailRedirectTo: 'https://www.savageeepy.com'
+                emailRedirectTo: 'https://adonistore.com'
             }
         });
         return { error };

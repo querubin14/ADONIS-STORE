@@ -141,8 +141,8 @@ const ProductDetail: React.FC = () => {
             <Navbar cartCount={cartCount} />
 
             <SEO
-                title={`${product.name} - Savage Store Paraguay`}
-                description={product.description || `Comprá ${product.name} en Savage Store. Calidad Premium.`}
+                title={`${product.name} - Adonis Store Paraguay`}
+                description={product.description || `Comprá ${product.name} en Adonis Store. Calidad Premium.`}
                 image={product.images[0]}
                 product={true}
                 // Important: Ensure this URL matches what the bot sees
@@ -156,10 +156,10 @@ const ProductDetail: React.FC = () => {
                     "@type": "Product",
                     "name": product.name,
                     "image": product.images,
-                    "description": product.description || `Compra ${product.name} en Savage Store Paraguay.`,
+                    "description": product.description || `Compra ${product.name} en Adonis Store Paraguay.`,
                     "brand": {
                         "@type": "Brand",
-                        "name": "Savage Store"
+                        "name": "Adonis Store"
                     },
                     "offers": {
                         "@type": "Offer",
@@ -199,8 +199,8 @@ const ProductDetail: React.FC = () => {
                                 alt={
                                     displayAlts?.[selectedImage] ||
                                     ((product.name.toLowerCase().includes('camiseta') || product.category?.toLowerCase().includes('ropa'))
-                                        ? `Camiseta de fútbol ${product.name} - Savage Store Paraguay`
-                                        : `${product.name} - Savage Store Paraguay`)
+                                        ? `${product.name} - Adonis Store Paraguay`
+                                        : `${product.name} - Adonis Store Paraguay`)
                                 }
                                 className={`w-full h-full object-cover ${isTotallyOutOfStock ? 'grayscale opacity-50' : ''} ${!zoomState.show ? 'transition-transform duration-500' : ''}`}
                                 style={{

@@ -10,13 +10,13 @@ interface SEOProps {
 }
 
 const SEO: React.FC<SEOProps> = ({
-    title = 'ADONIS STORE',
-    description = 'Las mejores camisetas de fútbol en Paraguay: Retro, internacionales y ediciones especiales. Además de calzado urbano, relojes y accesorios exclusivos. Calidad premium en ADONIS STORE.',
-    image = 'https://www.savageeepy.com/logo-final.png',
+    title = 'ADONIS STORE | Joyería Premium & Accesorios para Hombre',
+    description = 'Eleva tu estilo con Adoni Store. Las mejores pulseras, anillos, collares y billeteras para hombres en Paraguay. Colecciones exclusivas y calidad garantizada.',
+    image = 'https://adonistore.com/logo-final.png',
     product = false
 }) => {
     const location = useLocation();
-    const url = `https://www.savageeepy.com${location.pathname}`;
+    const url = `https://adonistore.com${location.pathname}`;
 
     return (
         <Helmet>

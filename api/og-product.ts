@@ -13,10 +13,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Default metadata
-    let title = 'SAVAGE STORE | Camisetas de Fútbol Premium';
-    let description = 'Las mejores camisetas de fútbol en Paraguay: Retro, internacionales y ediciones especiales.';
-    let image = 'https://www.savageeepy.com/crown.png';
-    const siteUrl = 'https://www.savageeepy.com';
+    let title = 'ADONIS STORE | Joyería Premium & Accesorios para Hombre';
+    let description = 'Eleva tu estilo con Adoni Store. Las mejores pulseras, anillos, collares y billeteras para hombres en Paraguay.';
+    let image = 'https://adonistore.com/logo-final.png';
+    const siteUrl = 'https://adonistore.com';
     let currentUrl = `${siteUrl}/product/${slug}`;
 
     // Fallback for root or invalid slug
@@ -62,7 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         if (product) {
-            title = `${product.name} | Savage Store`;
+            title = `${product.name} | Adonis Store`;
             if (product.description) {
                 description = product.description.replace(/\s+/g, ' ').substring(0, 160) + '...';
             }
@@ -93,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     <meta property="og:description" content="${description}">
     <meta property="og:image" content="${image}">
     <meta property="og:url" content="${currentUrl}">
-    <meta property="og:site_name" content="Savage Store">
+    <meta property="og:site_name" content="Adonis Store">
     <meta property="og:image:width" content="800">
     <meta property="og:image:height" content="800">
     
