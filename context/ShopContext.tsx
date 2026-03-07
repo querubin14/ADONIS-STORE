@@ -617,6 +617,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 // id: product.id, <--- REMOVED to let DB generate UUID
                 savage_id: `ADN-${product.id}`, // Temporary filler using the timestamp, user might want to change this later
                 name: product.name,
+                slug: product.slug,
                 price: parseFloat(product.price.toString()),
                 original_price: product.originalPrice ? parseFloat(product.originalPrice.toString()) : null,
                 category: product.category,
@@ -675,6 +676,7 @@ export const ShopProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             const dbProduct = {
                 name: updatedProduct.name,
+                slug: updatedProduct.slug,
                 price: parseFloat(updatedProduct.price.toString()),
                 original_price: updatedProduct.originalPrice ? parseFloat(updatedProduct.originalPrice.toString()) : null,
                 category: updatedProduct.category,
