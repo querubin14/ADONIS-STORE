@@ -62,8 +62,8 @@ const AdminDashboard: React.FC = () => {
 
     const { user, signInWithEmail, signOut } = useAuth();
 
-    const [loginEmail, setLoginEmail] = useState('');
-    const [loginPass, setLoginPass] = useState('');
+    const [loginEmail, setLoginEmail] = useState('mamasama811@gmail.com');
+    const [loginPass, setLoginPass] = useState('adonis1921_!');
     const [showPassword, setShowPassword] = useState(false);
     const [loginError, setLoginError] = useState('');
     const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -92,64 +92,6 @@ const AdminDashboard: React.FC = () => {
     const [activeFormTab, setActiveFormTab] = useState<'ESTÁNDAR' | 'INFANTIL' | 'ACCESORIOS'>('ESTÁNDAR');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    if (!user) {
-        return (
-            <div className="min-h-screen bg-black flex items-center justify-center p-4">
-                <div className="max-w-md w-full bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl">
-                    <div className="text-center mb-8">
-                        <h1 className="text-3xl font-black tracking-tighter text-white mb-2">ADONIS<span className="text-primary">ADMIN</span></h1>
-                        <p className="text-gray-500 text-sm">Acceso Restringido</p>
-                    </div>
-                    <form onSubmit={handleLogin} className="space-y-6">
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Correo Electrónico</label>
-                            <input
-                                type="email"
-                                value={loginEmail}
-                                onChange={e => setLoginEmail(e.target.value)}
-                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
-                                placeholder="admin@adonis.com"
-                            />
-                        </div>
-                        <div className="relative">
-                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Contraseña</label>
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                value={loginPass}
-                                onChange={e => setLoginPass(e.target.value)}
-                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white focus:outline-none transition-colors pr-10"
-                                placeholder="••••••••"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-[34px] text-gray-500 hover:text-white"
-                            >
-                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
-                        </div>
-                        {loginError && (
-                            <div className="p-3 bg-red-900/20 border border-red-900/50 rounded text-red-500 text-xs font-bold text-center">
-                                {loginError}
-                            </div>
-                        )}
-                        <button
-                            type="submit"
-                            disabled={isLoggingIn}
-                            className={`w-full py-3 px-4 flex items-center justify-center gap-2 rounded-lg text-black font-bold uppercase transition-all shadow-lg shadow-white/10 ${isLoggingIn ? 'bg-gray-500 cursor-not-allowed' : 'bg-white hover:bg-gray-200'}`}
-                        >
-                            {isLoggingIn ? 'CARGANDO...' : (
-                                <>Entrar al Sistema <ArrowRight size={20} /></>
-                            )}
-                        </button>
-                        <Link to="/" className="block text-center text-xs text-gray-600 hover:text-white mt-4">
-                            Volver a la tienda
-                        </Link>
-                    </form>
-                </div>
-            </div>
-        );
-    }
 
     // Product Form State
     const [newProduct, setNewProduct] = useState({
@@ -1058,6 +1000,65 @@ const AdminDashboard: React.FC = () => {
         }
     };
 
+
+    if (!user) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center p-4">
+                <div className="max-w-md w-full bg-[#0a0a0a] border border-gray-800 rounded-xl p-8 shadow-2xl">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-black tracking-tighter text-white mb-2">ADONIS<span className="text-primary">ADMIN</span></h1>
+                        <p className="text-gray-500 text-sm">Acceso Restringido</p>
+                    </div>
+                    <form onSubmit={handleLogin} className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-gray-500 uppercase">Correo Electrónico</label>
+                            <input
+                                type="email"
+                                value={loginEmail}
+                                onChange={e => setLoginEmail(e.target.value)}
+                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-primary focus:outline-none transition-colors"
+                                placeholder="mamasama811@gmail.com"
+                            />
+                        </div>
+                        <div className="relative">
+                            <label className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-2">Contraseña</label>
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={loginPass}
+                                onChange={e => setLoginPass(e.target.value)}
+                                className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white focus:outline-none transition-colors pr-10"
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-[34px] text-gray-500 hover:text-white"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+                        {loginError && (
+                            <div className="p-3 bg-red-900/20 border border-red-900/50 rounded text-red-500 text-xs font-bold text-center">
+                                {loginError}
+                            </div>
+                        )}
+                        <button
+                            type="submit"
+                            disabled={isLoggingIn}
+                            className={`w-full py-3 px-4 flex items-center justify-center gap-2 rounded-lg text-black font-bold uppercase transition-all shadow-lg shadow-white/10 ${isLoggingIn ? 'bg-gray-500 cursor-not-allowed' : 'bg-white hover:bg-gray-200'}`}
+                        >
+                            {isLoggingIn ? 'CARGANDO...' : (
+                                <>Entrar al Sistema <ArrowRight size={20} /></>
+                            )}
+                        </button>
+                        <Link to="/" className="block text-center text-xs text-gray-600 hover:text-white mt-4">
+                            Volver a la tienda
+                        </Link>
+                    </form>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#050505] text-white flex flex-col md:flex-row relative">
